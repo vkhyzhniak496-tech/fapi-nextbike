@@ -9,12 +9,6 @@ app = FastAPI(
 # Publiczne API Nextbike z żywymi danymi o stacjach
 NEXTBIKE_API_URL = "https://maps.nextbike.net/maps/nextbike-live.json"
 
-@app.get("/")
-def home():
-    return {
-        "status": "ok", 
-        "message": "Czysto, płasko i bez powiadomień MS 🚴"
-    }
 
 @app.get("/health/check")
 def health_check():
