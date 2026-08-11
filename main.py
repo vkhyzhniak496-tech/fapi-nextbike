@@ -6,7 +6,6 @@ app = FastAPI(
     description="No description provided"
 )
 
-# Publiczne API Nextbike z żywymi danymi o stacjach
 NEXTBIKE_API_URL = "https://maps.nextbike.net/maps/nextbike-live.json"
 
 
