@@ -15,44 +15,41 @@ def health_check():
         "SayHelloTo": "ctor2"
     }
 
-@app.get("/bikes/systems")
-async def get_all_systems_sorted():
+@app.get("/bikes/systems/poland")
+async def get_polish_systems():
     """
-    Zwraca wszystkie systemy rowerowe (miasta) z API Nextbike, 
-    priorytetowo sortując Polskę na samej górze.
+    Zwraca tylko i wyłącznie polskie systemy rowerowe z API Nextbike.
     """
     async with httpx.AsyncClient() as client:
         response = await client.get(NEXTBIKE_API_URL)
         data = response.json()
 
-    systems = []
+    polish_systems = []
 
-    # Iterujemy po wszystkich krajach i miastach w JSON-ie
     for country in data.get("countries", []):
-        country_name = country.get("country_name", "Unknown")
-        country_code = country.get("country", "")
+        # Filtrujemy tylko Polskę (kod 'PL' lub nazwa 'Poland')
+        if country.get("country") == "PL" or country.get("country_name") == "Poland":
+            for city in country.get("cities", []):
+                polish_systems.append({
+                    "city_id": city.get("uid"),
+                    "city_name": city.get("name"),
+                    "country_name": "Poland",
+                    "country_code": "PL",
+                    "total_bikes": city.get("set_point_bikes", 0),
+                    "total_places": len(city.get("places", [])),
+                    "lat": city.get("lat"),
+                    "lng": city.get("lng")
+                })
 
-        for city in country.get("cities", []):
-            systems.append({
-                "city_id": city.get("uid"),
-                "city_name": city.get("name"),
-                "country_name": country_name,
-                "country_code": country_code,
-                "total_bikes": city.get("set_point_bikes", 0),
-                "total_places": len(city.get("places", [])),
-                "lat": city.get("lat"),
-                "lng": city.get("lng")
-            })
-
-    # Kluczowe sortowanie:
-    # 1. Sprawdzamy czy country_code to "PL" (False/0 dla PL, True/1 dla reszty -> PL ląduje na górze)
-    # 2. Resztę sortujemy alfabetycznie po nazwie kraju, a potem po nazwie miasta.
-    systems.sort(key=lambda x: (x["country_code"] != "PL", x["country_name"], x["city_name"]))
+    # Sortujemy polskie miasta alfabetycznie według nazwy
+    polish_systems.sort(key=lambda x: x["city_name"])
 
     return {
-        "total_systems": len(systems),
-        "systems": systems
+        "total_polish_systems": len(polish_systems),
+        "systems": polish_systems
     }
+
+
 
 if __name__ == "__main__":
     import uvicorn
