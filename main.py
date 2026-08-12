@@ -15,40 +15,44 @@ def health_check():
         "SayHelloTo": "ctor2"
     }
 
-@app.get("/bikes/live")
-async def get_live_bikes(city_name: str = "Częstochowa"):
+@app.get("/bikes/systems")
+async def get_all_systems_sorted():
+    """
+    Zwraca wszystkie systemy rowerowe (miasta) z API Nextbike, 
+    priorytetowo sortując Polskę na samej górze.
+    """
     async with httpx.AsyncClient() as client:
         response = await client.get(NEXTBIKE_API_URL)
         data = response.json()
 
-    extracted_places = []
-    
-    # Przeszukujemy kraje i miasta
+    systems = []
+
+    # Iterujemy po wszystkich krajach i miastach w JSON-ie
     for country in data.get("countries", []):
+        country_name = country.get("country_name", "Unknown")
+        country_code = country.get("country", "")
+
         for city in country.get("cities", []):
-            # Dopasowujemy miasto po nazwie (ignorując wielkość liter)
-            if city_name.lower() in city.get("name", "").lower():
-                
-                # Właściwe stacje i rowery leżą w kluczu 'places' wewnątrz miasta!
-                for place in city.get("places", []):
-                    extracted_places.append({
-                        "id": place.get("uid"),
-                        "name": place.get("name"),
-                        "lat": place.get("lat"),
-                        "lng": place.get("lng"),
-                        "bikes_count": place.get("bikes_count"),
-                        "is_station": place.get("spot", True)
-                    })
-                
-                return {
-                    "matched_city": city.get("name"),
-                    "city_center": {"lat": city.get("lat"), "lng": city.get("lng")},
-                    "total_places": len(extracted_places),
-                    "places": extracted_places
-                }
+            systems.append({
+                "city_id": city.get("uid"),
+                "city_name": city.get("name"),
+                "country_name": country_name,
+                "country_code": country_code,
+                "total_bikes": city.get("set_point_bikes", 0),
+                "total_places": len(city.get("places", [])),
+                "lat": city.get("lat"),
+                "lng": city.get("lng")
+            })
 
-    return {"message": f"Nie znaleziono miasta zawierającego frazę '{city_name}'"}
+    # Kluczowe sortowanie:
+    # 1. Sprawdzamy czy country_code to "PL" (False/0 dla PL, True/1 dla reszty -> PL ląduje na górze)
+    # 2. Resztę sortujemy alfabetycznie po nazwie kraju, a potem po nazwie miasta.
+    systems.sort(key=lambda x: (x["country_code"] != "PL", x["country_name"], x["city_name"]))
 
+    return {
+        "total_systems": len(systems),
+        "systems": systems
+    }
 
 if __name__ == "__main__":
     import uvicorn
