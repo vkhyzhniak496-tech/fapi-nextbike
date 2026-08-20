@@ -3,6 +3,7 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse, Response
 import httpx
+import json
 
 app = FastAPI(title="Nextbike & CityBikes GIS")
 RESOURCES_DIR = Path(__file__).parent / "resources"
@@ -59,6 +60,17 @@ async def get_map_view():
     if not html_file.exists():
         return HTMLResponse("<h1>Brak pliku resources/index.html</h1>", status_code=404)
     return HTMLResponse(html_file.read_text(encoding="utf-8"))
+
+
+
+@app.get("/network/safe-cycleways")
+async def get_safe_cycleways():
+    """Serwuje statyczną siatkę bezpiecznych tras rowerowych (Dolny Mokotów)."""
+    geojson_file = RESOURCES_DIR / "safe_bike_dm.geojson"
+    if not geojson_file.exists():
+        raise HTTPException(status_code=404, detail="Brak pliku cycleways.geojson")
+    return json.loads(geojson_file.read_text(encoding="utf-8"))
+
 
 
 @app.get("/favicon.ico", include_in_schema=False)
