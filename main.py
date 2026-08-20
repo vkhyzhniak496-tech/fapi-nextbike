@@ -1,54 +1,69 @@
-from fastapi import FastAPI
+from datetime import datetime, timezone
+from pathlib import Path
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import HTMLResponse, Response
 import httpx
 
-app = FastAPI(
-    title="Nextbike 2",
-    description="No description provided"
-)
-
-NEXTBIKE_API_URL = "https://maps.nextbike.net/maps/nextbike-live.json"
+app = FastAPI(title="Nextbike & CityBikes GIS")
+RESOURCES_DIR = Path(__file__).parent / "resources"
+CITYBIKES_WARSAW_URL = "http://api.citybik.es/v2/networks/veturilo-nextbike-warsaw"
 
 
 @app.get("/health/check")
 def health_check():
-    return{
-        "SayHelloTo": "ctor2"
-    }
+    return {"SayHelloTo": "ctor2", "status": "running"}
 
-@app.get("/bikes/systems/poland")
-async def get_polish_systems():
-    """
-    Zwraca tylko i wyłącznie polskie systemy rowerowe z API Nextbike.
-    """
-    async with httpx.AsyncClient() as client:
-        response = await client.get(NEXTBIKE_API_URL)
-        data = response.json()
 
-    polish_systems = []
+@app.get("/bikes/citybikes/warsaw")
+async def get_warsaw_bikes():
+    """Pobiera stacje Veturilo 3.0 z gwarantowanym czasem aktualizacji serwera."""
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        res = await client.get(CITYBIKES_WARSAW_URL)
+        if res.status_code != 200:
+            raise HTTPException(status_code=502, detail="Błąd połączenia z CityBikes API")
+        data = res.json().get("network", {})
 
-    for country in data.get("countries", []):
-        # Filtrujemy tylko Polskę (kod 'PL' lub nazwa 'Poland')
-        if country.get("country") == "PL" or country.get("country_name") == "Poland":
-            for city in country.get("cities", []):
-                polish_systems.append({
-                    "city_id": city.get("uid"),
-                    "city_name": city.get("name"),
-                    "country_name": "Poland",
-                    "country_code": "PL",
-                    "total_bikes": city.get("set_point_bikes", 0),
-                    "total_places": len(city.get("places", [])),
-                    "lat": city.get("lat"),
-                    "lng": city.get("lng")
-                })
+    server_time_iso = datetime.now(timezone.utc).isoformat()
+    stations = data.get("stations", [])
+    features = []
 
-    # Sortujemy polskie miasta alfabetycznie według nazwy
-    polish_systems.sort(key=lambda x: x["city_name"])
+    for st in stations:
+        timestamp = st.get("timestamp") or server_time_iso
+        features.append({
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [st["longitude"], st["latitude"]]
+            },
+            "properties": {
+                "id": st["id"],
+                "name": st["name"],
+                "free_bikes": st.get("free_bikes", 0),
+                "empty_slots": st.get("empty_slots", 0),
+                "updated_at": timestamp
+            }
+        })
 
     return {
-        "total_polish_systems": len(polish_systems),
-        "systems": polish_systems
+        "type": "FeatureCollection",
+        "system_name": data.get("name", "VETURILO 3.0"),
+        "total_stations": len(features),
+        "last_update": server_time_iso,
+        "features": features
     }
 
+
+@app.get("/map", response_class=HTMLResponse)
+async def get_map_view():
+    html_file = RESOURCES_DIR / "index.html"
+    if not html_file.exists():
+        return HTMLResponse("<h1>Brak pliku resources/index.html</h1>", status_code=404)
+    return HTMLResponse(html_file.read_text(encoding="utf-8"))
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return Response(status_code=204)
 
 
 if __name__ == "__main__":
