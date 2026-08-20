@@ -9,15 +9,12 @@
     <style>
         body { margin: 0; padding: 0; }
         #map { width: 100vw; height: 100vh; }
-        
         .maplibregl-popup-content {
             font-family: sans-serif;
             padding: 10px 14px;
             border-radius: 8px;
             font-size: 13px;
         }
-
-        /* Panel statusu w prawym górnym rogu */
         #info-box {
             position: absolute;
             top: 15px;
@@ -39,8 +36,6 @@
             background: #2ecc71;
             margin-right: 5px;
         }
-
-        /* Legenda w prawym dolnym rogu */
         #legend {
             position: absolute;
             bottom: 25px;
@@ -85,10 +80,9 @@
     <div id="info-box">
         <span class="pulse"></span><b>Veturilo 3.0 Live</b><br/>
         <b>Aktualizacja:</b> <span id="last-update-label">Ładowanie...</span><br/>
-        <small style="color: #777;">Autoodświeżanie co 30s</small>
+        <small style="color: #777;">Autoodświeżanie stacji co 30s</small>
     </div>
 
-    <!-- Legenda warstw -->
     <div id="legend">
         <div class="legend-title">Infrastruktura rowerowa</div>
         <div class="legend-item">
@@ -127,15 +121,14 @@
         const map = new maplibregl.Map({
             container: 'map',
             style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-            center: [21.050, 52.193], // Centrum Dolnego Mokotowa
-            zoom: 13.5
+            center: [21.030, 52.215],
+            zoom: 12.5
         });
 
         async function refreshBikeData() {
             try {
                 const res = await fetch('/bikes/citybikes/warsaw?t=' + new Date().getTime());
                 const data = await res.json();
-
                 document.getElementById('last-update-label').innerText = formatTime(data.last_update);
 
                 const source = map.getSource('veturilo-stations');
@@ -147,7 +140,6 @@
                         data: data
                     });
 
-                    // Renderowanie punktów stacji na wierzchu linii
                     map.addLayer({
                         id: 'stations-point',
                         type: 'circle',
@@ -170,18 +162,17 @@
                     });
                 }
             } catch (err) {
-                console.error("Błąd aktualizacji stacji:", err);
+                console.error("Błąd stacji:", err);
             }
         }
 
         map.on('load', () => {
-            // Dodanie siatki bezpiecznych tras
+            // Wczytanie lokalnego pliku z dysku
             map.addSource('safe-cycleways', {
                 type: 'geojson',
                 data: '/network/safe-cycleways'
             });
 
-            // Warstwa linii z dopasowaniem kolorów
             map.addLayer({
                 id: 'cycleways-lines',
                 type: 'line',
@@ -194,20 +185,18 @@
                     'line-color': [
                         'match',
                         ['get', 'highway'],
-                        'cycleway', '#27ae60',       // Zielony
-                        'living_street', '#2980b9',  // Ciemnoniebieski
-                        '#3498db'                    // Błękitny dla Tempo 30 (residential/unclassified)
+                        'cycleway', '#27ae60',
+                        'living_street', '#2980b9',
+                        '#3498db'
                     ],
-                    'line-width': 3.5,
+                    'line-width': 3,
                     'line-opacity': 0.85
                 }
             });
 
-            // Start stacji rowerowych
             refreshBikeData();
             setInterval(refreshBikeData, 30000);
 
-            // Popupy stacji
             map.on('click', 'stations-point', (e) => {
                 const p = e.features[0].properties;
                 new maplibregl.Popup()
