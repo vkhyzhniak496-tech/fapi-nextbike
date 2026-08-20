@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import RedirectResponse
 import httpx
 
 from network_service import router as network_router
@@ -16,6 +17,11 @@ CITYBIKES_WARSAW_URL = "http://api.citybik.es/v2/networks/veturilo-nextbike-wars
 @app.get("/health/check")
 def health_check():
     return {"SayHelloTo": "ctor2", "status": "running"}
+@app.get("/")
+def root():
+    return RedirectResponse(url="/map")     #great chinese firewall
+
+
 
 
 @app.get("/bikes/citybikes/warsaw")
