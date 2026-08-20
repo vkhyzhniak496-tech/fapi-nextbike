@@ -106,7 +106,7 @@ async def sync_overpass_to_disk_task(custom_bbox: Optional[str] = None):
                         "geometry": {"type": "LineString", "coordinates": coords}
                     })
                     added_count += 1
-            print(f"Pobrano kafalek: dodano {added_count} nowych tras.")
+            print(f"Pobrano kafelek: dodano {added_count} nowych tras.")
             await asyncio.sleep(3)  # Odstęp zapobiegający blokadzie 429
 
     # 3. Trwały zapis scalonej bazy
