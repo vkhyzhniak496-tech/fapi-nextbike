@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warszawa - Veturilo MapLibre</title>
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+    <style>
+        body { margin: 0; padding: 0; }
+        #map { width: 100vw; height: 100vh; }
+        .maplibregl-popup-content {
+            font-family: sans-serif;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+        #info-box {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 1;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-family: sans-serif;
+            font-size: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            line-height: 1.5;
+        }
+        .pulse {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #2ecc71;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="info-box">
+        <span class="pulse"></span><b>Veturilo 3.0 Live</b><br/>
+        <b>Aktualizacja:</b> <span id="last-update-label">Ładowanie...</span><br/>
+        <small style="color: #777;">Autoodświeżanie co 30s</small>
+    </div>
+    <div id="map"></div>
+
+    <script>
+        function formatTime(val) {
+            if (!val) return "Brak danych";
+            const date = new Date(val);
+            if (isNaN(date.getTime())) return "Aktualne";
+            return date.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+
+        const map = new maplibregl.Map({
+            container: 'map',
+            style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+            center: [21.0122, 52.2297],
+            zoom: 12
+        });
+
+        async function refreshBikeData() {
+            try {
+                const res = await fetch('/bikes/citybikes/warsaw?t=' + new Date().getTime());
+                const data = await res.json();
+
+                document.getElementById('last-update-label').innerText = formatTime(data.last_update);
+
+                const source = map.getSource('veturilo-stations');
+                if (source) {
+                    source.setData(data);
+                } else {
+                    map.addSource('veturilo-stations', {
+                        type: 'geojson',
+                        data: data
+                    });
+
+                    map.addLayer({
+                        id: 'stations-point',
+                        type: 'circle',
+                        source: 'veturilo-stations',
+                        paint: {
+                            'circle-radius': [
+                                'interpolate', ['linear'], ['get', 'free_bikes'],
+                                0, 4,
+                                5, 7,
+                                15, 12
+                            ],
+                            'circle-color': [
+                                'case',
+                                ['==', ['get', 'free_bikes'], 0], '#e74c3c',
+                                '#2ecc71'
+                            ],
+                            'circle-stroke-width': 1.5,
+                            'circle-stroke-color': '#ffffff'
+                        }
+                    });
+                }
+            } catch (err) {
+                console.error("Błąd aktualizacji danych:", err);
+            }
+        }
+
+        map.on('load', () => {
+            refreshBikeData();
+            setInterval(refreshBikeData, 30000);
+
+            map.on('click', 'stations-point', (e) => {
+                const p = e.features[0].properties;
+                new maplibregl.Popup()
+                    .setLngLat(e.lngLat)
+                    .setHTML(`
+                        <h4 style="margin:0 0 6px 0;">${p.name}</h4>
+                        🚲 Dostępne rowery: <b>${p.free_bikes}</b><br/>
+                        🅿️ Wolne stojaki: <b>${p.empty_slots}</b>
+                    `)
+                    .addTo(map);
+            });
+
+            map.on('mouseenter', 'stations-point', () => { map.getCanvas().style.cursor = 'pointer'; });
+            map.on('mouseleave', 'stations-point', () => { map.getCanvas().style.cursor = ''; });
+        });
+    </script>
+</body>
+</html>

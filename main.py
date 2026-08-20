@@ -1,13 +1,12 @@
-import httpx
+from datetime import datetime, timezone
+from pathlib import Path
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import HTMLResponse, Response
+import httpx
 
-app = FastAPI(
-    title="Nextbike & CityBikes GIS Service",
-    description="Mikroserwis do serwowania danych rowerowych dla Warszawy i innych miast"
-)
-
+app = FastAPI(title="Nextbike & CityBikes GIS")
+RESOURCES_DIR = Path(__file__).parent / "resources"
 CITYBIKES_WARSAW_URL = "http://api.citybik.es/v2/networks/veturilo-nextbike-warsaw"
-#NEXTBIKE_LIVE_URL = "https://maps.nextbike.net/maps/nextbike-live.json"
 
 
 @app.get("/health/check")
@@ -16,39 +15,56 @@ def health_check():
 
 
 @app.get("/bikes/citybikes/warsaw")
-async def get_warsaw_citybikes():
-    """Citybikes API parse"""
-    async with httpx.AsyncClient() as client:
+async def get_warsaw_bikes():
+    """Pobiera stacje Veturilo 3.0 z gwarantowanym czasem aktualizacji serwera."""
+    async with httpx.AsyncClient(timeout=10.0) as client:
         res = await client.get(CITYBIKES_WARSAW_URL)
         if res.status_code != 200:
             raise HTTPException(status_code=502, detail="Błąd połączenia z CityBikes API")
         data = res.json().get("network", {})
 
+    server_time_iso = datetime.now(timezone.utc).isoformat()
+    stations = data.get("stations", [])
     features = []
-    for station in data.get("stations", []):
+
+    for st in stations:
+        timestamp = st.get("timestamp") or server_time_iso
         features.append({
             "type": "Feature",
             "geometry": {
                 "type": "Point",
-                "coordinates": [station["longitude"], station["latitude"]]
+                "coordinates": [st["longitude"], st["latitude"]]
             },
             "properties": {
-                "id": station["id"],
-                "name": station["name"],
-                "free_bikes": station.get("free_bikes", 0),
-                "empty_slots": station.get("empty_slots", 0),
-                "has_ebikes": station.get("extra", {}).get("has_ebikes", False),
-                "ebikes_count": station.get("extra", {}).get("ebikes", 0),
-                "updated_at": station.get("timestamp")
+                "id": st["id"],
+                "name": st["name"],
+                "free_bikes": st.get("free_bikes", 0),
+                "empty_slots": st.get("empty_slots", 0),
+                "updated_at": timestamp
             }
         })
 
     return {
         "type": "FeatureCollection",
-        "system_name": data.get("name"),
+        "system_name": data.get("name", "VETURILO 3.0"),
         "total_stations": len(features),
+        "last_update": server_time_iso,
         "features": features
     }
+
+
+@app.get("/map", response_class=HTMLResponse)
+async def get_map_view():
+    html_file = RESOURCES_DIR / "index.html"
+    if not html_file.exists():
+        return HTMLResponse("<h1>Brak pliku resources/index.html</h1>", status_code=404)
+    return HTMLResponse(html_file.read_text(encoding="utf-8"))
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return Response(status_code=204)
+
 
 if __name__ == "__main__":
     import uvicorn
