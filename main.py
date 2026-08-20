@@ -3,9 +3,12 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse, Response
 import httpx
-import json
+
+from network_service import router as network_router
 
 app = FastAPI(title="Nextbike & CityBikes GIS")
+app.include_router(network_router)
+
 RESOURCES_DIR = Path(__file__).parent / "resources"
 CITYBIKES_WARSAW_URL = "http://api.citybik.es/v2/networks/veturilo-nextbike-warsaw"
 
@@ -17,7 +20,7 @@ def health_check():
 
 @app.get("/bikes/citybikes/warsaw")
 async def get_warsaw_bikes():
-    """Pobiera stacje Veturilo 3.0 z gwarantowanym czasem aktualizacji serwera."""
+    """Pobiera stacje Veturilo 3.0 w standardzie GeoJSON."""
     async with httpx.AsyncClient(timeout=10.0) as client:
         res = await client.get(CITYBIKES_WARSAW_URL)
         if res.status_code != 200:
@@ -60,17 +63,6 @@ async def get_map_view():
     if not html_file.exists():
         return HTMLResponse("<h1>Brak pliku resources/index.html</h1>", status_code=404)
     return HTMLResponse(html_file.read_text(encoding="utf-8"))
-
-
-
-@app.get("/network/safe-cycleways")
-async def get_safe_cycleways():
-    """Serwuje statyczną siatkę bezpiecznych tras rowerowych (Dolny Mokotów)."""
-    geojson_file = RESOURCES_DIR / "safe_bike_dm.geojson"
-    if not geojson_file.exists():
-        raise HTTPException(status_code=404, detail="Brak pliku cycleways.geojson")
-    return json.loads(geojson_file.read_text(encoding="utf-8"))
-
 
 
 @app.get("/favicon.ico", include_in_schema=False)
