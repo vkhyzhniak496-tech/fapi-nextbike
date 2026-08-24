@@ -2,9 +2,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import RedirectResponse
 import httpx
 
+from network_service import router as network_router
+
 app = FastAPI(title="Nextbike & CityBikes GIS")
+app.include_router(network_router)
+
 RESOURCES_DIR = Path(__file__).parent / "resources"
 CITYBIKES_WARSAW_URL = "http://api.citybik.es/v2/networks/veturilo-nextbike-warsaw"
 
@@ -12,11 +17,16 @@ CITYBIKES_WARSAW_URL = "http://api.citybik.es/v2/networks/veturilo-nextbike-wars
 @app.get("/health/check")
 def health_check():
     return {"SayHelloTo": "ctor2", "status": "running"}
+@app.get("/")
+def root():
+    return RedirectResponse(url="/map")     #great chinese firewall
+
+
 
 
 @app.get("/bikes/citybikes/warsaw")
 async def get_warsaw_bikes():
-    """Pobiera stacje Veturilo 3.0 z gwarantowanym czasem aktualizacji serwera."""
+    """Pobiera stacje Veturilo 3.0 w standardzie GeoJSON."""
     async with httpx.AsyncClient(timeout=10.0) as client:
         res = await client.get(CITYBIKES_WARSAW_URL)
         if res.status_code != 200:

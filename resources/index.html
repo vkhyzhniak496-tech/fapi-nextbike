@@ -3,18 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Warszawa - Veturilo MapLibre</title>
+    <title>Warszawa - Veturilo & Safe Cycleways</title>
     <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
     <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
     <style>
         body { margin: 0; padding: 0; }
         #map { width: 100vw; height: 100vh; }
+        
         .maplibregl-popup-content {
             font-family: sans-serif;
             padding: 10px 14px;
             border-radius: 8px;
             font-size: 13px;
         }
+
         #info-box {
             position: absolute;
             top: 15px;
@@ -36,6 +38,45 @@
             background: #2ecc71;
             margin-right: 5px;
         }
+
+        #legend {
+            position: absolute;
+            bottom: 25px;
+            right: 15px;
+            z-index: 1;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-family: sans-serif;
+            font-size: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            line-height: 1.6;
+        }
+        .legend-title {
+            font-weight: bold;
+            margin-bottom: 6px;
+            font-size: 13px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 4px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        .legend-line {
+            width: 20px;
+            height: 4px;
+            margin-right: 8px;
+            border-radius: 2px;
+        }
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+            border: 1px solid #fff;
+        }
     </style>
 </head>
 <body>
@@ -44,6 +85,32 @@
         <b>Aktualizacja:</b> <span id="last-update-label">Ładowanie...</span><br/>
         <small style="color: #777;">Autoodświeżanie co 30s</small>
     </div>
+
+    <div id="legend">
+        <div class="legend-title">Infrastruktura rowerowa</div>
+        <div class="legend-item">
+            <span class="legend-line" style="background: #27ae60;"></span>
+            <span>Wydzielona droga (DDR)</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-line" style="background: #2980b9;"></span>
+            <span>Strefa zamieszkania / Woonerf</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-line" style="background: #3498db;"></span>
+            <span>Ulica Tempo 30 (uspokojona)</span>
+        </div>
+        <hr style="margin: 6px 0; border: 0; border-top: 1px solid #eee;" />
+        <div class="legend-item">
+            <span class="legend-dot" style="background: #2ecc71;"></span>
+            <span>Stacja (dostępne rowery)</span>
+        </div>
+        <div class="legend-item">
+            <span class="legend-dot" style="background: #e74c3c;"></span>
+            <span>Stacja pusta (0 rowerów)</span>
+        </div>
+    </div>
+
     <div id="map"></div>
 
     <script>
@@ -57,15 +124,28 @@
         const map = new maplibregl.Map({
             container: 'map',
             style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-            center: [21.0122, 52.2297],
-            zoom: 12
+            center: [21.012, 52.230],
+            zoom: 13
         });
+
+        // Kontroler geolokalizacji z kompasem i śledzeniem na żywo
+        const geolocate = new maplibregl.GeolocateControl({
+            positionOptions: {
+                enableHighAccuracy: true
+            },
+            trackUserLocation: true,
+            showUserLocation: true,
+            showAccuracyCircle: true
+        });
+        map.addControl(geolocate, 'top-left');
+
+        // Kontrolki zoomu (+ / -)
+        map.addControl(new maplibregl.NavigationControl(), 'top-left');
 
         async function refreshBikeData() {
             try {
                 const res = await fetch('/bikes/citybikes/warsaw?t=' + new Date().getTime());
                 const data = await res.json();
-
                 document.getElementById('last-update-label').innerText = formatTime(data.last_update);
 
                 const source = map.getSource('veturilo-stations');
@@ -99,11 +179,37 @@
                     });
                 }
             } catch (err) {
-                console.error("Błąd aktualizacji danych:", err);
+                console.error("Błąd stacji:", err);
             }
         }
 
         map.on('load', () => {
+            map.addSource('safe-cycleways', {
+                type: 'geojson',
+                data: '/network/safe-cycleways'
+            });
+
+            map.addLayer({
+                id: 'cycleways-lines',
+                type: 'line',
+                source: 'safe-cycleways',
+                layout: {
+                    'line-join': 'round',
+                    'line-cap': 'round'
+                },
+                paint: {
+                    'line-color': [
+                        'match',
+                        ['get', 'highway'],
+                        'cycleway', '#27ae60',
+                        'living_street', '#2980b9',
+                        '#3498db'
+                    ],
+                    'line-width': 3,
+                    'line-opacity': 0.85
+                }
+            });
+
             refreshBikeData();
             setInterval(refreshBikeData, 30000);
 
