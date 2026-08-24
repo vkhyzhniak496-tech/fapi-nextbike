@@ -9,12 +9,14 @@
     <style>
         body { margin: 0; padding: 0; }
         #map { width: 100vw; height: 100vh; }
+        
         .maplibregl-popup-content {
             font-family: sans-serif;
             padding: 10px 14px;
             border-radius: 8px;
             font-size: 13px;
         }
+
         #info-box {
             position: absolute;
             top: 15px;
@@ -36,6 +38,7 @@
             background: #2ecc71;
             margin-right: 5px;
         }
+
         #legend {
             position: absolute;
             bottom: 25px;
@@ -80,7 +83,7 @@
     <div id="info-box">
         <span class="pulse"></span><b>Veturilo 3.0 Live</b><br/>
         <b>Aktualizacja:</b> <span id="last-update-label">Ładowanie...</span><br/>
-        <small style="color: #777;">Autoodświeżanie stacji co 30s</small>
+        <small style="color: #777;">Autoodświeżanie co 30s</small>
     </div>
 
     <div id="legend">
@@ -121,9 +124,23 @@
         const map = new maplibregl.Map({
             container: 'map',
             style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-            center: [21.030, 52.215],
-            zoom: 12.5
+            center: [21.012, 52.230],
+            zoom: 13
         });
+
+        // Kontroler geolokalizacji z kompasem i śledzeniem na żywo
+        const geolocate = new maplibregl.GeolocateControl({
+            positionOptions: {
+                enableHighAccuracy: true
+            },
+            trackUserLocation: true,
+            showUserLocation: true,
+            showAccuracyCircle: true
+        });
+        map.addControl(geolocate, 'top-left');
+
+        // Kontrolki zoomu (+ / -)
+        map.addControl(new maplibregl.NavigationControl(), 'top-left');
 
         async function refreshBikeData() {
             try {
@@ -167,7 +184,6 @@
         }
 
         map.on('load', () => {
-            // Wczytanie lokalnego pliku z dysku
             map.addSource('safe-cycleways', {
                 type: 'geojson',
                 data: '/network/safe-cycleways'
