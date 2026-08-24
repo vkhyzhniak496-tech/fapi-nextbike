@@ -1,0 +1,176 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+#map {
+    width: 100vw;
+    height: 100vh;
+}
+
+.maplibregl-popup-content {
+    padding: 12px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    max-width: 320px;
+}
+
+.station-chart-img {
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+    margin-top: 8px;
+    border: 1px solid #e0e0e0;
+    display: block;
+}
+
+/* Panel informacyjny w prawym górnym rogu */
+#info-box {
+    position: absolute;
+    top: 15px;
+    right: 55px; /* Odstęp od natywnych kontrolek mapy */
+    z-index: 1;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 10px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    line-height: 1.5;
+}
+
+.pulse {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #2ecc71;
+    margin-right: 5px;
+}
+
+.btn-nav-leaderboard {
+    display: inline-block;
+    margin-top: 6px;
+    color: #007cbf;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+/* Legenda w prawym dolnym rogu */
+#legend {
+    position: absolute;
+    bottom: 25px;
+    right: 15px;
+    z-index: 1;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    line-height: 1.6;
+}
+
+.legend-title {
+    font-weight: bold;
+    margin-bottom: 6px;
+    font-size: 13px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 4px;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.legend-line {
+    width: 20px;
+    height: 4px;
+    margin-right: 8px;
+    border-radius: 2px;
+}
+
+.legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 8px;
+    border: 1px solid #fff;
+}
+
+/* Style widoku /leaderboard */
+.leaderboard-body {
+    background-color: #f4f6f8;
+    padding: 24px 16px;
+}
+
+.leaderboard-container {
+    max-width: 880px;
+    margin: 0 auto;
+}
+
+.leaderboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.btn-map {
+    background: #007cbf;
+    color: #ffffff;
+    text-decoration: none;
+    padding: 9px 16px;
+    border-radius: 6px;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+.leaderboard-section {
+    margin-bottom: 32px;
+}
+
+.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+}
+
+.station-card {
+    background: #ffffff;
+    border-radius: 8px;
+    padding: 16px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    cursor: pointer;
+    border: 1px solid #eaeaea;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.station-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(0,0,0,0.1);
+    border-color: #007cbf;
+}
+
+.station-card-title {
+    font-weight: bold;
+    font-size: 15px;
+    margin-bottom: 8px;
+    color: #2c3e50;
+}
+
+.station-card-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 13px;
+    color: #555555;
+}
+
+.teleport-hint {
+    margin-top: 12px;
+    font-size: 11px;
+    color: #007cbf;
+    font-weight: bold;
+}

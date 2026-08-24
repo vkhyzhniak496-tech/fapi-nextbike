@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ranking Stacji Veturilo - Warszawa</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body class="leaderboard-body">
+    <div class="leaderboard-container">
+        <header class="leaderboard-header">
+            <h1 style="margin: 0; font-size: 22px;">🏆 Ranking Stacji Veturilo</h1>
+            <a href="/map" class="btn-map">🗺️ Otwórz Mapę</a>
+        </header>
+
+        <section class="leaderboard-section">
+            <h2 style="font-size: 16px; color: #333;">🔥 Największe Huby (Dostępne rowery)</h2>
+            <div id="hubs-grid" class="cards-grid">Ładowanie rankingu...</div>
+        </section>
+
+        <section class="leaderboard-section">
+            <h2 style="font-size: 16px; color: #333;">⚠️ Stacje Przepełnione</h2>
+            <div id="overflow-grid" class="cards-grid">Ładowanie rankingu...</div>
+        </section>
+    </div>
+
+    <script>
+        async function loadLeaderboard() {
+            try {
+                const res = await fetch('/analytics/leaderboard?top_n=6');
+                const data = await res.json();
+
+                const renderCard = (st) => `
+                    <div class="station-card" onclick="teleport('${st.id}', ${st.lat}, ${st.lng}, '${encodeURIComponent(st.name)}')">
+                        <div class="station-card-title">${st.name}</div>
+                        <div class="station-card-metrics">
+                            <span>🚲 Rowery: <b>${st.free_bikes}</b></span>
+                            <span>🅿️ Wolne stojaki: <b>${st.empty_slots}</b></span>
+                            <span>📊 Obłożenie: <b>${st.occupancy_pct}%</b></span>
+                        </div>
+                        <div class="teleport-hint">Kliknij, aby otworzyć na mapie ➔</div>
+                    </div>
+                `;
+
+                document.getElementById('hubs-grid').innerHTML = data.top_hubs.map(renderCard).join('');
+                document.getElementById('overflow-grid').innerHTML = data.top_overflow.map(renderCard).join('');
+            } catch (err) {
+                console.error("Błąd pobierania rankingu:", err);
+            }
+        }
+
+        function teleport(id, lat, lng, encodedName) {
+            window.location.href = `/map?id=${id}&lat=${lat}&lng=${lng}&name=${encodedName}`;
+        }
+
+        loadLeaderboard();
+    </script>
+</body>
+</html>
