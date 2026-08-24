@@ -36,58 +36,55 @@ def root():
   return RedirectResponse(url="/map")
 
 
+LATEST_STATIONS_CACHE = None
+
+
 @app.get("/bikes/citybikes/warsaw")
 async def get_warsaw_bikes():
-  """Pobiera 348 stacji Veturilo 3.0 i zwraca je w formacie GeoJSON."""
-  async with httpx.AsyncClient(
-      timeout=20.0, follow_redirects=True, headers=HTTP_HEADERS
-  ) as client:
+    global LATEST_STATIONS_CACHE
+    server_time_iso = datetime.now(timezone.utc).isoformat()
+
     try:
-      res = await client.get(CITYBIKES_WARSAW_URL)
-      if res.status_code != 200:
-        raise HTTPException(
-            status_code=502,
-            detail=f"CityBikes API zwróciło status {res.status_code}",
-        )
-      data = res.json().get("network", {})
-    except Exception as exc:
-      raise HTTPException(
-          status_code=504,
-          detail=f"Błąd połączenia z CityBikes API: {str(exc)}",
-      ) from exc
+        async with httpx.AsyncClient(timeout=15.0, follow_redirects=True, headers=HTTP_HEADERS) as client:
+            res = await client.get(CITYBIKES_WARSAW_URL)
+            if res.status_code == 200:
+                data = res.json().get("network", {})
+                stations = data.get("stations", [])
+                
+                features = []
+                for st in stations:
+                    lat, lng = st.get("latitude"), st.get("longitude")
+                    if lat is not None and lng is not None:
+                        features.append({
+                            "type": "Feature",
+                            "geometry": {"type": "Point", "coordinates": [float(lng), float(lat)]},
+                            "properties": {
+                                "id": str(st["id"]),
+                                "name": str(st.get("name", "Stacja")),
+                                "free_bikes": int(st.get("free_bikes") or 0),
+                                "empty_slots": int(st.get("empty_slots") or 0),
+                                "updated_at": st.get("timestamp") or server_time_iso
+                            }
+                        })
+                
+                response_payload = {
+                    "type": "FeatureCollection",
+                    "system_name": data.get("name", "VETURILO 3.0"),
+                    "total_stations": len(features),
+                    "last_update": server_time_iso,
+                    "features": features
+                }
+                LATEST_STATIONS_CACHE = response_payload
+                return response_payload
 
-  server_time_iso = datetime.now(timezone.utc).isoformat()
-  stations = data.get("stations", [])
-  features = []
+    except Exception:
+        pass  # W razie timeoutu nie wywalamy błędu 504
 
-  for st in stations:
-    lat = st.get("latitude")
-    lng = st.get("longitude")
-    if lat is not None and lng is not None:
-      free_bikes = int(st.get("free_bikes") or 0)
-      empty_slots = int(st.get("empty_slots") or 0)
-      timestamp = st.get("timestamp") or server_time_iso
+    # Jeśli CityBikes złapie timeout, serwujemy ostatnie znane stacje
+    if LATEST_STATIONS_CACHE is not None:
+        return LATEST_STATIONS_CACHE
 
-      features.append({
-          "type": "Feature",
-          "geometry": {"type": "Point", "coordinates": [float(lng), float(lat)]},
-          "properties": {
-              "id": str(st["id"]),
-              "name": str(st.get("name", "Stacja")),
-              "free_bikes": free_bikes,
-              "empty_slots": empty_slots,
-              "updated_at": timestamp,
-          },
-      })
-
-  return {
-      "type": "FeatureCollection",
-      "system_name": data.get("name", "VETURILO 3.0"),
-      "total_stations": len(features),
-      "last_update": server_time_iso,
-      "features": features,
-  }
-
+    raise HTTPException(status_code=504, detail="CityBikes API nie odpowiada, brak danych w cache.")
 
 @app.get("/map", response_class=HTMLResponse)
 async def get_map_view():
