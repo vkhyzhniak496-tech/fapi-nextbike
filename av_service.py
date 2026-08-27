@@ -3,9 +3,11 @@ from collections import defaultdict, deque
 from datetime import datetime, timezone
 import io
 from typing import Dict
+
 from fastapi import APIRouter, HTTPException, Response
 import httpx
 import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
@@ -22,11 +24,14 @@ HTTP_HEADERS = {
     "Accept": "application/json",
 }
 
-STATION_HISTORY_BUFFER: Dict[str, deque] = defaultdict(lambda: deque(maxlen=60))
+# Zwiększamy bufor do 100 ostatnich zmian (zdarzeń)
+STATION_HISTORY_BUFFER: Dict[str, deque] = defaultdict(
+    lambda: deque(maxlen=100)
+)
 
 
 async def _history_poller_worker():
-  """Worker próbkujący stacje w tle co 30 sekund."""
+  """Worker rejestrujący wyłącznie realne zmiany (zdarzenia) na stacjach."""
   async with httpx.AsyncClient(
       timeout=20.0, follow_redirects=True, headers=HTTP_HEADERS
   ) as client:
@@ -36,12 +41,15 @@ async def _history_poller_worker():
         if res.status_code == 200:
           stations = res.json().get("network", {}).get("stations", [])
           now_hhmmss = datetime.now(timezone.utc).strftime("%H:%M:%S")
+
           for st in stations:
             s_id = str(st.get("id"))
-            STATION_HISTORY_BUFFER[s_id].append({
-                "time": now_hhmmss,
-                "bikes": int(st.get("free_bikes") or 0),
-            })
+            current_bikes = int(st.get("free_bikes") or 0)
+            buf = STATION_HISTORY_BUFFER[s_id]
+
+            # Zapisujemy tylko przy pierwszym odczycie LUB gdy zmieniła się liczba rowerów
+            if not buf or buf[-1]["bikes"] != current_bikes:
+              buf.append({"time": now_hhmmss, "bikes": current_bikes})
       except Exception:
         pass
       await asyncio.sleep(30)
@@ -100,25 +108,41 @@ async def get_stations_leaderboard(top_n: int = 50):
 
 @router.get("/station/{station_id}/chart.png")
 def get_station_chart_image(station_id: str, name: str = "Stacja"):
-  """Generuje wykres liniowy dla podanej stacji."""
+  """Generuje wykres zdarzeń dla stacji."""
   history = STATION_HISTORY_BUFFER.get(station_id)
-  if not history or len(history) < 1:
-    raise HTTPException(status_code=404, detail="Brak próbek dla tej stacji")
+  if not history:
+    raise HTTPException(
+        status_code=404, detail="Brak zarejestrowanych danych dla stacji"
+    )
 
   labels = [entry["time"] for entry in history]
   values = [entry["bikes"] for entry in history]
 
   fig, ax = plt.subplots(figsize=(6, 2.8), dpi=100)
-  ax.plot(
-      labels, values, color="#007cbf", marker="o", markersize=4, linewidth=2
-  )
-  ax.set_title(f"Historia: {name}", fontsize=10, fontweight="bold", pad=8)
+
+  if len(values) == 1:
+    # Pojedynczy punkt (stacja od startu nie zmieniła stanu)
+    ax.scatter(labels, values, color="#007cbf", s=50, zorder=3)
+    ax.axhline(y=values[0], color="#007cbf", linestyle=":", alpha=0.6)
+  else:
+    # Wykres schodkowy (steps-post) - idealny dla dyskretnych wypożyczeń/zwrotów
+    ax.step(
+        labels,
+        values,
+        where="post",
+        color="#007cbf",
+        marker="o",
+        markersize=4,
+        linewidth=2,
+    )
+
+  ax.set_title(f"Historia zmian: {name}", fontsize=10, fontweight="bold", pad=8)
   ax.set_ylabel("Liczba rowerów", fontsize=8)
   ax.grid(True, linestyle="--", alpha=0.4)
 
+  # Wymuszenie liczb całkowitych na osi Y
   ax.yaxis.set_major_locator(MaxNLocator(integer=True))
-  min_v = min(values)
-  max_v = max(values)
+  min_v, max_v = min(values), max(values)
   ax.set_ylim(max(0, min_v - 1), max_v + 2)
 
   if len(labels) > 6:
