@@ -38,15 +38,17 @@ HEADERS = {
 
 
 def build_tile_query(bbox: str) -> str:
-  return f"""
-    [out:json][timeout:90];
+    return f"""
+    [out:json][timeout:120];
     (
       way["highway"="cycleway"]({bbox});
-      way["highway"="path"]["bicycle"="designated"]({bbox});
-      way["cycleway"~"^(lane|opposite_lane|track|share_busway)$"]({bbox});
-      way["cycleway:both"~"^(lane|opposite_lane|track|share_busway)$"]({bbox});
-      way["cycleway:left"~"^(lane|opposite_lane|track|share_busway)$"]({bbox});
-      way["cycleway:right"~"^(lane|opposite_lane|track|share_busway)$"]({bbox});
+      way["highway"~"^(path|footway|pedestrian)$"]["bicycle"~"^(designated|yes)$"]({bbox});
+      way["cycleway"~"^(lane|opposite_lane|track|share_busway|opposite)$"]({bbox});
+      way["cycleway:both"~"^(lane|opposite_lane|track|share_busway|opposite)$"]({bbox});
+      way["cycleway:left"~"^(lane|opposite_lane|track|share_busway|opposite)$"]({bbox});
+      way["cycleway:right"~"^(lane|opposite_lane|track|share_busway|opposite)$"]({bbox});
+      way["busway:right"="share_busway"]({bbox});
+      way["busway:left"="share_busway"]({bbox});
       way["oneway:bicycle"="no"]({bbox});
       way["highway"="living_street"]({bbox});
       way["highway"="residential"]["maxspeed"="30"]({bbox});
