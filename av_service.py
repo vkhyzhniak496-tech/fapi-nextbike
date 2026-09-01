@@ -1,8 +1,9 @@
 import asyncio
 from collections import defaultdict, deque
+from contextlib import asynccontextmanager
 from datetime import datetime
 import io
-from typing import Dict
+from typing import Dict, Optional
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, HTTPException, Response
@@ -13,9 +14,8 @@ import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 
-router = APIRouter(prefix="/analytics", tags=["Bikeshare Analytics & Charts"])
+from models import Station
 
-# Strefa czasowa dla Warszawy (automatycznie uwzględnia czas letni/zimowy CEST/CET)
 WARSAW_TZ = ZoneInfo("Europe/Warsaw")
 
 CITYBIKES_WARSAW_URL = (
@@ -28,14 +28,15 @@ HTTP_HEADERS = {
     "Accept": "application/json",
 }
 
-# Bufor przechowuje do 1000 ostatnich zdarzeń
+# Bufor zdarzeń i słownik metadanych stacji
 STATION_HISTORY_BUFFER: Dict[str, deque] = defaultdict(
     lambda: deque(maxlen=1000)
 )
+STATION_METADATA: Dict[str, str] = {}
 
 
 async def _history_poller_worker():
-    """Worker rejestrujący wyłącznie realne zmiany stanu stacji w czasie lokalnym."""
+    """Worker rejestrujący zmiany stanu stacji w czasie lokalnym."""
     async with httpx.AsyncClient(
         timeout=20.0, follow_redirects=True, headers=HTTP_HEADERS
     ) as client:
@@ -48,28 +49,40 @@ async def _history_poller_worker():
 
                     for st in stations:
                         s_id = str(st.get("id"))
+                        s_name = str(st.get("name", "Stacja"))
                         current_bikes = int(st.get("free_bikes") or 0)
+
+                        STATION_METADATA[s_id] = s_name
                         buf = STATION_HISTORY_BUFFER[s_id]
 
-                        # Delta-logging: zapisujemy stan początkowy LUB faktyczną zmianę
                         if not buf or buf[-1]["bikes"] != current_bikes:
                             buf.append({
                                 "datetime": now_warsaw,
-                                "bikes": current_bikes
+                                "bikes": current_bikes,
                             })
             except Exception:
                 pass
             await asyncio.sleep(30)
 
 
-@router.on_event("startup")
-async def startup_analytics_poller():
-    asyncio.create_task(_history_poller_worker())
+@asynccontextmanager
+async def analytics_lifespan(app_router: APIRouter):
+    """Nowoczesna obsługa cyklu życia workera w tle (zastępuje on_event)."""
+    task = asyncio.create_task(_history_poller_worker())
+    yield
+    task.cancel()
+
+
+router = APIRouter(
+    prefix="/analytics",
+    tags=["Bikeshare Analytics & Charts"],
+    lifespan=analytics_lifespan,
+)
 
 
 @router.get("/leaderboard")
 async def get_stations_leaderboard(top_n: int = 50):
-    """Zwraca ranking hubów oraz przepełnionych stacji."""
+    """Zwraca ranking hubów oraz stacji o wysokim obłożeniu."""
     async with httpx.AsyncClient(
         timeout=20.0, follow_redirects=True, headers=HTTP_HEADERS
     ) as client:
@@ -78,80 +91,73 @@ async def get_stations_leaderboard(top_n: int = 50):
             raise HTTPException(
                 status_code=502, detail="Błąd pobierania danych CityBikes"
             )
-        stations = res.json().get("network", {}).get("stations", [])
+        stations_raw = res.json().get("network", {}).get("stations", [])
 
-    parsed = []
-    for st in stations:
-        free_bikes = int(st.get("free_bikes") or 0)
-        empty_slots = int(st.get("empty_slots") or 0)
-        total_docks = free_bikes + empty_slots
-        occupancy = (
-            (free_bikes / total_docks * 100)
-            if total_docks > 0
-            else (100.0 if free_bikes > 0 else 0.0)
+    stations = [
+        Station(
+            id=str(st.get("id")),
+            name=str(st.get("name", "Stacja")),
+            lat=float(st.get("latitude") or 0.0),
+            lng=float(st.get("longitude") or 0.0),
+            free_bikes=int(st.get("free_bikes") or 0),
+            empty_slots=int(st.get("empty_slots") or 0),
         )
+        for st in stations_raw
+    ]
 
-        parsed.append({
-            "id": str(st.get("id")),
-            "name": str(st.get("name", "Stacja")),
-            "lat": st.get("latitude"),
-            "lng": st.get("longitude"),
-            "free_bikes": free_bikes,
-            "empty_slots": empty_slots,
-            "occupancy_pct": round(occupancy, 1),
-        })
-
-    top_hubs = sorted(parsed, key=lambda x: x["free_bikes"], reverse=True)[:top_n]
+    top_hubs = sorted(stations, key=lambda x: x.free_bikes, reverse=True)[:top_n]
     top_overflow = sorted(
-        parsed, key=lambda x: (x["occupancy_pct"], x["free_bikes"]), reverse=True
+        stations,
+        key=lambda x: (x.occupancy_pct, x.free_bikes),
+        reverse=True,
     )[:top_n]
 
     return {
-        "total_active_stations": len(parsed),
-        "top_hubs": top_hubs,
-        "top_overflow": top_overflow,
+        "total_active_stations": len(stations),
+        "top_hubs": [s.model_dump() for s in top_hubs],
+        "top_overflow": [s.model_dump() for s in top_overflow],
     }
 
 
 @router.get("/station/{station_id}/chart.png")
-def get_station_chart_image(station_id: str, name: str = "Stacja"):
-    """Generuje wykres schodkowy z ciągłą, proporcjonalną osią czasu w strefie polskiej."""
+def get_station_chart_image(station_id: str, name: Optional[str] = None):
+    """Generuje czysty wykres schodkowy. Nazwę stacji pobiera z pamięci."""
     history = STATION_HISTORY_BUFFER.get(station_id)
     if not history or len(history) < 2:
         raise HTTPException(
-            status_code=404, detail="Brak zarejestrowanych danych dla stacji"
+            status_code=404,
+            detail="Brak wystarczającej liczby zmian do wygenerowania wykresu",
         )
 
+    resolved_name = name or STATION_METADATA.get(station_id, "Stacja Veturilo")
     dates = [entry["datetime"] for entry in history]
     values = [entry["bikes"] for entry in history]
 
     fig, ax = plt.subplots(figsize=(6, 2.8), dpi=100)
 
-    if len(values) == 1:
-        ax.scatter(dates, values, color="#007cbf", s=40, zorder=3)
-        ax.axhline(y=values[0], color="#007cbf", linestyle=":", alpha=0.6)
-    else:
-        # Wykres schodkowy z rzeczywistą, ciągłą osią dat
-        ax.step(
-            dates,
-            values,
-            where="post",
-            color="#007cbf",
-            marker="o",
-            markersize=3.5,
-            linewidth=1.8,
-        )
+    ax.step(
+        dates,
+        values,
+        where="post",
+        color="#007cbf",
+        marker="o",
+        markersize=3.5,
+        linewidth=1.8,
+    )
 
-    # Formatowanie osi X pod kątem ciągłego czasu lokalnego
     time_fmt = mdates.DateFormatter("%H:%M:%S", tz=WARSAW_TZ)
     ax.xaxis.set_major_formatter(time_fmt)
     ax.xaxis.set_major_locator(mdates.AutoDateLocator(tz=WARSAW_TZ))
 
-    ax.set_title(f"Historia zmian: {name}", fontsize=10, fontweight="bold", pad=8)
+    ax.set_title(
+        f"Historia zmian: {resolved_name}",
+        fontsize=10,
+        fontweight="bold",
+        pad=8,
+    )
     ax.set_ylabel("Liczba rowerów", fontsize=8)
     ax.grid(True, linestyle="--", alpha=0.4)
 
-    # Całkowite wartości na osi Y
     ax.yaxis.set_major_locator(MaxNLocator(integer=True))
     min_v, max_v = min(values), max(values)
     ax.set_ylim(max(0, min_v - 1), max_v + 2)
