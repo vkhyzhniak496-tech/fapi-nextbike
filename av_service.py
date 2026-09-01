@@ -3,6 +3,7 @@ from collections import defaultdict, deque
 from contextlib import asynccontextmanager
 from datetime import datetime
 import io
+import logging
 from typing import Dict, Optional
 from zoneinfo import ZoneInfo
 
@@ -15,9 +16,11 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 
 from models import Station
+from storage import load_history, save_history
+
+logger = logging.getLogger(__name__)
 
 WARSAW_TZ = ZoneInfo("Europe/Warsaw")
-
 CITYBIKES_WARSAW_URL = (
     "http://api.citybik.es/v2/networks/veturilo-nextbike-warsaw"
 )
@@ -28,15 +31,19 @@ HTTP_HEADERS = {
     "Accept": "application/json",
 }
 
-# Bufor zdarzeń i słownik metadanych stacji
-STATION_HISTORY_BUFFER: Dict[str, deque] = defaultdict(
-    lambda: deque(maxlen=1000)
-)
-STATION_METADATA: Dict[str, str] = {}
+# 1. Wczytanie danych z dysku przy imporcie modułu
+_loaded_meta, _loaded_buf = load_history()
+STATION_METADATA: Dict[str, str] = _loaded_meta
+
+# Inicjalizacja bufora jako defaultdict(deque) i zasilenie go danymi z pliku
+STATION_HISTORY_BUFFER: Dict[str, deque] = defaultdict(lambda: deque(maxlen=1000))
+for s_id, records in _loaded_buf.items():
+    STATION_HISTORY_BUFFER[s_id].extend(records)
 
 
 async def _history_poller_worker():
-    """Worker rejestrujący zmiany stanu stacji w czasie lokalnym."""
+    """Worker rejestrujący zmiany stanu stacji i wykonujący autozapis na dysk."""
+    save_counter = 0
     async with httpx.AsyncClient(
         timeout=20.0, follow_redirects=True, headers=HTTP_HEADERS
     ) as client:
@@ -60,17 +67,35 @@ async def _history_poller_worker():
                                 "datetime": now_warsaw,
                                 "bikes": current_bikes,
                             })
-            except Exception:
-                pass
+
+                    # Autozapis na dysk co 10 cykli (co 5 minut)
+                    save_counter += 1
+                    if save_counter >= 10:
+                        save_history(STATION_METADATA, dict(STATION_HISTORY_BUFFER))
+                        save_counter = 0
+
+            except asyncio.CancelledError:
+                # Zapis stanu przy zatrzymaniu zadania
+                save_history(STATION_METADATA, dict(STATION_HISTORY_BUFFER))
+                break
+            except Exception as e:
+                logger.warning(f"Błąd pętli pobierania historii: {e}")
+
             await asyncio.sleep(30)
 
 
 @asynccontextmanager
 async def analytics_lifespan(app_router: APIRouter):
-    """Nowoczesna obsługa cyklu życia workera w tle (zastępuje on_event)."""
+    """Zarządzanie cyklem życia workera i persystencją danych."""
     task = asyncio.create_task(_history_poller_worker())
     yield
     task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
+    # Bezpieczny zrzut pamięci RAM do pliku przy wyłączaniu serwera
+    save_history(STATION_METADATA, dict(STATION_HISTORY_BUFFER))
 
 
 router = APIRouter(
@@ -121,20 +146,26 @@ async def get_stations_leaderboard(top_n: int = 50):
 
 @router.get("/station/{station_id}/chart.png")
 def get_station_chart_image(station_id: str, name: Optional[str] = None):
-    """Generuje czysty wykres schodkowy. Nazwę stacji pobiera z pamięci."""
-    history = STATION_HISTORY_BUFFER.get(station_id)
-    if not history or len(history) < 2:
+    history = list(STATION_HISTORY_BUFFER.get(station_id, []))
+    if not history:
         raise HTTPException(
             status_code=404,
-            detail="Brak wystarczającej liczby zmian do wygenerowania wykresu",
+            detail="Brak zarejestrowanych danych dla tej stacji",
         )
 
     resolved_name = name or STATION_METADATA.get(station_id, "Stacja Veturilo")
-    dates = [entry["datetime"] for entry in history]
-    values = [entry["bikes"] for entry in history]
+    now_warsaw = datetime.now(WARSAW_TZ)
+
+    # Jeśli mamy tylko 1 punkt (brak zmian), dodajemy punkt wirtualny "teraz",
+    # aby Matplotlib miał poprawny przedział czasu na osi X
+    if len(history) == 1:
+        dates = [history[0]["datetime"], now_warsaw]
+        values = [history[0]["bikes"], history[0]["bikes"]]
+    else:
+        dates = [entry["datetime"] for entry in history]
+        values = [entry["bikes"] for entry in history]
 
     fig, ax = plt.subplots(figsize=(6, 2.8), dpi=100)
-
     ax.step(
         dates,
         values,

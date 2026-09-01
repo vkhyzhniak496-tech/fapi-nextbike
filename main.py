@@ -1,4 +1,6 @@
 from datetime import datetime, timezone
+import json
+import logging
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 from fastapi import FastAPI, HTTPException
@@ -9,6 +11,9 @@ import httpx
 from av_service import router as av_router
 from models import Station
 from network_service import router as network_router
+from storage import load_stations_cache, save_stations_cache
+
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="Nextbike & Safe Cycleways GIS")
 app.include_router(network_router)
@@ -27,7 +32,8 @@ HTTP_HEADERS = {
     "Accept": "application/json",
 }
 
-LATEST_STATIONS_CACHE: Dict[str, Any] = None
+# Inicjalizacja cache danymi z dysku przy starcie modułu
+LATEST_STATIONS_CACHE: Dict[str, Any] = load_stations_cache()
 
 
 @app.get("/health/check")
@@ -78,13 +84,13 @@ def parse_stations_to_features(
 
 @app.get("/bikes/citybikes/warsaw")
 async def get_warsaw_bikes():
-    """Główny endpoint GeoJSON serwujący stacje na mapę."""
+    """Główny endpoint GeoJSON serwujący stacje na mapę z automatycznym fallbackiem."""
     global LATEST_STATIONS_CACHE
     server_time_iso = datetime.now(timezone.utc).isoformat()
 
     try:
         async with httpx.AsyncClient(
-            timeout=15.0, follow_redirects=True, headers=HTTP_HEADERS
+            timeout=20.0, follow_redirects=True, headers=HTTP_HEADERS
         ) as client:
             network_data = await fetch_network_metadata(client)
             stations_raw = network_data.get("stations", [])
@@ -101,18 +107,30 @@ async def get_warsaw_bikes():
             }
 
             LATEST_STATIONS_CACHE = response_payload
+            save_stations_cache(response_payload)
             return response_payload
 
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning(f"Błąd CityBikes API, używam cache: {e}")
 
+    # Fallback 1: Dane z pamięci RAM
     if LATEST_STATIONS_CACHE is not None:
         return LATEST_STATIONS_CACHE
 
-    raise HTTPException(
-        status_code=504,
-        detail="CityBikes API nie odpowiada, brak danych w cache.",
-    )
+    # Fallback 2: Odczyt świeżo z dysku
+    disk_cache = load_stations_cache()
+    if disk_cache is not None:
+        LATEST_STATIONS_CACHE = disk_cache
+        return disk_cache
+
+    # Fallback 3: Bezpieczny pusty GeoJSON (zapobiega wyłożeniu frontendu Leaflet)
+    return {
+        "type": "FeatureCollection",
+        "system_name": "VETURILO 3.0",
+        "total_stations": 0,
+        "last_update": server_time_iso,
+        "features": [],
+    }
 
 
 @app.get("/map", response_class=HTMLResponse)
