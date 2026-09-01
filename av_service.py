@@ -42,15 +42,18 @@ for s_id, records in _loaded_buf.items():
 
 
 async def _history_poller_worker():
-    """Worker rejestrujący zmiany stanu stacji i wykonujący autozapis na dysk."""
     save_counter = 0
+    backoff_delay = 30  # bazowy czas oczekiwania
+
     async with httpx.AsyncClient(
         timeout=20.0, follow_redirects=True, headers=HTTP_HEADERS
     ) as client:
         while True:
             try:
                 res = await client.get(CITYBIKES_WARSAW_URL)
+                
                 if res.status_code == 200:
+                    backoff_delay = 45  # resetujemy do bezpiecznego bazowego interwału
                     stations = res.json().get("network", {}).get("stations", [])
                     now_warsaw = datetime.now(WARSAW_TZ)
 
@@ -68,20 +71,30 @@ async def _history_poller_worker():
                                 "bikes": current_bikes,
                             })
 
-                    # Autozapis na dysk co 10 cykli (co 5 minut)
                     save_counter += 1
                     if save_counter >= 10:
                         save_history(STATION_METADATA, dict(STATION_HISTORY_BUFFER))
                         save_counter = 0
 
+                elif res.status_code == 429:
+                    # Sprawdzamy, czy CityBikes przysłało nagłówek Retry-After
+                    retry_after = res.headers.get("Retry-After")
+                    wait_time = int(retry_after) if retry_after and retry_after.isdigit() else 120
+                    logger.warning(f"Otrzymano 429 Rate Limit. Wstrzymuję odpytywanie na {wait_time}s...")
+                    backoff_delay = wait_time
+
+                else:
+                    logger.warning(f"CityBikes API zwróciło status: {res.status_code}")
+                    backoff_delay = 60
+
             except asyncio.CancelledError:
-                # Zapis stanu przy zatrzymaniu zadania
                 save_history(STATION_METADATA, dict(STATION_HISTORY_BUFFER))
                 break
             except Exception as e:
-                logger.warning(f"Błąd pętli pobierania historii: {e}")
+                logger.warning(f"Wyjątek w workerze: {e}")
+                backoff_delay = 60
 
-            await asyncio.sleep(30)
+            await asyncio.sleep(backoff_delay)
 
 
 @asynccontextmanager
