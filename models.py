@@ -42,3 +42,7 @@ class Station(BaseModel):
 class StationHistoryEntry(BaseModel):
     datetime: datetime
     bikes: int
+
+
+class SyncCustomRequest(BaseModel):
+    bbox: Optional[str] = None
