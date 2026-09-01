@@ -105,3 +105,8 @@ async def get_warsaw_bikes():
         status_code=504,
         detail="CityBikes API nie odpowiada, brak danych w cache.",
     )
+
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
