@@ -1,10 +1,12 @@
 from datetime import datetime, timezone
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
+from typing import Any, Dict, List, Tuple
 import httpx
 
+
+from models import Station
 from av_service import router as av_router
 from network_service import router as network_router
 
@@ -15,12 +17,6 @@ app.include_router(av_router)
 RESOURCES_DIR = Path(__file__).parent / "resources"
 app.mount("/static", StaticFiles(directory=RESOURCES_DIR), name="static")
 
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Tuple
-from fastapi import HTTPException
-import httpx
-
-from models import Station
 
 CITYBIKES_WARSAW_URL = (
     "http://api.citybik.es/v2/networks/veturilo-nextbike-warsaw"
