@@ -2,7 +2,7 @@
   "type": "FeatureCollection",
   "system_name": "VETURILO 3.0",
   "total_stations": 349,
-  "last_update": "2026-09-01T16:28:30.054267+00:00",
+  "last_update": "2026-09-01T16:29:30.512659+00:00",
   "features": [
     {
       "type": "Feature",
@@ -19,7 +19,7 @@
         "free_bikes": 0,
         "empty_slots": 15,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:27:49.970114+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221179+00:00Z"
       }
     },
     {
@@ -37,7 +37,7 @@
         "free_bikes": 16,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.902868+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.183574+00:00Z"
       }
     },
     {
@@ -55,7 +55,7 @@
         "free_bikes": 31,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.973488+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299444+00:00Z"
       }
     },
     {
@@ -73,7 +73,7 @@
         "free_bikes": 2,
         "empty_slots": 7,
         "occupancy_pct": 22.2,
-        "updated_at": "2026-09-01T16:27:49.972159+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298124+00:00Z"
       }
     },
     {
@@ -91,7 +91,7 @@
         "free_bikes": 3,
         "empty_slots": 7,
         "occupancy_pct": 30.0,
-        "updated_at": "2026-09-01T16:27:49.907716+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.219600+00:00Z"
       }
     },
     {
@@ -109,7 +109,7 @@
         "free_bikes": 14,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.972996+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298939+00:00Z"
       }
     },
     {
@@ -127,7 +127,7 @@
         "free_bikes": 2,
         "empty_slots": 8,
         "occupancy_pct": 20.0,
-        "updated_at": "2026-09-01T16:27:49.973279+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299212+00:00Z"
       }
     },
     {
@@ -145,7 +145,7 @@
         "free_bikes": 2,
         "empty_slots": 10,
         "occupancy_pct": 16.7,
-        "updated_at": "2026-09-01T16:27:49.969735+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220737+00:00Z"
       }
     },
     {
@@ -163,7 +163,7 @@
         "free_bikes": 25,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.970838+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221993+00:00Z"
       }
     },
     {
@@ -181,7 +181,7 @@
         "free_bikes": 9,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.971962+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297914+00:00Z"
       }
     },
     {
@@ -199,7 +199,7 @@
         "free_bikes": 15,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.907796+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.219791+00:00Z"
       }
     },
     {
@@ -217,7 +217,7 @@
         "free_bikes": 5,
         "empty_slots": 2,
         "occupancy_pct": 71.4,
-        "updated_at": "2026-09-01T16:27:49.972094+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298053+00:00Z"
       }
     },
     {
@@ -235,7 +235,7 @@
         "free_bikes": 9,
         "empty_slots": 1,
         "occupancy_pct": 90.0,
-        "updated_at": "2026-09-01T16:27:49.972331+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298296+00:00Z"
       }
     },
     {
@@ -253,7 +253,7 @@
         "free_bikes": 13,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.905949+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.216844+00:00Z"
       }
     },
     {
@@ -271,7 +271,7 @@
         "free_bikes": 13,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:50.155872+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299915+00:00Z"
       }
     },
     {
@@ -289,7 +289,7 @@
         "free_bikes": 7,
         "empty_slots": 1,
         "occupancy_pct": 87.5,
-        "updated_at": "2026-09-01T16:27:49.971487+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297423+00:00Z"
       }
     },
     {
@@ -307,7 +307,7 @@
         "free_bikes": 4,
         "empty_slots": 4,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:27:49.906359+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.217609+00:00Z"
       }
     },
     {
@@ -325,7 +325,7 @@
         "free_bikes": 0,
         "empty_slots": 8,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:27:49.906321+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.217569+00:00Z"
       }
     },
     {
@@ -343,7 +343,7 @@
         "free_bikes": 5,
         "empty_slots": 7,
         "occupancy_pct": 41.7,
-        "updated_at": "2026-09-01T16:27:49.906708+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218160+00:00Z"
       }
     },
     {
@@ -361,7 +361,7 @@
         "free_bikes": 2,
         "empty_slots": 10,
         "occupancy_pct": 16.7,
-        "updated_at": "2026-09-01T16:27:49.971244+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297183+00:00Z"
       }
     },
     {
@@ -379,7 +379,7 @@
         "free_bikes": 13,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.971575+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297512+00:00Z"
       }
     },
     {
@@ -397,7 +397,7 @@
         "free_bikes": 1,
         "empty_slots": 13,
         "occupancy_pct": 7.1,
-        "updated_at": "2026-09-01T16:27:49.907144+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218652+00:00Z"
       }
     },
     {
@@ -415,7 +415,7 @@
         "free_bikes": 4,
         "empty_slots": 14,
         "occupancy_pct": 22.2,
-        "updated_at": "2026-09-01T16:27:49.907183+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218699+00:00Z"
       }
     },
     {
@@ -433,7 +433,7 @@
         "free_bikes": 3,
         "empty_slots": 5,
         "occupancy_pct": 37.5,
-        "updated_at": "2026-09-01T16:27:49.970177+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221245+00:00Z"
       }
     },
     {
@@ -451,7 +451,7 @@
         "free_bikes": 19,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.973360+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299290+00:00Z"
       }
     },
     {
@@ -469,7 +469,7 @@
         "free_bikes": 3,
         "empty_slots": 5,
         "occupancy_pct": 37.5,
-        "updated_at": "2026-09-01T16:27:49.906279+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.217526+00:00Z"
       }
     },
     {
@@ -487,7 +487,7 @@
         "free_bikes": 12,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.973444+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299369+00:00Z"
       }
     },
     {
@@ -505,7 +505,7 @@
         "free_bikes": 7,
         "empty_slots": 1,
         "occupancy_pct": 87.5,
-        "updated_at": "2026-09-01T16:27:49.971553+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297491+00:00Z"
       }
     },
     {
@@ -523,7 +523,7 @@
         "free_bikes": 10,
         "empty_slots": 6,
         "occupancy_pct": 62.5,
-        "updated_at": "2026-09-01T16:27:49.971153+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297082+00:00Z"
       }
     },
     {
@@ -541,7 +541,7 @@
         "free_bikes": 1,
         "empty_slots": 11,
         "occupancy_pct": 8.3,
-        "updated_at": "2026-09-01T16:27:49.971445+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297381+00:00Z"
       }
     },
     {
@@ -559,7 +559,7 @@
         "free_bikes": 10,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.973694+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299643+00:00Z"
       }
     },
     {
@@ -577,7 +577,7 @@
         "free_bikes": 4,
         "empty_slots": 6,
         "occupancy_pct": 40.0,
-        "updated_at": "2026-09-01T16:27:49.907256+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218788+00:00Z"
       }
     },
     {
@@ -595,7 +595,7 @@
         "free_bikes": 9,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.970904+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.222063+00:00Z"
       }
     },
     {
@@ -613,7 +613,7 @@
         "free_bikes": 18,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.971712+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297642+00:00Z"
       }
     },
     {
@@ -631,7 +631,7 @@
         "free_bikes": 6,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:50.157964+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.300322+00:00Z"
       }
     },
     {
@@ -649,7 +649,7 @@
         "free_bikes": 3,
         "empty_slots": 10,
         "occupancy_pct": 23.1,
-        "updated_at": "2026-09-01T16:27:49.970660+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221796+00:00Z"
       }
     },
     {
@@ -667,7 +667,7 @@
         "free_bikes": 4,
         "empty_slots": 1,
         "occupancy_pct": 80.0,
-        "updated_at": "2026-09-01T16:27:49.971197+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297135+00:00Z"
       }
     },
     {
@@ -685,7 +685,7 @@
         "free_bikes": 2,
         "empty_slots": 12,
         "occupancy_pct": 14.3,
-        "updated_at": "2026-09-01T16:27:49.906668+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218055+00:00Z"
       }
     },
     {
@@ -703,7 +703,7 @@
         "free_bikes": 10,
         "empty_slots": 1,
         "occupancy_pct": 90.9,
-        "updated_at": "2026-09-01T16:27:49.903387+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.216753+00:00Z"
       }
     },
     {
@@ -721,7 +721,7 @@
         "free_bikes": 12,
         "empty_slots": 2,
         "occupancy_pct": 85.7,
-        "updated_at": "2026-09-01T16:27:49.970925+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.222085+00:00Z"
       }
     },
     {
@@ -739,7 +739,7 @@
         "free_bikes": 10,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.972597+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298577+00:00Z"
       }
     },
     {
@@ -757,7 +757,7 @@
         "free_bikes": 17,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.971917+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297868+00:00Z"
       }
     },
     {
@@ -775,7 +775,7 @@
         "free_bikes": 14,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.972442+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298400+00:00Z"
       }
     },
     {
@@ -793,7 +793,7 @@
         "free_bikes": 10,
         "empty_slots": 5,
         "occupancy_pct": 66.7,
-        "updated_at": "2026-09-01T16:27:49.973087+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299024+00:00Z"
       }
     },
     {
@@ -811,7 +811,7 @@
         "free_bikes": 0,
         "empty_slots": 8,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:27:49.971783+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297709+00:00Z"
       }
     },
     {
@@ -829,7 +829,7 @@
         "free_bikes": 7,
         "empty_slots": 4,
         "occupancy_pct": 63.6,
-        "updated_at": "2026-09-01T16:27:49.903018+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.183707+00:00Z"
       }
     },
     {
@@ -847,7 +847,7 @@
         "free_bikes": 9,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.906149+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.217039+00:00Z"
       }
     },
     {
@@ -865,7 +865,7 @@
         "free_bikes": 19,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.971027+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.296944+00:00Z"
       }
     },
     {
@@ -883,7 +883,7 @@
         "free_bikes": 19,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.969411+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220138+00:00Z"
       }
     },
     {
@@ -901,7 +901,7 @@
         "free_bikes": 4,
         "empty_slots": 3,
         "occupancy_pct": 57.1,
-        "updated_at": "2026-09-01T16:27:49.907756+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.219695+00:00Z"
       }
     },
     {
@@ -919,7 +919,7 @@
         "free_bikes": 16,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.906839+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218324+00:00Z"
       }
     },
     {
@@ -937,7 +937,7 @@
         "free_bikes": 1,
         "empty_slots": 6,
         "occupancy_pct": 14.3,
-        "updated_at": "2026-09-01T16:27:49.972181+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298145+00:00Z"
       }
     },
     {
@@ -955,7 +955,7 @@
         "free_bikes": 12,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.903263+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.216622+00:00Z"
       }
     },
     {
@@ -973,7 +973,7 @@
         "free_bikes": 12,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.970520+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221666+00:00Z"
       }
     },
     {
@@ -991,7 +991,7 @@
         "free_bikes": 1,
         "empty_slots": 7,
         "occupancy_pct": 12.5,
-        "updated_at": "2026-09-01T16:27:49.906541+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.217797+00:00Z"
       }
     },
     {
@@ -1009,7 +1009,7 @@
         "free_bikes": 5,
         "empty_slots": 5,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:27:49.970022+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220979+00:00Z"
       }
     },
     {
@@ -1027,7 +1027,7 @@
         "free_bikes": 5,
         "empty_slots": 1,
         "occupancy_pct": 83.3,
-        "updated_at": "2026-09-01T16:27:49.903077+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.183760+00:00Z"
       }
     },
     {
@@ -1045,7 +1045,7 @@
         "free_bikes": 0,
         "empty_slots": 8,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:27:49.907128+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218633+00:00Z"
       }
     },
     {
@@ -1063,7 +1063,7 @@
         "free_bikes": 3,
         "empty_slots": 12,
         "occupancy_pct": 20.0,
-        "updated_at": "2026-09-01T16:27:49.907650+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.219434+00:00Z"
       }
     },
     {
@@ -1081,7 +1081,7 @@
         "free_bikes": 1,
         "empty_slots": 8,
         "occupancy_pct": 11.1,
-        "updated_at": "2026-09-01T16:27:49.973260+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299192+00:00Z"
       }
     },
     {
@@ -1099,7 +1099,7 @@
         "free_bikes": 1,
         "empty_slots": 8,
         "occupancy_pct": 11.1,
-        "updated_at": "2026-09-01T16:27:49.969596+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220443+00:00Z"
       }
     },
     {
@@ -1117,7 +1117,7 @@
         "free_bikes": 0,
         "empty_slots": 15,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:27:49.906012+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.216887+00:00Z"
       }
     },
     {
@@ -1135,7 +1135,7 @@
         "free_bikes": 1,
         "empty_slots": 13,
         "occupancy_pct": 7.1,
-        "updated_at": "2026-09-01T16:27:49.969552+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220386+00:00Z"
       }
     },
     {
@@ -1153,7 +1153,7 @@
         "free_bikes": 30,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.970766+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221925+00:00Z"
       }
     },
     {
@@ -1171,7 +1171,7 @@
         "free_bikes": 17,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.972464+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298423+00:00Z"
       }
     },
     {
@@ -1189,7 +1189,7 @@
         "free_bikes": 19,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.906904+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218418+00:00Z"
       }
     },
     {
@@ -1207,7 +1207,7 @@
         "free_bikes": 1,
         "empty_slots": 7,
         "occupancy_pct": 12.5,
-        "updated_at": "2026-09-01T16:27:49.907915+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.219960+00:00Z"
       }
     },
     {
@@ -1225,7 +1225,7 @@
         "free_bikes": 4,
         "empty_slots": 4,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:27:49.906337+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.217585+00:00Z"
       }
     },
     {
@@ -1243,7 +1243,7 @@
         "free_bikes": 1,
         "empty_slots": 9,
         "occupancy_pct": 10.0,
-        "updated_at": "2026-09-01T16:27:49.907010+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218495+00:00Z"
       }
     },
     {
@@ -1261,7 +1261,7 @@
         "free_bikes": 5,
         "empty_slots": 5,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:27:49.906943+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218469+00:00Z"
       }
     },
     {
@@ -1279,7 +1279,7 @@
         "free_bikes": 7,
         "empty_slots": 3,
         "occupancy_pct": 70.0,
-        "updated_at": "2026-09-01T16:27:49.907689+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.219535+00:00Z"
       }
     },
     {
@@ -1297,7 +1297,7 @@
         "free_bikes": 7,
         "empty_slots": 3,
         "occupancy_pct": 70.0,
-        "updated_at": "2026-09-01T16:27:49.971402+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297339+00:00Z"
       }
     },
     {
@@ -1315,7 +1315,7 @@
         "free_bikes": 1,
         "empty_slots": 10,
         "occupancy_pct": 9.1,
-        "updated_at": "2026-09-01T16:27:49.907876+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.219922+00:00Z"
       }
     },
     {
@@ -1333,7 +1333,7 @@
         "free_bikes": 16,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.906080+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.216955+00:00Z"
       }
     },
     {
@@ -1351,7 +1351,7 @@
         "free_bikes": 18,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.906602+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.217928+00:00Z"
       }
     },
     {
@@ -1369,7 +1369,7 @@
         "free_bikes": 8,
         "empty_slots": 2,
         "occupancy_pct": 80.0,
-        "updated_at": "2026-09-01T16:27:49.971465+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297401+00:00Z"
       }
     },
     {
@@ -1387,7 +1387,7 @@
         "free_bikes": 0,
         "empty_slots": 6,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:27:49.973532+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299489+00:00Z"
       }
     },
     {
@@ -1405,7 +1405,7 @@
         "free_bikes": 7,
         "empty_slots": 1,
         "occupancy_pct": 87.5,
-        "updated_at": "2026-09-01T16:27:49.972619+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298599+00:00Z"
       }
     },
     {
@@ -1423,7 +1423,7 @@
         "free_bikes": 2,
         "empty_slots": 11,
         "occupancy_pct": 15.4,
-        "updated_at": "2026-09-01T16:27:49.907163+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218676+00:00Z"
       }
     },
     {
@@ -1441,7 +1441,7 @@
         "free_bikes": 5,
         "empty_slots": 4,
         "occupancy_pct": 55.6,
-        "updated_at": "2026-09-01T16:27:50.155673+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299872+00:00Z"
       }
     },
     {
@@ -1459,7 +1459,7 @@
         "free_bikes": 9,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.907562+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.219195+00:00Z"
       }
     },
     {
@@ -1477,7 +1477,7 @@
         "free_bikes": 12,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:50.156242+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299980+00:00Z"
       }
     },
     {
@@ -1495,7 +1495,7 @@
         "free_bikes": 4,
         "empty_slots": 5,
         "occupancy_pct": 44.4,
-        "updated_at": "2026-09-01T16:27:49.907087+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218585+00:00Z"
       }
     },
     {
@@ -1513,7 +1513,7 @@
         "free_bikes": 16,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.969819+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220810+00:00Z"
       }
     },
     {
@@ -1531,7 +1531,7 @@
         "free_bikes": 4,
         "empty_slots": 2,
         "occupancy_pct": 66.7,
-        "updated_at": "2026-09-01T16:27:49.973775+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299723+00:00Z"
       }
     },
     {
@@ -1549,7 +1549,7 @@
         "free_bikes": 14,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:50.157942+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.300301+00:00Z"
       }
     },
     {
@@ -1567,7 +1567,7 @@
         "free_bikes": 2,
         "empty_slots": 6,
         "occupancy_pct": 25.0,
-        "updated_at": "2026-09-01T16:27:49.972681+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298656+00:00Z"
       }
     },
     {
@@ -1585,7 +1585,7 @@
         "free_bikes": 15,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.906257+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.217501+00:00Z"
       }
     },
     {
@@ -1603,7 +1603,7 @@
         "free_bikes": 1,
         "empty_slots": 9,
         "occupancy_pct": 10.0,
-        "updated_at": "2026-09-01T16:27:49.907380+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218928+00:00Z"
       }
     },
     {
@@ -1621,7 +1621,7 @@
         "free_bikes": 1,
         "empty_slots": 10,
         "occupancy_pct": 9.1,
-        "updated_at": "2026-09-01T16:27:49.971983+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297935+00:00Z"
       }
     },
     {
@@ -1639,7 +1639,7 @@
         "free_bikes": 4,
         "empty_slots": 6,
         "occupancy_pct": 40.0,
-        "updated_at": "2026-09-01T16:27:49.903414+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.216777+00:00Z"
       }
     },
     {
@@ -1657,7 +1657,7 @@
         "free_bikes": 16,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:50.157986+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.300342+00:00Z"
       }
     },
     {
@@ -1675,7 +1675,7 @@
         "free_bikes": 17,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.903211+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.216565+00:00Z"
       }
     },
     {
@@ -1693,7 +1693,7 @@
         "free_bikes": 13,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.903156+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.216513+00:00Z"
       }
     },
     {
@@ -1711,7 +1711,7 @@
         "free_bikes": 16,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.907604+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.219328+00:00Z"
       }
     },
     {
@@ -1729,7 +1729,7 @@
         "free_bikes": 13,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.971048+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.296970+00:00Z"
       }
     },
     {
@@ -1747,7 +1747,7 @@
         "free_bikes": 8,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.970341+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221499+00:00Z"
       }
     },
     {
@@ -1765,7 +1765,7 @@
         "free_bikes": 3,
         "empty_slots": 8,
         "occupancy_pct": 27.3,
-        "updated_at": "2026-09-01T16:27:49.905891+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.216800+00:00Z"
       }
     },
     {
@@ -1783,7 +1783,7 @@
         "free_bikes": 2,
         "empty_slots": 6,
         "occupancy_pct": 25.0,
-        "updated_at": "2026-09-01T16:27:49.973300+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299232+00:00Z"
       }
     },
     {
@@ -1801,7 +1801,7 @@
         "free_bikes": 15,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.906436+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.217691+00:00Z"
       }
     },
     {
@@ -1819,7 +1819,7 @@
         "free_bikes": 18,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.972574+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298554+00:00Z"
       }
     },
     {
@@ -1837,7 +1837,7 @@
         "free_bikes": 5,
         "empty_slots": 7,
         "occupancy_pct": 41.7,
-        "updated_at": "2026-09-01T16:27:49.969616+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220553+00:00Z"
       }
     },
     {
@@ -1855,7 +1855,7 @@
         "free_bikes": 18,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:50.158008+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.300365+00:00Z"
       }
     },
     {
@@ -1873,7 +1873,7 @@
         "free_bikes": 16,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.973217+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299150+00:00Z"
       }
     },
     {
@@ -1891,7 +1891,7 @@
         "free_bikes": 16,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.971004+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.296919+00:00Z"
       }
     },
     {
@@ -1909,7 +1909,7 @@
         "free_bikes": 12,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.972309+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298274+00:00Z"
       }
     },
     {
@@ -1927,7 +1927,7 @@
         "free_bikes": 2,
         "empty_slots": 9,
         "occupancy_pct": 18.2,
-        "updated_at": "2026-09-01T16:27:49.970945+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.222106+00:00Z"
       }
     },
     {
@@ -1945,7 +1945,7 @@
         "free_bikes": 2,
         "empty_slots": 10,
         "occupancy_pct": 16.7,
-        "updated_at": "2026-09-01T16:27:49.906191+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.217427+00:00Z"
       }
     },
     {
@@ -1963,7 +1963,7 @@
         "free_bikes": 0,
         "empty_slots": 8,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:27:49.973427+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299353+00:00Z"
       }
     },
     {
@@ -1981,7 +1981,7 @@
         "free_bikes": 3,
         "empty_slots": 5,
         "occupancy_pct": 37.5,
-        "updated_at": "2026-09-01T16:27:49.973511+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299469+00:00Z"
       }
     },
     {
@@ -1999,7 +1999,7 @@
         "free_bikes": 2,
         "empty_slots": 12,
         "occupancy_pct": 14.3,
-        "updated_at": "2026-09-01T16:27:49.972138+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298101+00:00Z"
       }
     },
     {
@@ -2017,7 +2017,7 @@
         "free_bikes": 6,
         "empty_slots": 4,
         "occupancy_pct": 60.0,
-        "updated_at": "2026-09-01T16:27:49.902840+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.183551+00:00Z"
       }
     },
     {
@@ -2035,7 +2035,7 @@
         "free_bikes": 24,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.970314+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221430+00:00Z"
       }
     },
     {
@@ -2053,7 +2053,7 @@
         "free_bikes": 1,
         "empty_slots": 13,
         "occupancy_pct": 7.1,
-        "updated_at": "2026-09-01T16:27:49.969574+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220417+00:00Z"
       }
     },
     {
@@ -2071,7 +2071,7 @@
         "free_bikes": 6,
         "empty_slots": 4,
         "occupancy_pct": 60.0,
-        "updated_at": "2026-09-01T16:27:49.972703+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298678+00:00Z"
       }
     },
     {
@@ -2089,7 +2089,7 @@
         "free_bikes": 3,
         "empty_slots": 5,
         "occupancy_pct": 37.5,
-        "updated_at": "2026-09-01T16:27:49.972266+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298233+00:00Z"
       }
     },
     {
@@ -2107,7 +2107,7 @@
         "free_bikes": 24,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.907625+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.219364+00:00Z"
       }
     },
     {
@@ -2125,7 +2125,7 @@
         "free_bikes": 17,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.970434+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221621+00:00Z"
       }
     },
     {
@@ -2143,7 +2143,7 @@
         "free_bikes": 0,
         "empty_slots": 10,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:27:49.906399+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.217652+00:00Z"
       }
     },
     {
@@ -2161,7 +2161,7 @@
         "free_bikes": 4,
         "empty_slots": 4,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:27:49.972769+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298740+00:00Z"
       }
     },
     {
@@ -2179,7 +2179,7 @@
         "free_bikes": 21,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.972024+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297976+00:00Z"
       }
     },
     {
@@ -2197,7 +2197,7 @@
         "free_bikes": 11,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.973384+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299312+00:00Z"
       }
     },
     {
@@ -2215,7 +2215,7 @@
         "free_bikes": 5,
         "empty_slots": 6,
         "occupancy_pct": 45.5,
-        "updated_at": "2026-09-01T16:27:49.969487+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220297+00:00Z"
       }
     },
     {
@@ -2233,7 +2233,7 @@
         "free_bikes": 23,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.972903+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298870+00:00Z"
       }
     },
     {
@@ -2251,7 +2251,7 @@
         "free_bikes": 8,
         "empty_slots": 4,
         "occupancy_pct": 66.7,
-        "updated_at": "2026-09-01T16:27:49.906030+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.216906+00:00Z"
       }
     },
     {
@@ -2269,7 +2269,7 @@
         "free_bikes": 5,
         "empty_slots": 5,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:27:50.155485+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299836+00:00Z"
       }
     },
     {
@@ -2287,7 +2287,7 @@
         "free_bikes": 1,
         "empty_slots": 4,
         "occupancy_pct": 20.0,
-        "updated_at": "2026-09-01T16:27:49.973614+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299566+00:00Z"
       }
     },
     {
@@ -2305,7 +2305,7 @@
         "free_bikes": 5,
         "empty_slots": 3,
         "occupancy_pct": 62.5,
-        "updated_at": "2026-09-01T16:27:49.973340+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299271+00:00Z"
       }
     },
     {
@@ -2323,7 +2323,7 @@
         "free_bikes": 10,
         "empty_slots": 6,
         "occupancy_pct": 62.5,
-        "updated_at": "2026-09-01T16:27:49.972553+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298534+00:00Z"
       }
     },
     {
@@ -2341,7 +2341,7 @@
         "free_bikes": 18,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.971125+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297060+00:00Z"
       }
     },
     {
@@ -2359,7 +2359,7 @@
         "free_bikes": 2,
         "empty_slots": 6,
         "occupancy_pct": 25.0,
-        "updated_at": "2026-09-01T16:27:49.970001+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220953+00:00Z"
       }
     },
     {
@@ -2377,7 +2377,7 @@
         "free_bikes": 0,
         "empty_slots": 8,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:27:49.907050+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218542+00:00Z"
       }
     },
     {
@@ -2395,7 +2395,7 @@
         "free_bikes": 14,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.972244+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298210+00:00Z"
       }
     },
     {
@@ -2413,7 +2413,7 @@
         "free_bikes": 9,
         "empty_slots": 1,
         "occupancy_pct": 90.0,
-        "updated_at": "2026-09-01T16:27:49.969687+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220695+00:00Z"
       }
     },
     {
@@ -2431,7 +2431,7 @@
         "free_bikes": 15,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.973065+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299003+00:00Z"
       }
     },
     {
@@ -2449,7 +2449,7 @@
         "free_bikes": 18,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.903046+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.183731+00:00Z"
       }
     },
     {
@@ -2467,7 +2467,7 @@
         "free_bikes": 16,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.971646+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297578+00:00Z"
       }
     },
     {
@@ -2485,7 +2485,7 @@
         "free_bikes": 1,
         "empty_slots": 11,
         "occupancy_pct": 8.3,
-        "updated_at": "2026-09-01T16:27:49.907968+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220010+00:00Z"
       }
     },
     {
@@ -2503,7 +2503,7 @@
         "free_bikes": 2,
         "empty_slots": 6,
         "occupancy_pct": 25.0,
-        "updated_at": "2026-09-01T16:27:49.973178+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299111+00:00Z"
       }
     },
     {
@@ -2521,7 +2521,7 @@
         "free_bikes": 0,
         "empty_slots": 14,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:27:49.906926+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218450+00:00Z"
       }
     },
     {
@@ -2539,7 +2539,7 @@
         "free_bikes": 4,
         "empty_slots": 10,
         "occupancy_pct": 28.6,
-        "updated_at": "2026-09-01T16:27:49.903103+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.183783+00:00Z"
       }
     },
     {
@@ -2557,7 +2557,7 @@
         "free_bikes": 15,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.970200+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221265+00:00Z"
       }
     },
     {
@@ -2575,7 +2575,7 @@
         "free_bikes": 20,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.969901+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220845+00:00Z"
       }
     },
     {
@@ -2593,7 +2593,7 @@
         "free_bikes": 19,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.973133+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299068+00:00Z"
       }
     },
     {
@@ -2611,7 +2611,7 @@
         "free_bikes": 6,
         "empty_slots": 7,
         "occupancy_pct": 46.2,
-        "updated_at": "2026-09-01T16:27:49.907818+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.219856+00:00Z"
       }
     },
     {
@@ -2629,7 +2629,7 @@
         "free_bikes": 7,
         "empty_slots": 3,
         "occupancy_pct": 70.0,
-        "updated_at": "2026-09-01T16:27:49.969797+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220791+00:00Z"
       }
     },
     {
@@ -2647,7 +2647,7 @@
         "free_bikes": 1,
         "empty_slots": 8,
         "occupancy_pct": 11.1,
-        "updated_at": "2026-09-01T16:27:49.902900+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.183601+00:00Z"
       }
     },
     {
@@ -2665,7 +2665,7 @@
         "free_bikes": 5,
         "empty_slots": 4,
         "occupancy_pct": 55.6,
-        "updated_at": "2026-09-01T16:27:49.970247+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221311+00:00Z"
       }
     },
     {
@@ -2683,7 +2683,7 @@
         "free_bikes": 4,
         "empty_slots": 5,
         "occupancy_pct": 44.4,
-        "updated_at": "2026-09-01T16:27:49.973017+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298959+00:00Z"
       }
     },
     {
@@ -2701,7 +2701,7 @@
         "free_bikes": 9,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.970457+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221644+00:00Z"
       }
     },
     {
@@ -2719,7 +2719,7 @@
         "free_bikes": 2,
         "empty_slots": 5,
         "occupancy_pct": 28.6,
-        "updated_at": "2026-09-01T16:27:49.902780+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.183498+00:00Z"
       }
     },
     {
@@ -2737,7 +2737,7 @@
         "free_bikes": 5,
         "empty_slots": 3,
         "occupancy_pct": 62.5,
-        "updated_at": "2026-09-01T16:27:49.906581+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.217899+00:00Z"
       }
     },
     {
@@ -2755,7 +2755,7 @@
         "free_bikes": 7,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.970745+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221905+00:00Z"
       }
     },
     {
@@ -2773,7 +2773,7 @@
         "free_bikes": 16,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.971175+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297105+00:00Z"
       }
     },
     {
@@ -2791,7 +2791,7 @@
         "free_bikes": 8,
         "empty_slots": 4,
         "occupancy_pct": 66.7,
-        "updated_at": "2026-09-01T16:27:49.907776+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.219719+00:00Z"
       }
     },
     {
@@ -2809,7 +2809,7 @@
         "free_bikes": 3,
         "empty_slots": 11,
         "occupancy_pct": 21.4,
-        "updated_at": "2026-09-01T16:27:49.906105+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.216979+00:00Z"
       }
     },
     {
@@ -2827,7 +2827,7 @@
         "free_bikes": 4,
         "empty_slots": 8,
         "occupancy_pct": 33.3,
-        "updated_at": "2026-09-01T16:27:49.902988+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.183685+00:00Z"
       }
     },
     {
@@ -2845,7 +2845,7 @@
         "free_bikes": 4,
         "empty_slots": 5,
         "occupancy_pct": 44.4,
-        "updated_at": "2026-09-01T16:27:49.973796+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299771+00:00Z"
       }
     },
     {
@@ -2863,7 +2863,7 @@
         "free_bikes": 3,
         "empty_slots": 11,
         "occupancy_pct": 21.4,
-        "updated_at": "2026-09-01T16:27:49.972287+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298255+00:00Z"
       }
     },
     {
@@ -2881,7 +2881,7 @@
         "free_bikes": 5,
         "empty_slots": 5,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:27:49.902811+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.183528+00:00Z"
       }
     },
     {
@@ -2899,7 +2899,7 @@
         "free_bikes": 18,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:50.157448+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.300174+00:00Z"
       }
     },
     {
@@ -2917,7 +2917,7 @@
         "free_bikes": 7,
         "empty_slots": 3,
         "occupancy_pct": 70.0,
-        "updated_at": "2026-09-01T16:27:49.970569+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221712+00:00Z"
       }
     },
     {
@@ -2935,7 +2935,7 @@
         "free_bikes": 2,
         "empty_slots": 12,
         "occupancy_pct": 14.3,
-        "updated_at": "2026-09-01T16:27:49.907359+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218905+00:00Z"
       }
     },
     {
@@ -2953,7 +2953,7 @@
         "free_bikes": 0,
         "empty_slots": 7,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:27:49.969716+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220720+00:00Z"
       }
     },
     {
@@ -2971,7 +2971,7 @@
         "free_bikes": 9,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:50.157414+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.300152+00:00Z"
       }
     },
     {
@@ -2989,7 +2989,7 @@
         "free_bikes": 8,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.970971+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.296880+00:00Z"
       }
     },
     {
@@ -3007,7 +3007,7 @@
         "free_bikes": 19,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.907422+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218974+00:00Z"
       }
     },
     {
@@ -3025,7 +3025,7 @@
         "free_bikes": 5,
         "empty_slots": 7,
         "occupancy_pct": 41.7,
-        "updated_at": "2026-09-01T16:27:49.902952+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.183662+00:00Z"
       }
     },
     {
@@ -3043,7 +3043,7 @@
         "free_bikes": 7,
         "empty_slots": 3,
         "occupancy_pct": 70.0,
-        "updated_at": "2026-09-01T16:27:49.906415+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.217670+00:00Z"
       }
     },
     {
@@ -3061,7 +3061,7 @@
         "free_bikes": 2,
         "empty_slots": 6,
         "occupancy_pct": 25.0,
-        "updated_at": "2026-09-01T16:27:49.972511+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298467+00:00Z"
       }
     },
     {
@@ -3079,7 +3079,7 @@
         "free_bikes": 3,
         "empty_slots": 7,
         "occupancy_pct": 30.0,
-        "updated_at": "2026-09-01T16:27:49.902926+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.183631+00:00Z"
       }
     },
     {
@@ -3097,7 +3097,7 @@
         "free_bikes": 6,
         "empty_slots": 2,
         "occupancy_pct": 75.0,
-        "updated_at": "2026-09-01T16:27:49.907988+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220030+00:00Z"
       }
     },
     {
@@ -3115,7 +3115,7 @@
         "free_bikes": 0,
         "empty_slots": 11,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:27:49.907220+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218745+00:00Z"
       }
     },
     {
@@ -3133,7 +3133,7 @@
         "free_bikes": 29,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.971218+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297157+00:00Z"
       }
     },
     {
@@ -3151,7 +3151,7 @@
         "free_bikes": 12,
         "empty_slots": 1,
         "occupancy_pct": 92.3,
-        "updated_at": "2026-09-01T16:27:49.972641+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298618+00:00Z"
       }
     },
     {
@@ -3169,7 +3169,7 @@
         "free_bikes": 11,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:50.157815+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.300216+00:00Z"
       }
     },
     {
@@ -3187,7 +3187,7 @@
         "free_bikes": 30,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.973037+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298979+00:00Z"
       }
     },
     {
@@ -3205,7 +3205,7 @@
         "free_bikes": 15,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:50.157896+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.300258+00:00Z"
       }
     },
     {
@@ -3223,7 +3223,7 @@
         "free_bikes": 30,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.972813+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298782+00:00Z"
       }
     },
     {
@@ -3241,7 +3241,7 @@
         "free_bikes": 4,
         "empty_slots": 8,
         "occupancy_pct": 33.3,
-        "updated_at": "2026-09-01T16:27:49.972749+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298720+00:00Z"
       }
     },
     {
@@ -3259,7 +3259,7 @@
         "free_bikes": 14,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.973591+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299545+00:00Z"
       }
     },
     {
@@ -3277,7 +3277,7 @@
         "free_bikes": 12,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.972202+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298166+00:00Z"
       }
     },
     {
@@ -3295,7 +3295,7 @@
         "free_bikes": 12,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.971087+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297014+00:00Z"
       }
     },
     {
@@ -3313,7 +3313,7 @@
         "free_bikes": 4,
         "empty_slots": 5,
         "occupancy_pct": 44.4,
-        "updated_at": "2026-09-01T16:27:49.970724+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221885+00:00Z"
       }
     },
     {
@@ -3331,7 +3331,7 @@
         "free_bikes": 7,
         "empty_slots": 3,
         "occupancy_pct": 70.0,
-        "updated_at": "2026-09-01T16:27:49.970068+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221108+00:00Z"
       }
     },
     {
@@ -3349,7 +3349,7 @@
         "free_bikes": 12,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:50.155829+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299893+00:00Z"
       }
     },
     {
@@ -3367,7 +3367,7 @@
         "free_bikes": 7,
         "empty_slots": 5,
         "occupancy_pct": 58.3,
-        "updated_at": "2026-09-01T16:27:49.970363+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221534+00:00Z"
       }
     },
     {
@@ -3385,7 +3385,7 @@
         "free_bikes": 13,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.971600+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297534+00:00Z"
       }
     },
     {
@@ -3403,7 +3403,7 @@
         "free_bikes": 6,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:50.156603+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.300112+00:00Z"
       }
     },
     {
@@ -3421,7 +3421,7 @@
         "free_bikes": 6,
         "empty_slots": 6,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:27:49.969774+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220773+00:00Z"
       }
     },
     {
@@ -3439,7 +3439,7 @@
         "free_bikes": 5,
         "empty_slots": 2,
         "occupancy_pct": 71.4,
-        "updated_at": "2026-09-01T16:27:49.903313+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.216681+00:00Z"
       }
     },
     {
@@ -3457,7 +3457,7 @@
         "free_bikes": 6,
         "empty_slots": 4,
         "occupancy_pct": 60.0,
-        "updated_at": "2026-09-01T16:27:49.969930+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220870+00:00Z"
       }
     },
     {
@@ -3475,7 +3475,7 @@
         "free_bikes": 3,
         "empty_slots": 9,
         "occupancy_pct": 25.0,
-        "updated_at": "2026-09-01T16:27:49.969661+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220664+00:00Z"
       }
     },
     {
@@ -3493,7 +3493,7 @@
         "free_bikes": 20,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.907445+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218999+00:00Z"
       }
     },
     {
@@ -3511,7 +3511,7 @@
         "free_bikes": 1,
         "empty_slots": 9,
         "occupancy_pct": 10.0,
-        "updated_at": "2026-09-01T16:27:49.973548+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299505+00:00Z"
       }
     },
     {
@@ -3529,7 +3529,7 @@
         "free_bikes": 8,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.906213+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.217451+00:00Z"
       }
     },
     {
@@ -3547,7 +3547,7 @@
         "free_bikes": 6,
         "empty_slots": 4,
         "occupancy_pct": 60.0,
-        "updated_at": "2026-09-01T16:27:49.907583+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.219265+00:00Z"
       }
     },
     {
@@ -3565,7 +3565,7 @@
         "free_bikes": 10,
         "empty_slots": 7,
         "occupancy_pct": 58.8,
-        "updated_at": "2026-09-01T16:27:49.970152+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221222+00:00Z"
       }
     },
     {
@@ -3583,7 +3583,7 @@
         "free_bikes": 8,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.970680+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221815+00:00Z"
       }
     },
     {
@@ -3601,7 +3601,7 @@
         "free_bikes": 19,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:50.157918+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.300278+00:00Z"
       }
     },
     {
@@ -3619,7 +3619,7 @@
         "free_bikes": 2,
         "empty_slots": 8,
         "occupancy_pct": 20.0,
-        "updated_at": "2026-09-01T16:27:50.157473+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.300195+00:00Z"
       }
     },
     {
@@ -3637,7 +3637,7 @@
         "free_bikes": 12,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:50.156201+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299958+00:00Z"
       }
     },
     {
@@ -3655,7 +3655,7 @@
         "free_bikes": 11,
         "empty_slots": 1,
         "occupancy_pct": 91.7,
-        "updated_at": "2026-09-01T16:27:49.971333+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297273+00:00Z"
       }
     },
     {
@@ -3673,7 +3673,7 @@
         "free_bikes": 1,
         "empty_slots": 9,
         "occupancy_pct": 10.0,
-        "updated_at": "2026-09-01T16:27:49.907934+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.219979+00:00Z"
       }
     },
     {
@@ -3691,7 +3691,7 @@
         "free_bikes": 10,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.908009+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220080+00:00Z"
       }
     },
     {
@@ -3709,7 +3709,7 @@
         "free_bikes": 17,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.906625+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.217959+00:00Z"
       }
     },
     {
@@ -3727,7 +3727,7 @@
         "free_bikes": 3,
         "empty_slots": 9,
         "occupancy_pct": 25.0,
-        "updated_at": "2026-09-01T16:27:49.903289+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.216657+00:00Z"
       }
     },
     {
@@ -3745,7 +3745,7 @@
         "free_bikes": 3,
         "empty_slots": 7,
         "occupancy_pct": 30.0,
-        "updated_at": "2026-09-01T16:27:49.907896+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.219941+00:00Z"
       }
     },
     {
@@ -3763,7 +3763,7 @@
         "free_bikes": 11,
         "empty_slots": 1,
         "occupancy_pct": 91.7,
-        "updated_at": "2026-09-01T16:27:49.971844+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297771+00:00Z"
       }
     },
     {
@@ -3781,7 +3781,7 @@
         "free_bikes": 21,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.972485+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298444+00:00Z"
       }
     },
     {
@@ -3799,7 +3799,7 @@
         "free_bikes": 6,
         "empty_slots": 3,
         "occupancy_pct": 66.7,
-        "updated_at": "2026-09-01T16:27:49.972354+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298317+00:00Z"
       }
     },
     {
@@ -3817,7 +3817,7 @@
         "free_bikes": 13,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.970592+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221732+00:00Z"
       }
     },
     {
@@ -3835,7 +3835,7 @@
         "free_bikes": 8,
         "empty_slots": 2,
         "occupancy_pct": 80.0,
-        "updated_at": "2026-09-01T16:27:49.970269+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221340+00:00Z"
       }
     },
     {
@@ -3853,7 +3853,7 @@
         "free_bikes": 16,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.903336+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.216704+00:00Z"
       }
     },
     {
@@ -3871,7 +3871,7 @@
         "free_bikes": 3,
         "empty_slots": 9,
         "occupancy_pct": 25.0,
-        "updated_at": "2026-09-01T16:27:49.969509+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220325+00:00Z"
       }
     },
     {
@@ -3889,7 +3889,7 @@
         "free_bikes": 5,
         "empty_slots": 5,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:27:49.970224+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221288+00:00Z"
       }
     },
     {
@@ -3907,7 +3907,7 @@
         "free_bikes": 8,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.906818+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218299+00:00Z"
       }
     },
     {
@@ -3925,7 +3925,7 @@
         "free_bikes": 0,
         "empty_slots": 12,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:27:49.907468+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.219024+00:00Z"
       }
     },
     {
@@ -3943,7 +3943,7 @@
         "free_bikes": 18,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.971532+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297469+00:00Z"
       }
     },
     {
@@ -3961,7 +3961,7 @@
         "free_bikes": 12,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.971106+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297037+00:00Z"
       }
     },
     {
@@ -3979,7 +3979,7 @@
         "free_bikes": 7,
         "empty_slots": 2,
         "occupancy_pct": 77.8,
-        "updated_at": "2026-09-01T16:27:49.902726+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.183385+00:00Z"
       }
     },
     {
@@ -3997,7 +3997,7 @@
         "free_bikes": 0,
         "empty_slots": 13,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:27:49.969883+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220831+00:00Z"
       }
     },
     {
@@ -4015,7 +4015,7 @@
         "free_bikes": 2,
         "empty_slots": 6,
         "occupancy_pct": 25.0,
-        "updated_at": "2026-09-01T16:27:49.907202+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218723+00:00Z"
       }
     },
     {
@@ -4033,7 +4033,7 @@
         "free_bikes": 10,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.970702+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221863+00:00Z"
       }
     },
     {
@@ -4051,7 +4051,7 @@
         "free_bikes": 4,
         "empty_slots": 6,
         "occupancy_pct": 40.0,
-        "updated_at": "2026-09-01T16:27:49.973653+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299603+00:00Z"
       }
     },
     {
@@ -4069,7 +4069,7 @@
         "free_bikes": 13,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.906883+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218378+00:00Z"
       }
     },
     {
@@ -4087,7 +4087,7 @@
         "free_bikes": 4,
         "empty_slots": 16,
         "occupancy_pct": 20.0,
-        "updated_at": "2026-09-01T16:27:49.969953+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220892+00:00Z"
       }
     },
     {
@@ -4105,7 +4105,7 @@
         "free_bikes": 2,
         "empty_slots": 2,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:27:49.969639+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220599+00:00Z"
       }
     },
     {
@@ -4123,7 +4123,7 @@
         "free_bikes": 9,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.970045+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221042+00:00Z"
       }
     },
     {
@@ -4141,7 +4141,7 @@
         "free_bikes": 10,
         "empty_slots": 4,
         "occupancy_pct": 71.4,
-        "updated_at": "2026-09-01T16:27:49.972115+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298078+00:00Z"
       }
     },
     {
@@ -4159,7 +4159,7 @@
         "free_bikes": 4,
         "empty_slots": 4,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:27:49.907484+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.219042+00:00Z"
       }
     },
     {
@@ -4177,7 +4177,7 @@
         "free_bikes": 0,
         "empty_slots": 8,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:27:49.907839+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.219884+00:00Z"
       }
     },
     {
@@ -4195,7 +4195,7 @@
         "free_bikes": 3,
         "empty_slots": 9,
         "occupancy_pct": 25.0,
-        "updated_at": "2026-09-01T16:27:50.157873+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.300237+00:00Z"
       }
     },
     {
@@ -4213,7 +4213,7 @@
         "free_bikes": 10,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.971801+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297727+00:00Z"
       }
     },
     {
@@ -4231,7 +4231,7 @@
         "free_bikes": 17,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.971068+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.296992+00:00Z"
       }
     },
     {
@@ -4249,7 +4249,7 @@
         "free_bikes": 13,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.970862+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.222019+00:00Z"
       }
     },
     {
@@ -4267,7 +4267,7 @@
         "free_bikes": 11,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.973673+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299622+00:00Z"
       }
     },
     {
@@ -4285,7 +4285,7 @@
         "free_bikes": 3,
         "empty_slots": 9,
         "occupancy_pct": 25.0,
-        "updated_at": "2026-09-01T16:27:49.906127+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.217008+00:00Z"
       }
     },
     {
@@ -4303,7 +4303,7 @@
         "free_bikes": 8,
         "empty_slots": 2,
         "occupancy_pct": 80.0,
-        "updated_at": "2026-09-01T16:27:49.906687+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218125+00:00Z"
       }
     },
     {
@@ -4321,7 +4321,7 @@
         "free_bikes": 3,
         "empty_slots": 7,
         "occupancy_pct": 30.0,
-        "updated_at": "2026-09-01T16:27:49.970131+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221199+00:00Z"
       }
     },
     {
@@ -4339,7 +4339,7 @@
         "free_bikes": 2,
         "empty_slots": 8,
         "occupancy_pct": 20.0,
-        "updated_at": "2026-09-01T16:27:49.905987+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.216867+00:00Z"
       }
     },
     {
@@ -4357,7 +4357,7 @@
         "free_bikes": 8,
         "empty_slots": 2,
         "occupancy_pct": 80.0,
-        "updated_at": "2026-09-01T16:27:49.970292+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221368+00:00Z"
       }
     },
     {
@@ -4375,7 +4375,7 @@
         "free_bikes": 1,
         "empty_slots": 7,
         "occupancy_pct": 12.5,
-        "updated_at": "2026-09-01T16:27:49.907031+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218519+00:00Z"
       }
     },
     {
@@ -4393,7 +4393,7 @@
         "free_bikes": 4,
         "empty_slots": 1,
         "occupancy_pct": 80.0,
-        "updated_at": "2026-09-01T16:27:50.156622+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.300132+00:00Z"
       }
     },
     {
@@ -4411,7 +4411,7 @@
         "free_bikes": 9,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:50.155316+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299813+00:00Z"
       }
     },
     {
@@ -4429,7 +4429,7 @@
         "free_bikes": 4,
         "empty_slots": 4,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:27:49.971424+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297360+00:00Z"
       }
     },
     {
@@ -4447,7 +4447,7 @@
         "free_bikes": 10,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.906796+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218274+00:00Z"
       }
     },
     {
@@ -4465,7 +4465,7 @@
         "free_bikes": 2,
         "empty_slots": 12,
         "occupancy_pct": 14.3,
-        "updated_at": "2026-09-01T16:27:49.973197+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299131+00:00Z"
       }
     },
     {
@@ -4483,7 +4483,7 @@
         "free_bikes": 7,
         "empty_slots": 3,
         "occupancy_pct": 70.0,
-        "updated_at": "2026-09-01T16:27:49.969376+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220113+00:00Z"
       }
     },
     {
@@ -4501,7 +4501,7 @@
         "free_bikes": 1,
         "empty_slots": 7,
         "occupancy_pct": 12.5,
-        "updated_at": "2026-09-01T16:27:49.907109+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218611+00:00Z"
       }
     },
     {
@@ -4519,7 +4519,7 @@
         "free_bikes": 4,
         "empty_slots": 4,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:27:49.973569+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299525+00:00Z"
       }
     },
     {
@@ -4537,7 +4537,7 @@
         "free_bikes": 1,
         "empty_slots": 13,
         "occupancy_pct": 7.1,
-        "updated_at": "2026-09-01T16:27:49.907505+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.219067+00:00Z"
       }
     },
     {
@@ -4555,7 +4555,7 @@
         "free_bikes": 20,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:50.156460+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.300002+00:00Z"
       }
     },
     {
@@ -4573,7 +4573,7 @@
         "free_bikes": 6,
         "empty_slots": 3,
         "occupancy_pct": 66.7,
-        "updated_at": "2026-09-01T16:27:49.972222+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298188+00:00Z"
       }
     },
     {
@@ -4591,7 +4591,7 @@
         "free_bikes": 21,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.972725+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298698+00:00Z"
       }
     },
     {
@@ -4609,7 +4609,7 @@
         "free_bikes": 1,
         "empty_slots": 5,
         "occupancy_pct": 16.7,
-        "updated_at": "2026-09-01T16:27:49.973739+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299685+00:00Z"
       }
     },
     {
@@ -4627,7 +4627,7 @@
         "free_bikes": 11,
         "empty_slots": 11,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:27:49.907400+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218951+00:00Z"
       }
     },
     {
@@ -4645,7 +4645,7 @@
         "free_bikes": 5,
         "empty_slots": 4,
         "occupancy_pct": 55.6,
-        "updated_at": "2026-09-01T16:27:49.971265+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297206+00:00Z"
       }
     },
     {
@@ -4663,7 +4663,7 @@
         "free_bikes": 7,
         "empty_slots": 3,
         "occupancy_pct": 70.0,
-        "updated_at": "2026-09-01T16:27:49.972003+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297955+00:00Z"
       }
     },
     {
@@ -4681,7 +4681,7 @@
         "free_bikes": 16,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.971736+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297664+00:00Z"
       }
     },
     {
@@ -4699,7 +4699,7 @@
         "free_bikes": 22,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.972069+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298026+00:00Z"
       }
     },
     {
@@ -4717,7 +4717,7 @@
         "free_bikes": 15,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:50.156512+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.300026+00:00Z"
       }
     },
     {
@@ -4735,7 +4735,7 @@
         "free_bikes": 25,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.972881+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298847+00:00Z"
       }
     },
     {
@@ -4753,7 +4753,7 @@
         "free_bikes": 11,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.970636+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221774+00:00Z"
       }
     },
     {
@@ -4771,7 +4771,7 @@
         "free_bikes": 37,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.972930+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298892+00:00Z"
       }
     },
     {
@@ -4789,7 +4789,7 @@
         "free_bikes": 6,
         "empty_slots": 2,
         "occupancy_pct": 75.0,
-        "updated_at": "2026-09-01T16:27:49.905925+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.216822+00:00Z"
       }
     },
     {
@@ -4807,7 +4807,7 @@
         "free_bikes": 1,
         "empty_slots": 9,
         "occupancy_pct": 10.0,
-        "updated_at": "2026-09-01T16:27:49.971691+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297621+00:00Z"
       }
     },
     {
@@ -4825,7 +4825,7 @@
         "free_bikes": 6,
         "empty_slots": 3,
         "occupancy_pct": 66.7,
-        "updated_at": "2026-09-01T16:27:49.906235+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.217476+00:00Z"
       }
     },
     {
@@ -4843,7 +4843,7 @@
         "free_bikes": 11,
         "empty_slots": 1,
         "occupancy_pct": 91.7,
-        "updated_at": "2026-09-01T16:27:49.903183+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.216541+00:00Z"
       }
     },
     {
@@ -4861,7 +4861,7 @@
         "free_bikes": 2,
         "empty_slots": 6,
         "occupancy_pct": 25.0,
-        "updated_at": "2026-09-01T16:27:49.903239+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.216591+00:00Z"
       }
     },
     {
@@ -4879,7 +4879,7 @@
         "free_bikes": 6,
         "empty_slots": 2,
         "occupancy_pct": 75.0,
-        "updated_at": "2026-09-01T16:27:49.906560+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.217816+00:00Z"
       }
     },
     {
@@ -4897,7 +4897,7 @@
         "free_bikes": 0,
         "empty_slots": 8,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:27:50.155524+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299856+00:00Z"
       }
     },
     {
@@ -4915,7 +4915,7 @@
         "free_bikes": 9,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.970091+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221146+00:00Z"
       }
     },
     {
@@ -4933,7 +4933,7 @@
         "free_bikes": 12,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.971668+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297599+00:00Z"
       }
     },
     {
@@ -4951,7 +4951,7 @@
         "free_bikes": 4,
         "empty_slots": 6,
         "occupancy_pct": 40.0,
-        "updated_at": "2026-09-01T16:27:49.970384+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221570+00:00Z"
       }
     },
     {
@@ -4969,7 +4969,7 @@
         "free_bikes": 14,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.972836+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298805+00:00Z"
       }
     },
     {
@@ -4987,7 +4987,7 @@
         "free_bikes": 0,
         "empty_slots": 8,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:27:49.972664+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298639+00:00Z"
       }
     },
     {
@@ -5005,7 +5005,7 @@
         "free_bikes": 2,
         "empty_slots": 8,
         "occupancy_pct": 20.0,
-        "updated_at": "2026-09-01T16:27:49.973819+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299793+00:00Z"
       }
     },
     {
@@ -5023,7 +5023,7 @@
         "free_bikes": 27,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.970405+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221596+00:00Z"
       }
     },
     {
@@ -5041,7 +5041,7 @@
         "free_bikes": 15,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.973110+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299046+00:00Z"
       }
     },
     {
@@ -5059,7 +5059,7 @@
         "free_bikes": 1,
         "empty_slots": 13,
         "occupancy_pct": 7.1,
-        "updated_at": "2026-09-01T16:27:49.906499+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.217755+00:00Z"
       }
     },
     {
@@ -5077,7 +5077,7 @@
         "free_bikes": 2,
         "empty_slots": 4,
         "occupancy_pct": 33.3,
-        "updated_at": "2026-09-01T16:27:49.906648+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.217994+00:00Z"
       }
     },
     {
@@ -5095,7 +5095,7 @@
         "free_bikes": 2,
         "empty_slots": 7,
         "occupancy_pct": 22.2,
-        "updated_at": "2026-09-01T16:27:49.973718+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299664+00:00Z"
       }
     },
     {
@@ -5113,7 +5113,7 @@
         "free_bikes": 5,
         "empty_slots": 3,
         "occupancy_pct": 62.5,
-        "updated_at": "2026-09-01T16:27:49.971623+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297556+00:00Z"
       }
     },
     {
@@ -5131,7 +5131,7 @@
         "free_bikes": 6,
         "empty_slots": 3,
         "occupancy_pct": 66.7,
-        "updated_at": "2026-09-01T16:27:49.972375+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298338+00:00Z"
       }
     },
     {
@@ -5149,7 +5149,7 @@
         "free_bikes": 8,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.906478+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.217733+00:00Z"
       }
     },
     {
@@ -5167,7 +5167,7 @@
         "free_bikes": 2,
         "empty_slots": 10,
         "occupancy_pct": 16.7,
-        "updated_at": "2026-09-01T16:27:49.971825+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297750+00:00Z"
       }
     },
     {
@@ -5185,7 +5185,7 @@
         "free_bikes": 10,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.906056+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.216930+00:00Z"
       }
     },
     {
@@ -5203,7 +5203,7 @@
         "free_bikes": 13,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.906731+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218198+00:00Z"
       }
     },
     {
@@ -5221,7 +5221,7 @@
         "free_bikes": 3,
         "empty_slots": 7,
         "occupancy_pct": 30.0,
-        "updated_at": "2026-09-01T16:27:49.907338+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218881+00:00Z"
       }
     },
     {
@@ -5239,7 +5239,7 @@
         "free_bikes": 9,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.969530+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220361+00:00Z"
       }
     },
     {
@@ -5257,7 +5257,7 @@
         "free_bikes": 4,
         "empty_slots": 10,
         "occupancy_pct": 28.6,
-        "updated_at": "2026-09-01T16:27:49.907298+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218835+00:00Z"
       }
     },
     {
@@ -5275,7 +5275,7 @@
         "free_bikes": 11,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.903361+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.216729+00:00Z"
       }
     },
     {
@@ -5293,7 +5293,7 @@
         "free_bikes": 2,
         "empty_slots": 11,
         "occupancy_pct": 15.4,
-        "updated_at": "2026-09-01T16:27:49.907067+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218562+00:00Z"
       }
     },
     {
@@ -5311,7 +5311,7 @@
         "free_bikes": 15,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.973405+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299332+00:00Z"
       }
     },
     {
@@ -5329,7 +5329,7 @@
         "free_bikes": 6,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:50.156539+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.300048+00:00Z"
       }
     },
     {
@@ -5347,7 +5347,7 @@
         "free_bikes": 5,
         "empty_slots": 3,
         "occupancy_pct": 62.5,
-        "updated_at": "2026-09-01T16:27:49.906520+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.217776+00:00Z"
       }
     },
     {
@@ -5365,7 +5365,7 @@
         "free_bikes": 1,
         "empty_slots": 7,
         "occupancy_pct": 12.5,
-        "updated_at": "2026-09-01T16:27:49.971941+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297893+00:00Z"
       }
     },
     {
@@ -5383,7 +5383,7 @@
         "free_bikes": 11,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.971759+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297686+00:00Z"
       }
     },
     {
@@ -5401,7 +5401,7 @@
         "free_bikes": 5,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.971289+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297229+00:00Z"
       }
     },
     {
@@ -5419,7 +5419,7 @@
         "free_bikes": 6,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:50.156584+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.300092+00:00Z"
       }
     },
     {
@@ -5437,7 +5437,7 @@
         "free_bikes": 9,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.973466+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299421+00:00Z"
       }
     },
     {
@@ -5455,7 +5455,7 @@
         "free_bikes": 6,
         "empty_slots": 3,
         "occupancy_pct": 66.7,
-        "updated_at": "2026-09-01T16:27:50.156034+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299936+00:00Z"
       }
     },
     {
@@ -5473,7 +5473,7 @@
         "free_bikes": 1,
         "empty_slots": 8,
         "occupancy_pct": 11.1,
-        "updated_at": "2026-09-01T16:27:49.972048+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298001+00:00Z"
       }
     },
     {
@@ -5491,7 +5491,7 @@
         "free_bikes": 12,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:50.156563+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.300069+00:00Z"
       }
     },
     {
@@ -5509,7 +5509,7 @@
         "free_bikes": 13,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.906859+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218349+00:00Z"
       }
     },
     {
@@ -5527,7 +5527,7 @@
         "free_bikes": 16,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.973239+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299172+00:00Z"
       }
     },
     {
@@ -5545,7 +5545,7 @@
         "free_bikes": 9,
         "empty_slots": 3,
         "occupancy_pct": 75.0,
-        "updated_at": "2026-09-01T16:27:49.970614+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221753+00:00Z"
       }
     },
     {
@@ -5563,7 +5563,7 @@
         "free_bikes": 1,
         "empty_slots": 11,
         "occupancy_pct": 8.3,
-        "updated_at": "2026-09-01T16:27:49.906379+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.217630+00:00Z"
       }
     },
     {
@@ -5581,7 +5581,7 @@
         "free_bikes": 2,
         "empty_slots": 6,
         "occupancy_pct": 25.0,
-        "updated_at": "2026-09-01T16:27:49.907319+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218859+00:00Z"
       }
     },
     {
@@ -5599,7 +5599,7 @@
         "free_bikes": 11,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.971310+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297250+00:00Z"
       }
     },
     {
@@ -5617,7 +5617,7 @@
         "free_bikes": 13,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.971509+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297446+00:00Z"
       }
     },
     {
@@ -5635,7 +5635,7 @@
         "free_bikes": 7,
         "empty_slots": 3,
         "occupancy_pct": 70.0,
-        "updated_at": "2026-09-01T16:27:49.906456+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.217712+00:00Z"
       }
     },
     {
@@ -5653,7 +5653,7 @@
         "free_bikes": 1,
         "empty_slots": 9,
         "occupancy_pct": 10.0,
-        "updated_at": "2026-09-01T16:27:49.907524+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.219090+00:00Z"
       }
     },
     {
@@ -5671,7 +5671,7 @@
         "free_bikes": 0,
         "empty_slots": 9,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:27:49.969758+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220758+00:00Z"
       }
     },
     {
@@ -5689,7 +5689,7 @@
         "free_bikes": 2,
         "empty_slots": 8,
         "occupancy_pct": 20.0,
-        "updated_at": "2026-09-01T16:27:50.158030+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.300387+00:00Z"
       }
     },
     {
@@ -5707,7 +5707,7 @@
         "free_bikes": 1,
         "empty_slots": 10,
         "occupancy_pct": 9.1,
-        "updated_at": "2026-09-01T16:27:49.907856+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.219902+00:00Z"
       }
     },
     {
@@ -5725,7 +5725,7 @@
         "free_bikes": 5,
         "empty_slots": 5,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:27:49.906755+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218226+00:00Z"
       }
     },
     {
@@ -5743,7 +5743,7 @@
         "free_bikes": 5,
         "empty_slots": 7,
         "occupancy_pct": 41.7,
-        "updated_at": "2026-09-01T16:27:49.970817+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221972+00:00Z"
       }
     },
     {
@@ -5761,7 +5761,7 @@
         "free_bikes": 10,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.972419+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298378+00:00Z"
       }
     },
     {
@@ -5779,7 +5779,7 @@
         "free_bikes": 3,
         "empty_slots": 7,
         "occupancy_pct": 30.0,
-        "updated_at": "2026-09-01T16:27:49.970885+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.222043+00:00Z"
       }
     },
     {
@@ -5797,7 +5797,7 @@
         "free_bikes": 1,
         "empty_slots": 9,
         "occupancy_pct": 10.0,
-        "updated_at": "2026-09-01T16:27:49.973633+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299585+00:00Z"
       }
     },
     {
@@ -5815,7 +5815,7 @@
         "free_bikes": 2,
         "empty_slots": 9,
         "occupancy_pct": 18.2,
-        "updated_at": "2026-09-01T16:27:49.906170+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.217397+00:00Z"
       }
     },
     {
@@ -5833,7 +5833,7 @@
         "free_bikes": 13,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.969978+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220919+00:00Z"
       }
     },
     {
@@ -5851,7 +5851,7 @@
         "free_bikes": 0,
         "empty_slots": 5,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:27:49.973760+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299708+00:00Z"
       }
     },
     {
@@ -5869,7 +5869,7 @@
         "free_bikes": 1,
         "empty_slots": 11,
         "occupancy_pct": 8.3,
-        "updated_at": "2026-09-01T16:27:49.907670+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.219504+00:00Z"
       }
     },
     {
@@ -5887,7 +5887,7 @@
         "free_bikes": 19,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.903127+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.183897+00:00Z"
       }
     },
     {
@@ -5905,7 +5905,7 @@
         "free_bikes": 12,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.973156+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299089+00:00Z"
       }
     },
     {
@@ -5923,7 +5923,7 @@
         "free_bikes": 13,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.971378+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297316+00:00Z"
       }
     },
     {
@@ -5941,7 +5941,7 @@
         "free_bikes": 26,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.972858+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298825+00:00Z"
       }
     },
     {
@@ -5959,7 +5959,7 @@
         "free_bikes": 9,
         "empty_slots": 5,
         "occupancy_pct": 64.3,
-        "updated_at": "2026-09-01T16:27:49.906300+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.217546+00:00Z"
       }
     },
     {
@@ -5977,7 +5977,7 @@
         "free_bikes": 4,
         "empty_slots": 6,
         "occupancy_pct": 40.0,
-        "updated_at": "2026-09-01T16:27:49.969438+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220202+00:00Z"
       }
     },
     {
@@ -5995,7 +5995,7 @@
         "free_bikes": 1,
         "empty_slots": 9,
         "occupancy_pct": 10.0,
-        "updated_at": "2026-09-01T16:27:49.973320+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.299253+00:00Z"
       }
     },
     {
@@ -6013,7 +6013,7 @@
         "free_bikes": 0,
         "empty_slots": 9,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:27:49.907953+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.219996+00:00Z"
       }
     },
     {
@@ -6031,7 +6031,7 @@
         "free_bikes": 9,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.972971+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298918+00:00Z"
       }
     },
     {
@@ -6049,7 +6049,7 @@
         "free_bikes": 3,
         "empty_slots": 8,
         "occupancy_pct": 27.3,
-        "updated_at": "2026-09-01T16:27:49.970796+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221950+00:00Z"
       }
     },
     {
@@ -6067,7 +6067,7 @@
         "free_bikes": 1,
         "empty_slots": 9,
         "occupancy_pct": 10.0,
-        "updated_at": "2026-09-01T16:27:49.907737+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.219629+00:00Z"
       }
     },
     {
@@ -6085,7 +6085,7 @@
         "free_bikes": 5,
         "empty_slots": 3,
         "occupancy_pct": 62.5,
-        "updated_at": "2026-09-01T16:27:49.969461+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.220262+00:00Z"
       }
     },
     {
@@ -6103,7 +6103,7 @@
         "free_bikes": 10,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.972397+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298358+00:00Z"
       }
     },
     {
@@ -6121,7 +6121,7 @@
         "free_bikes": 7,
         "empty_slots": 3,
         "occupancy_pct": 70.0,
-        "updated_at": "2026-09-01T16:27:49.907277+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218812+00:00Z"
       }
     },
     {
@@ -6139,7 +6139,7 @@
         "free_bikes": 5,
         "empty_slots": 5,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:27:49.971356+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297295+00:00Z"
       }
     },
     {
@@ -6157,7 +6157,7 @@
         "free_bikes": 5,
         "empty_slots": 5,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:27:49.972532+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298512+00:00Z"
       }
     },
     {
@@ -6175,7 +6175,7 @@
         "free_bikes": 12,
         "empty_slots": 6,
         "occupancy_pct": 66.7,
-        "updated_at": "2026-09-01T16:27:49.971867+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297793+00:00Z"
       }
     },
     {
@@ -6193,7 +6193,7 @@
         "free_bikes": 25,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.972790+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.298759+00:00Z"
       }
     },
     {
@@ -6211,7 +6211,7 @@
         "free_bikes": 3,
         "empty_slots": 5,
         "occupancy_pct": 37.5,
-        "updated_at": "2026-09-01T16:27:49.907543+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.219159+00:00Z"
       }
     },
     {
@@ -6229,7 +6229,7 @@
         "free_bikes": 23,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.971889+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.297814+00:00Z"
       }
     },
     {
@@ -6247,7 +6247,7 @@
         "free_bikes": 2,
         "empty_slots": 7,
         "occupancy_pct": 22.2,
-        "updated_at": "2026-09-01T16:27:49.907236+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218765+00:00Z"
       }
     },
     {
@@ -6265,7 +6265,7 @@
         "free_bikes": 7,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.970545+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.221688+00:00Z"
       }
     },
     {
@@ -6283,7 +6283,7 @@
         "free_bikes": 14,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:27:49.906775+00:00Z"
+        "updated_at": "2026-09-01T16:28:48.218250+00:00Z"
       }
     }
   ]
