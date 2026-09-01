@@ -2,7 +2,7 @@
   "type": "FeatureCollection",
   "system_name": "VETURILO 3.0",
   "total_stations": 349,
-  "last_update": "2026-09-01T16:25:55.775320+00:00",
+  "last_update": "2026-09-01T16:28:30.054267+00:00",
   "features": [
     {
       "type": "Feature",
@@ -19,7 +19,7 @@
         "free_bikes": 0,
         "empty_slots": 15,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:25:48.372055+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970114+00:00Z"
       }
     },
     {
@@ -37,7 +37,7 @@
         "free_bikes": 16,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.368799+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.902868+00:00Z"
       }
     },
     {
@@ -52,10 +52,10 @@
       "properties": {
         "id": "029c42156011a06c59bc24773c914cba",
         "name": "Metro Centrum Nauki Kopernik",
-        "free_bikes": 27,
+        "free_bikes": 31,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.448476+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973488+00:00Z"
       }
     },
     {
@@ -70,10 +70,10 @@
       "properties": {
         "id": "02c9feac733886f5bdef0fe682da4b32",
         "name": "Darwina - Nusbauma-Hilarowicza",
-        "free_bikes": 1,
-        "empty_slots": 8,
-        "occupancy_pct": 11.1,
-        "updated_at": "2026-09-01T16:25:48.446170+00:00Z"
+        "free_bikes": 2,
+        "empty_slots": 7,
+        "occupancy_pct": 22.2,
+        "updated_at": "2026-09-01T16:27:49.972159+00:00Z"
       }
     },
     {
@@ -91,7 +91,7 @@
         "free_bikes": 3,
         "empty_slots": 7,
         "occupancy_pct": 30.0,
-        "updated_at": "2026-09-01T16:25:48.370899+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907716+00:00Z"
       }
     },
     {
@@ -109,7 +109,7 @@
         "free_bikes": 14,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.447564+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972996+00:00Z"
       }
     },
     {
@@ -124,10 +124,10 @@
       "properties": {
         "id": "0822da805524eeefc9f86fe1a56c12ca",
         "name": "Westfield Mokotów ",
-        "free_bikes": 3,
-        "empty_slots": 7,
-        "occupancy_pct": 30.0,
-        "updated_at": "2026-09-01T16:25:48.448041+00:00Z"
+        "free_bikes": 2,
+        "empty_slots": 8,
+        "occupancy_pct": 20.0,
+        "updated_at": "2026-09-01T16:27:49.973279+00:00Z"
       }
     },
     {
@@ -145,7 +145,7 @@
         "free_bikes": 2,
         "empty_slots": 10,
         "occupancy_pct": 16.7,
-        "updated_at": "2026-09-01T16:25:48.371845+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.969735+00:00Z"
       }
     },
     {
@@ -163,7 +163,7 @@
         "free_bikes": 25,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.372473+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970838+00:00Z"
       }
     },
     {
@@ -181,7 +181,7 @@
         "free_bikes": 9,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.445976+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971962+00:00Z"
       }
     },
     {
@@ -199,7 +199,7 @@
         "free_bikes": 15,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.370956+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907796+00:00Z"
       }
     },
     {
@@ -217,7 +217,7 @@
         "free_bikes": 5,
         "empty_slots": 2,
         "occupancy_pct": 71.4,
-        "updated_at": "2026-09-01T16:25:48.446118+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972094+00:00Z"
       }
     },
     {
@@ -235,7 +235,7 @@
         "free_bikes": 9,
         "empty_slots": 1,
         "occupancy_pct": 90.0,
-        "updated_at": "2026-09-01T16:25:48.446301+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972331+00:00Z"
       }
     },
     {
@@ -250,10 +250,10 @@
       "properties": {
         "id": "0ea4616547c55119e4da57546aa44897",
         "name": "Przasnyska - Rydygiera",
-        "free_bikes": 12,
+        "free_bikes": 13,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.369285+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.905949+00:00Z"
       }
     },
     {
@@ -271,7 +271,7 @@
         "free_bikes": 13,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.449749+00:00Z"
+        "updated_at": "2026-09-01T16:27:50.155872+00:00Z"
       }
     },
     {
@@ -286,10 +286,10 @@
       "properties": {
         "id": "0ed37f4f60c6e4418d95fe411d000212",
         "name": "Stryjeńskich - Wąwozowa",
-        "free_bikes": 6,
-        "empty_slots": 2,
-        "occupancy_pct": 75.0,
-        "updated_at": "2026-09-01T16:25:48.373337+00:00Z"
+        "free_bikes": 7,
+        "empty_slots": 1,
+        "occupancy_pct": 87.5,
+        "updated_at": "2026-09-01T16:27:49.971487+00:00Z"
       }
     },
     {
@@ -307,7 +307,7 @@
         "free_bikes": 4,
         "empty_slots": 4,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:25:48.369820+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906359+00:00Z"
       }
     },
     {
@@ -325,7 +325,7 @@
         "free_bikes": 0,
         "empty_slots": 8,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:25:48.369792+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906321+00:00Z"
       }
     },
     {
@@ -343,7 +343,7 @@
         "free_bikes": 5,
         "empty_slots": 7,
         "occupancy_pct": 41.7,
-        "updated_at": "2026-09-01T16:25:48.370121+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906708+00:00Z"
       }
     },
     {
@@ -361,7 +361,7 @@
         "free_bikes": 2,
         "empty_slots": 10,
         "occupancy_pct": 16.7,
-        "updated_at": "2026-09-01T16:25:48.373030+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971244+00:00Z"
       }
     },
     {
@@ -379,7 +379,7 @@
         "free_bikes": 13,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.373436+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971575+00:00Z"
       }
     },
     {
@@ -394,10 +394,10 @@
       "properties": {
         "id": "10c5d081a6079acb6e93fd25b0279114",
         "name": "al. Jana Pawła II - Plac Mirowski",
-        "free_bikes": 2,
-        "empty_slots": 12,
-        "occupancy_pct": 14.3,
-        "updated_at": "2026-09-01T16:25:48.370503+00:00Z"
+        "free_bikes": 1,
+        "empty_slots": 13,
+        "occupancy_pct": 7.1,
+        "updated_at": "2026-09-01T16:27:49.907144+00:00Z"
       }
     },
     {
@@ -412,10 +412,10 @@
       "properties": {
         "id": "110f181922def048c5b238db43647a4a",
         "name": "Rondo ONZ",
-        "free_bikes": 3,
-        "empty_slots": 15,
-        "occupancy_pct": 16.7,
-        "updated_at": "2026-09-01T16:25:48.370533+00:00Z"
+        "free_bikes": 4,
+        "empty_slots": 14,
+        "occupancy_pct": 22.2,
+        "updated_at": "2026-09-01T16:27:49.907183+00:00Z"
       }
     },
     {
@@ -433,7 +433,7 @@
         "free_bikes": 3,
         "empty_slots": 5,
         "occupancy_pct": 37.5,
-        "updated_at": "2026-09-01T16:25:48.372094+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970177+00:00Z"
       }
     },
     {
@@ -448,10 +448,10 @@
       "properties": {
         "id": "1479a6efc866992aa8b1b0e65fa07873",
         "name": "Szaserów – Garwolińska",
-        "free_bikes": 20,
+        "free_bikes": 19,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.448341+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973360+00:00Z"
       }
     },
     {
@@ -469,7 +469,7 @@
         "free_bikes": 3,
         "empty_slots": 5,
         "occupancy_pct": 37.5,
-        "updated_at": "2026-09-01T16:25:48.369761+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906279+00:00Z"
       }
     },
     {
@@ -487,7 +487,7 @@
         "free_bikes": 12,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.448432+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973444+00:00Z"
       }
     },
     {
@@ -505,7 +505,7 @@
         "free_bikes": 7,
         "empty_slots": 1,
         "occupancy_pct": 87.5,
-        "updated_at": "2026-09-01T16:25:48.373413+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971553+00:00Z"
       }
     },
     {
@@ -520,10 +520,10 @@
       "properties": {
         "id": "168a7a248aef49cc95f047ddbc528f3a",
         "name": "Metro Ursynów",
-        "free_bikes": 11,
-        "empty_slots": 5,
-        "occupancy_pct": 68.8,
-        "updated_at": "2026-09-01T16:25:48.372768+00:00Z"
+        "free_bikes": 10,
+        "empty_slots": 6,
+        "occupancy_pct": 62.5,
+        "updated_at": "2026-09-01T16:27:49.971153+00:00Z"
       }
     },
     {
@@ -541,7 +541,7 @@
         "free_bikes": 1,
         "empty_slots": 11,
         "occupancy_pct": 8.3,
-        "updated_at": "2026-09-01T16:25:48.373234+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971445+00:00Z"
       }
     },
     {
@@ -559,7 +559,7 @@
         "free_bikes": 10,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.448812+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973694+00:00Z"
       }
     },
     {
@@ -574,10 +574,10 @@
       "properties": {
         "id": "16fcc6f4399c540070064b9465943f74",
         "name": "Marszałkowska - Królewska",
-        "free_bikes": 5,
-        "empty_slots": 5,
-        "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:25:48.370586+00:00Z"
+        "free_bikes": 4,
+        "empty_slots": 6,
+        "occupancy_pct": 40.0,
+        "updated_at": "2026-09-01T16:27:49.907256+00:00Z"
       }
     },
     {
@@ -595,7 +595,7 @@
         "free_bikes": 9,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.372516+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970904+00:00Z"
       }
     },
     {
@@ -613,7 +613,7 @@
         "free_bikes": 18,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.373573+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971712+00:00Z"
       }
     },
     {
@@ -631,7 +631,7 @@
         "free_bikes": 6,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.450208+00:00Z"
+        "updated_at": "2026-09-01T16:27:50.157964+00:00Z"
       }
     },
     {
@@ -649,7 +649,7 @@
         "free_bikes": 3,
         "empty_slots": 10,
         "occupancy_pct": 23.1,
-        "updated_at": "2026-09-01T16:25:48.372364+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970660+00:00Z"
       }
     },
     {
@@ -667,7 +667,7 @@
         "free_bikes": 4,
         "empty_slots": 1,
         "occupancy_pct": 80.0,
-        "updated_at": "2026-09-01T16:25:48.372937+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971197+00:00Z"
       }
     },
     {
@@ -685,7 +685,7 @@
         "free_bikes": 2,
         "empty_slots": 12,
         "occupancy_pct": 14.3,
-        "updated_at": "2026-09-01T16:25:48.370090+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906668+00:00Z"
       }
     },
     {
@@ -703,7 +703,7 @@
         "free_bikes": 10,
         "empty_slots": 1,
         "occupancy_pct": 90.9,
-        "updated_at": "2026-09-01T16:25:48.369221+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.903387+00:00Z"
       }
     },
     {
@@ -721,7 +721,7 @@
         "free_bikes": 12,
         "empty_slots": 2,
         "occupancy_pct": 85.7,
-        "updated_at": "2026-09-01T16:25:48.372530+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970925+00:00Z"
       }
     },
     {
@@ -736,10 +736,10 @@
       "properties": {
         "id": "19c2a625c104a9f3a89d021b9f919775",
         "name": "Pętla Kawęczyńska - Bazylika",
-        "free_bikes": 9,
+        "free_bikes": 10,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.447060+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972597+00:00Z"
       }
     },
     {
@@ -757,7 +757,7 @@
         "free_bikes": 17,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.445926+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971917+00:00Z"
       }
     },
     {
@@ -775,7 +775,7 @@
         "free_bikes": 14,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.446520+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972442+00:00Z"
       }
     },
     {
@@ -793,7 +793,7 @@
         "free_bikes": 10,
         "empty_slots": 5,
         "occupancy_pct": 66.7,
-        "updated_at": "2026-09-01T16:25:48.447663+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973087+00:00Z"
       }
     },
     {
@@ -811,7 +811,7 @@
         "free_bikes": 0,
         "empty_slots": 8,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:25:48.373698+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971783+00:00Z"
       }
     },
     {
@@ -826,10 +826,10 @@
       "properties": {
         "id": "1e8c044ec0e68a508b4d9fd11f8c4edd",
         "name": "Metro Słodowiec",
-        "free_bikes": 5,
-        "empty_slots": 6,
-        "occupancy_pct": 45.5,
-        "updated_at": "2026-09-01T16:25:48.368893+00:00Z"
+        "free_bikes": 7,
+        "empty_slots": 4,
+        "occupancy_pct": 63.6,
+        "updated_at": "2026-09-01T16:27:49.903018+00:00Z"
       }
     },
     {
@@ -844,10 +844,10 @@
       "properties": {
         "id": "1ee27f3bb5c9ee6de9d1d24b2b2213bf",
         "name": "Stawki - Dubois",
-        "free_bikes": 6,
-        "empty_slots": 2,
-        "occupancy_pct": 75.0,
-        "updated_at": "2026-09-01T16:25:48.369406+00:00Z"
+        "free_bikes": 9,
+        "empty_slots": 0,
+        "occupancy_pct": 100.0,
+        "updated_at": "2026-09-01T16:27:49.906149+00:00Z"
       }
     },
     {
@@ -865,7 +865,7 @@
         "free_bikes": 19,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.372634+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971027+00:00Z"
       }
     },
     {
@@ -883,7 +883,7 @@
         "free_bikes": 19,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.371188+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.969411+00:00Z"
       }
     },
     {
@@ -901,7 +901,7 @@
         "free_bikes": 4,
         "empty_slots": 3,
         "occupancy_pct": 57.1,
-        "updated_at": "2026-09-01T16:25:48.370926+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907756+00:00Z"
       }
     },
     {
@@ -919,7 +919,7 @@
         "free_bikes": 16,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.370278+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906839+00:00Z"
       }
     },
     {
@@ -937,7 +937,7 @@
         "free_bikes": 1,
         "empty_slots": 6,
         "occupancy_pct": 14.3,
-        "updated_at": "2026-09-01T16:25:48.446184+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972181+00:00Z"
       }
     },
     {
@@ -955,7 +955,7 @@
         "free_bikes": 12,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.369138+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.903263+00:00Z"
       }
     },
     {
@@ -973,7 +973,7 @@
         "free_bikes": 12,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.372276+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970520+00:00Z"
       }
     },
     {
@@ -991,7 +991,7 @@
         "free_bikes": 1,
         "empty_slots": 7,
         "occupancy_pct": 12.5,
-        "updated_at": "2026-09-01T16:25:48.370003+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906541+00:00Z"
       }
     },
     {
@@ -1009,7 +1009,7 @@
         "free_bikes": 5,
         "empty_slots": 5,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:25:48.371993+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970022+00:00Z"
       }
     },
     {
@@ -1027,7 +1027,7 @@
         "free_bikes": 5,
         "empty_slots": 1,
         "occupancy_pct": 83.3,
-        "updated_at": "2026-09-01T16:25:48.368995+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.903077+00:00Z"
       }
     },
     {
@@ -1045,7 +1045,7 @@
         "free_bikes": 0,
         "empty_slots": 8,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:25:48.370450+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907128+00:00Z"
       }
     },
     {
@@ -1060,10 +1060,10 @@
       "properties": {
         "id": "26df1f96c2ec09b646bbd470e5955aeb",
         "name": "al. Jerozolimskie - Niemcewicza",
-        "free_bikes": 2,
-        "empty_slots": 13,
-        "occupancy_pct": 13.3,
-        "updated_at": "2026-09-01T16:25:48.370859+00:00Z"
+        "free_bikes": 3,
+        "empty_slots": 12,
+        "occupancy_pct": 20.0,
+        "updated_at": "2026-09-01T16:27:49.907650+00:00Z"
       }
     },
     {
@@ -1078,10 +1078,10 @@
       "properties": {
         "id": "2734c79552746c3c60c3e93fd289764d",
         "name": "Eurocentrum",
-        "free_bikes": 0,
-        "empty_slots": 9,
-        "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:25:48.448023+00:00Z"
+        "free_bikes": 1,
+        "empty_slots": 8,
+        "occupancy_pct": 11.1,
+        "updated_at": "2026-09-01T16:27:49.973260+00:00Z"
       }
     },
     {
@@ -1099,7 +1099,7 @@
         "free_bikes": 1,
         "empty_slots": 8,
         "occupancy_pct": 11.1,
-        "updated_at": "2026-09-01T16:25:48.371705+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.969596+00:00Z"
       }
     },
     {
@@ -1117,7 +1117,7 @@
         "free_bikes": 0,
         "empty_slots": 15,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:25:48.369315+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906012+00:00Z"
       }
     },
     {
@@ -1132,10 +1132,10 @@
       "properties": {
         "id": "28c872f22061ac2bb4733dc497f1506c",
         "name": "al. Niepodległości - Nowowiejska",
-        "free_bikes": 2,
-        "empty_slots": 12,
-        "occupancy_pct": 14.3,
-        "updated_at": "2026-09-01T16:25:48.371678+00:00Z"
+        "free_bikes": 1,
+        "empty_slots": 13,
+        "occupancy_pct": 7.1,
+        "updated_at": "2026-09-01T16:27:49.969552+00:00Z"
       }
     },
     {
@@ -1153,7 +1153,7 @@
         "free_bikes": 30,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.372430+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970766+00:00Z"
       }
     },
     {
@@ -1171,7 +1171,7 @@
         "free_bikes": 17,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.446536+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972464+00:00Z"
       }
     },
     {
@@ -1189,7 +1189,7 @@
         "free_bikes": 19,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.370325+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906904+00:00Z"
       }
     },
     {
@@ -1207,7 +1207,7 @@
         "free_bikes": 1,
         "empty_slots": 7,
         "occupancy_pct": 12.5,
-        "updated_at": "2026-09-01T16:25:48.371093+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907915+00:00Z"
       }
     },
     {
@@ -1225,7 +1225,7 @@
         "free_bikes": 4,
         "empty_slots": 4,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:25:48.369804+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906337+00:00Z"
       }
     },
     {
@@ -1240,10 +1240,10 @@
       "properties": {
         "id": "2ad3ea92ac2aafffeed53040e79d436f",
         "name": "Kasprzaka - Skierniewicka",
-        "free_bikes": 0,
-        "empty_slots": 10,
-        "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:25:48.370369+00:00Z"
+        "free_bikes": 1,
+        "empty_slots": 9,
+        "occupancy_pct": 10.0,
+        "updated_at": "2026-09-01T16:27:49.907010+00:00Z"
       }
     },
     {
@@ -1261,7 +1261,7 @@
         "free_bikes": 5,
         "empty_slots": 5,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:25:48.370356+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906943+00:00Z"
       }
     },
     {
@@ -1276,10 +1276,10 @@
       "properties": {
         "id": "2b4b736862bc595261ac30ce4a91ebb8",
         "name": "Plac Zawiszy",
-        "free_bikes": 8,
-        "empty_slots": 2,
-        "occupancy_pct": 80.0,
-        "updated_at": "2026-09-01T16:25:48.370886+00:00Z"
+        "free_bikes": 7,
+        "empty_slots": 3,
+        "occupancy_pct": 70.0,
+        "updated_at": "2026-09-01T16:27:49.907689+00:00Z"
       }
     },
     {
@@ -1294,10 +1294,10 @@
       "properties": {
         "id": "2d2e55454b0fe8850179685772cd48b9",
         "name": "Dereniowa - Płaskowickiej",
-        "free_bikes": 5,
-        "empty_slots": 5,
-        "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:25:48.373191+00:00Z"
+        "free_bikes": 7,
+        "empty_slots": 3,
+        "occupancy_pct": 70.0,
+        "updated_at": "2026-09-01T16:27:49.971402+00:00Z"
       }
     },
     {
@@ -1312,10 +1312,10 @@
       "properties": {
         "id": "2dc44d0c649a7b2be8a18866ac754645",
         "name": "Marszałkowska - Al. Jerozolimskie",
-        "free_bikes": 2,
-        "empty_slots": 9,
-        "occupancy_pct": 18.2,
-        "updated_at": "2026-09-01T16:25:48.371065+00:00Z"
+        "free_bikes": 1,
+        "empty_slots": 10,
+        "occupancy_pct": 9.1,
+        "updated_at": "2026-09-01T16:27:49.907876+00:00Z"
       }
     },
     {
@@ -1333,7 +1333,7 @@
         "free_bikes": 16,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.369359+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906080+00:00Z"
       }
     },
     {
@@ -1348,10 +1348,10 @@
       "properties": {
         "id": "3127ba25313cfbfb5135917bb6d3c025",
         "name": "Powstańców Śląskich - Człuchowska",
-        "free_bikes": 17,
+        "free_bikes": 18,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.370045+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906602+00:00Z"
       }
     },
     {
@@ -1369,7 +1369,7 @@
         "free_bikes": 8,
         "empty_slots": 2,
         "occupancy_pct": 80.0,
-        "updated_at": "2026-09-01T16:25:48.373255+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971465+00:00Z"
       }
     },
     {
@@ -1387,7 +1387,7 @@
         "free_bikes": 0,
         "empty_slots": 6,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:25:48.448521+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973532+00:00Z"
       }
     },
     {
@@ -1402,10 +1402,10 @@
       "properties": {
         "id": "32c876bbc7d4e8f89ca791e4c0d3f1d9",
         "name": "Targowa - Kijowska",
-        "free_bikes": 8,
-        "empty_slots": 0,
-        "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.447102+00:00Z"
+        "free_bikes": 7,
+        "empty_slots": 1,
+        "occupancy_pct": 87.5,
+        "updated_at": "2026-09-01T16:27:49.972619+00:00Z"
       }
     },
     {
@@ -1423,7 +1423,7 @@
         "free_bikes": 2,
         "empty_slots": 11,
         "occupancy_pct": 15.4,
-        "updated_at": "2026-09-01T16:25:48.370518+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907163+00:00Z"
       }
     },
     {
@@ -1441,7 +1441,7 @@
         "free_bikes": 5,
         "empty_slots": 4,
         "occupancy_pct": 55.6,
-        "updated_at": "2026-09-01T16:25:48.449705+00:00Z"
+        "updated_at": "2026-09-01T16:27:50.155673+00:00Z"
       }
     },
     {
@@ -1459,7 +1459,7 @@
         "free_bikes": 9,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.370802+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907562+00:00Z"
       }
     },
     {
@@ -1477,7 +1477,7 @@
         "free_bikes": 12,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.449814+00:00Z"
+        "updated_at": "2026-09-01T16:27:50.156242+00:00Z"
       }
     },
     {
@@ -1492,10 +1492,10 @@
       "properties": {
         "id": "35fa27a5bf41523fc3c1129348af7297",
         "name": "Górczewska - Płocka",
-        "free_bikes": 2,
-        "empty_slots": 7,
-        "occupancy_pct": 22.2,
-        "updated_at": "2026-09-01T16:25:48.370420+00:00Z"
+        "free_bikes": 4,
+        "empty_slots": 5,
+        "occupancy_pct": 44.4,
+        "updated_at": "2026-09-01T16:27:49.907087+00:00Z"
       }
     },
     {
@@ -1513,7 +1513,7 @@
         "free_bikes": 16,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.371894+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.969819+00:00Z"
       }
     },
     {
@@ -1531,7 +1531,7 @@
         "free_bikes": 4,
         "empty_slots": 2,
         "occupancy_pct": 66.7,
-        "updated_at": "2026-09-01T16:25:48.449074+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973775+00:00Z"
       }
     },
     {
@@ -1549,7 +1549,7 @@
         "free_bikes": 14,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.450186+00:00Z"
+        "updated_at": "2026-09-01T16:27:50.157942+00:00Z"
       }
     },
     {
@@ -1567,7 +1567,7 @@
         "free_bikes": 2,
         "empty_slots": 6,
         "occupancy_pct": 25.0,
-        "updated_at": "2026-09-01T16:25:48.447179+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972681+00:00Z"
       }
     },
     {
@@ -1585,7 +1585,7 @@
         "free_bikes": 15,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.369742+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906257+00:00Z"
       }
     },
     {
@@ -1603,7 +1603,7 @@
         "free_bikes": 1,
         "empty_slots": 9,
         "occupancy_pct": 10.0,
-        "updated_at": "2026-09-01T16:25:48.370673+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907380+00:00Z"
       }
     },
     {
@@ -1621,7 +1621,7 @@
         "free_bikes": 1,
         "empty_slots": 10,
         "occupancy_pct": 9.1,
-        "updated_at": "2026-09-01T16:25:48.446001+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971983+00:00Z"
       }
     },
     {
@@ -1639,7 +1639,7 @@
         "free_bikes": 4,
         "empty_slots": 6,
         "occupancy_pct": 40.0,
-        "updated_at": "2026-09-01T16:25:48.369238+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.903414+00:00Z"
       }
     },
     {
@@ -1657,7 +1657,7 @@
         "free_bikes": 16,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.450230+00:00Z"
+        "updated_at": "2026-09-01T16:27:50.157986+00:00Z"
       }
     },
     {
@@ -1672,10 +1672,10 @@
       "properties": {
         "id": "3c0cac1370be50443da766d07e355298",
         "name": "Broniewskiego - Włościańska",
-        "free_bikes": 18,
+        "free_bikes": 17,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.369103+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.903211+00:00Z"
       }
     },
     {
@@ -1690,10 +1690,10 @@
       "properties": {
         "id": "3c437d9c6f825ff79d2bef8bcd219eca",
         "name": "Metro Marymont",
-        "free_bikes": 14,
+        "free_bikes": 13,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.369067+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.903156+00:00Z"
       }
     },
     {
@@ -1711,7 +1711,7 @@
         "free_bikes": 16,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.370829+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907604+00:00Z"
       }
     },
     {
@@ -1729,7 +1729,7 @@
         "free_bikes": 13,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.372658+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971048+00:00Z"
       }
     },
     {
@@ -1747,7 +1747,7 @@
         "free_bikes": 8,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.372192+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970341+00:00Z"
       }
     },
     {
@@ -1765,7 +1765,7 @@
         "free_bikes": 3,
         "empty_slots": 8,
         "occupancy_pct": 27.3,
-        "updated_at": "2026-09-01T16:25:48.369254+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.905891+00:00Z"
       }
     },
     {
@@ -1783,7 +1783,7 @@
         "free_bikes": 2,
         "empty_slots": 6,
         "occupancy_pct": 25.0,
-        "updated_at": "2026-09-01T16:25:48.448064+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973300+00:00Z"
       }
     },
     {
@@ -1801,7 +1801,7 @@
         "free_bikes": 15,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.369928+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906436+00:00Z"
       }
     },
     {
@@ -1819,7 +1819,7 @@
         "free_bikes": 18,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.446836+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972574+00:00Z"
       }
     },
     {
@@ -1834,10 +1834,10 @@
       "properties": {
         "id": "451066983501ea99e222daefbe647685",
         "name": "Plac Politechniki",
-        "free_bikes": 6,
-        "empty_slots": 6,
-        "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:25:48.371719+00:00Z"
+        "free_bikes": 5,
+        "empty_slots": 7,
+        "occupancy_pct": 41.7,
+        "updated_at": "2026-09-01T16:27:49.969616+00:00Z"
       }
     },
     {
@@ -1855,7 +1855,7 @@
         "free_bikes": 18,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.450253+00:00Z"
+        "updated_at": "2026-09-01T16:27:50.158008+00:00Z"
       }
     },
     {
@@ -1870,10 +1870,10 @@
       "properties": {
         "id": "47916561021f038309a2ff07ae5e571c",
         "name": "Arkadia",
-        "free_bikes": 15,
+        "free_bikes": 16,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.447980+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973217+00:00Z"
       }
     },
     {
@@ -1891,7 +1891,7 @@
         "free_bikes": 16,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.372602+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971004+00:00Z"
       }
     },
     {
@@ -1909,7 +1909,7 @@
         "free_bikes": 12,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.446286+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972309+00:00Z"
       }
     },
     {
@@ -1924,10 +1924,10 @@
       "properties": {
         "id": "4a6ad342f2c0f8d05edaba9a022d947a",
         "name": "Metro Służew",
-        "free_bikes": 1,
-        "empty_slots": 10,
-        "occupancy_pct": 9.1,
-        "updated_at": "2026-09-01T16:25:48.372545+00:00Z"
+        "free_bikes": 2,
+        "empty_slots": 9,
+        "occupancy_pct": 18.2,
+        "updated_at": "2026-09-01T16:27:49.970945+00:00Z"
       }
     },
     {
@@ -1942,10 +1942,10 @@
       "properties": {
         "id": "4a87cc9c16a8ac1424f5abd9fe8bcc83",
         "name": "Sanguszki - Wybrzeże Gdańskie",
-        "free_bikes": 1,
-        "empty_slots": 11,
-        "occupancy_pct": 8.3,
-        "updated_at": "2026-09-01T16:25:48.369529+00:00Z"
+        "free_bikes": 2,
+        "empty_slots": 10,
+        "occupancy_pct": 16.7,
+        "updated_at": "2026-09-01T16:27:49.906191+00:00Z"
       }
     },
     {
@@ -1963,7 +1963,7 @@
         "free_bikes": 0,
         "empty_slots": 8,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:25:48.448414+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973427+00:00Z"
       }
     },
     {
@@ -1981,7 +1981,7 @@
         "free_bikes": 3,
         "empty_slots": 5,
         "occupancy_pct": 37.5,
-        "updated_at": "2026-09-01T16:25:48.448501+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973511+00:00Z"
       }
     },
     {
@@ -1996,10 +1996,10 @@
       "properties": {
         "id": "506881703d4510ce61b3673f9d86b038",
         "name": "Rondo Starzyńskiego",
-        "free_bikes": 4,
-        "empty_slots": 10,
-        "occupancy_pct": 28.6,
-        "updated_at": "2026-09-01T16:25:48.446155+00:00Z"
+        "free_bikes": 2,
+        "empty_slots": 12,
+        "occupancy_pct": 14.3,
+        "updated_at": "2026-09-01T16:27:49.972138+00:00Z"
       }
     },
     {
@@ -2017,7 +2017,7 @@
         "free_bikes": 6,
         "empty_slots": 4,
         "occupancy_pct": 60.0,
-        "updated_at": "2026-09-01T16:25:48.368778+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.902840+00:00Z"
       }
     },
     {
@@ -2035,7 +2035,7 @@
         "free_bikes": 24,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.372176+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970314+00:00Z"
       }
     },
     {
@@ -2050,10 +2050,10 @@
       "properties": {
         "id": "56cb35e0fda6c1876fe3c22d2c37cd04",
         "name": "al. Armii Ludowej - al. Niepodległości",
-        "free_bikes": 0,
-        "empty_slots": 14,
-        "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:25:48.371693+00:00Z"
+        "free_bikes": 1,
+        "empty_slots": 13,
+        "occupancy_pct": 7.1,
+        "updated_at": "2026-09-01T16:27:49.969574+00:00Z"
       }
     },
     {
@@ -2071,7 +2071,7 @@
         "free_bikes": 6,
         "empty_slots": 4,
         "occupancy_pct": 60.0,
-        "updated_at": "2026-09-01T16:25:48.447200+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972703+00:00Z"
       }
     },
     {
@@ -2086,10 +2086,10 @@
       "properties": {
         "id": "5788e6b493067ef679db122342862ba3",
         "name": "Jagiellońska - Ratuszowa",
-        "free_bikes": 4,
-        "empty_slots": 4,
-        "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:25:48.446254+00:00Z"
+        "free_bikes": 3,
+        "empty_slots": 5,
+        "occupancy_pct": 37.5,
+        "updated_at": "2026-09-01T16:27:49.972266+00:00Z"
       }
     },
     {
@@ -2107,7 +2107,7 @@
         "free_bikes": 24,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.370843+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907625+00:00Z"
       }
     },
     {
@@ -2122,10 +2122,10 @@
       "properties": {
         "id": "59221335cc17068630bb955ff602d677",
         "name": "Czerniakowska - ZUS",
-        "free_bikes": 18,
+        "free_bikes": 17,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.372248+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970434+00:00Z"
       }
     },
     {
@@ -2143,7 +2143,7 @@
         "free_bikes": 0,
         "empty_slots": 10,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:25:48.369892+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906399+00:00Z"
       }
     },
     {
@@ -2158,10 +2158,10 @@
       "properties": {
         "id": "5c38ebb45bc3547ecc29269c5f694cb5",
         "name": "Stalowa - Czynszowa",
-        "free_bikes": 5,
-        "empty_slots": 3,
-        "occupancy_pct": 62.5,
-        "updated_at": "2026-09-01T16:25:48.447279+00:00Z"
+        "free_bikes": 4,
+        "empty_slots": 4,
+        "occupancy_pct": 50.0,
+        "updated_at": "2026-09-01T16:27:49.972769+00:00Z"
       }
     },
     {
@@ -2176,10 +2176,10 @@
       "properties": {
         "id": "5cbc87c6f7cd56544d36538d01e9d87d",
         "name": "Metro Targówek Mieszkaniowy ",
-        "free_bikes": 20,
+        "free_bikes": 21,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.446045+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972024+00:00Z"
       }
     },
     {
@@ -2194,10 +2194,10 @@
       "properties": {
         "id": "5cc76b966b8d4893017c924b1c37f8ca",
         "name": "Wolska - Redutowa",
-        "free_bikes": 10,
+        "free_bikes": 11,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.448368+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973384+00:00Z"
       }
     },
     {
@@ -2212,10 +2212,10 @@
       "properties": {
         "id": "5cca09126c7adf783e5efec20ec6d87f",
         "name": "Plac Narutowicza",
-        "free_bikes": 7,
-        "empty_slots": 4,
-        "occupancy_pct": 63.6,
-        "updated_at": "2026-09-01T16:25:48.371603+00:00Z"
+        "free_bikes": 5,
+        "empty_slots": 6,
+        "occupancy_pct": 45.5,
+        "updated_at": "2026-09-01T16:27:49.969487+00:00Z"
       }
     },
     {
@@ -2233,7 +2233,7 @@
         "free_bikes": 23,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.447508+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972903+00:00Z"
       }
     },
     {
@@ -2251,7 +2251,7 @@
         "free_bikes": 8,
         "empty_slots": 4,
         "occupancy_pct": 66.7,
-        "updated_at": "2026-09-01T16:25:48.369327+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906030+00:00Z"
       }
     },
     {
@@ -2269,7 +2269,7 @@
         "free_bikes": 5,
         "empty_slots": 5,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:25:48.449158+00:00Z"
+        "updated_at": "2026-09-01T16:27:50.155485+00:00Z"
       }
     },
     {
@@ -2287,7 +2287,7 @@
         "free_bikes": 1,
         "empty_slots": 4,
         "occupancy_pct": 20.0,
-        "updated_at": "2026-09-01T16:25:48.448602+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973614+00:00Z"
       }
     },
     {
@@ -2302,10 +2302,10 @@
       "properties": {
         "id": "5f0ee630fcbffd7ca570e6c563d1c6c5",
         "name": "Wola Park",
-        "free_bikes": 3,
-        "empty_slots": 5,
-        "occupancy_pct": 37.5,
-        "updated_at": "2026-09-01T16:25:48.448309+00:00Z"
+        "free_bikes": 5,
+        "empty_slots": 3,
+        "occupancy_pct": 62.5,
+        "updated_at": "2026-09-01T16:27:49.973340+00:00Z"
       }
     },
     {
@@ -2323,7 +2323,7 @@
         "free_bikes": 10,
         "empty_slots": 6,
         "occupancy_pct": 62.5,
-        "updated_at": "2026-09-01T16:25:48.446666+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972553+00:00Z"
       }
     },
     {
@@ -2338,10 +2338,10 @@
       "properties": {
         "id": "619fc6e4f4e72ed1bd96f1f59c0b8947",
         "name": "Kochanowskiego - Galla Anonima",
-        "free_bikes": 17,
+        "free_bikes": 18,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.372741+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971125+00:00Z"
       }
     },
     {
@@ -2359,7 +2359,7 @@
         "free_bikes": 2,
         "empty_slots": 6,
         "occupancy_pct": 25.0,
-        "updated_at": "2026-09-01T16:25:48.371980+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970001+00:00Z"
       }
     },
     {
@@ -2377,7 +2377,7 @@
         "free_bikes": 0,
         "empty_slots": 8,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:25:48.370392+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907050+00:00Z"
       }
     },
     {
@@ -2395,7 +2395,7 @@
         "free_bikes": 14,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.446231+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972244+00:00Z"
       }
     },
     {
@@ -2413,7 +2413,7 @@
         "free_bikes": 9,
         "empty_slots": 1,
         "occupancy_pct": 90.0,
-        "updated_at": "2026-09-01T16:25:48.371819+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.969687+00:00Z"
       }
     },
     {
@@ -2428,10 +2428,10 @@
       "properties": {
         "id": "63b5b2d98a5ed1a6af91118095f8ee8a",
         "name": "Ostrobramska - Zamieniecka",
-        "free_bikes": 14,
+        "free_bikes": 15,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.447617+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973065+00:00Z"
       }
     },
     {
@@ -2446,10 +2446,10 @@
       "properties": {
         "id": "63c12cd750d3a5ef2188fc8c1e4a8bd8",
         "name": "OSiR Żoliborz",
-        "free_bikes": 22,
+        "free_bikes": 18,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.368910+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.903046+00:00Z"
       }
     },
     {
@@ -2464,10 +2464,10 @@
       "properties": {
         "id": "640e4eb1c30052f57cdb8063b26680d3",
         "name": "Grupy AK Krybar",
-        "free_bikes": 17,
+        "free_bikes": 16,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.373504+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971646+00:00Z"
       }
     },
     {
@@ -2485,7 +2485,7 @@
         "free_bikes": 1,
         "empty_slots": 11,
         "occupancy_pct": 8.3,
-        "updated_at": "2026-09-01T16:25:48.371131+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907968+00:00Z"
       }
     },
     {
@@ -2503,7 +2503,7 @@
         "free_bikes": 2,
         "empty_slots": 6,
         "occupancy_pct": 25.0,
-        "updated_at": "2026-09-01T16:25:48.447939+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973178+00:00Z"
       }
     },
     {
@@ -2518,10 +2518,10 @@
       "properties": {
         "id": "653dde6fff6893aef1ab2826b3477d25",
         "name": "al. Prymasa Tysiąclecia - Górczewska",
-        "free_bikes": 1,
-        "empty_slots": 13,
-        "occupancy_pct": 7.1,
-        "updated_at": "2026-09-01T16:25:48.370341+00:00Z"
+        "free_bikes": 0,
+        "empty_slots": 14,
+        "occupancy_pct": 0.0,
+        "updated_at": "2026-09-01T16:27:49.906926+00:00Z"
       }
     },
     {
@@ -2539,7 +2539,7 @@
         "free_bikes": 4,
         "empty_slots": 10,
         "occupancy_pct": 28.6,
-        "updated_at": "2026-09-01T16:25:48.369014+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.903103+00:00Z"
       }
     },
     {
@@ -2554,10 +2554,10 @@
       "properties": {
         "id": "66bac044af729ef869efb0a9da2c5045",
         "name": "Żwirki i Wigury - Racławicka",
-        "free_bikes": 16,
+        "free_bikes": 15,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.372107+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970200+00:00Z"
       }
     },
     {
@@ -2572,10 +2572,10 @@
       "properties": {
         "id": "66f526f8cdd44f32356c8bfb62e7d021",
         "name": "Grójecka - Bitwy Warszawskiej 1920 roku",
-        "free_bikes": 19,
+        "free_bikes": 20,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.371920+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.969901+00:00Z"
       }
     },
     {
@@ -2593,7 +2593,7 @@
         "free_bikes": 19,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.447714+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973133+00:00Z"
       }
     },
     {
@@ -2608,10 +2608,10 @@
       "properties": {
         "id": "67d10b08d4565697ecc65c7c626032c0",
         "name": "Emilii Plater - al. Jerozolimskie",
-        "free_bikes": 7,
-        "empty_slots": 6,
-        "occupancy_pct": 53.8,
-        "updated_at": "2026-09-01T16:25:48.371010+00:00Z"
+        "free_bikes": 6,
+        "empty_slots": 7,
+        "occupancy_pct": 46.2,
+        "updated_at": "2026-09-01T16:27:49.907818+00:00Z"
       }
     },
     {
@@ -2629,7 +2629,7 @@
         "free_bikes": 7,
         "empty_slots": 3,
         "occupancy_pct": 70.0,
-        "updated_at": "2026-09-01T16:25:48.371880+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.969797+00:00Z"
       }
     },
     {
@@ -2647,7 +2647,7 @@
         "free_bikes": 1,
         "empty_slots": 8,
         "occupancy_pct": 11.1,
-        "updated_at": "2026-09-01T16:25:48.368822+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.902900+00:00Z"
       }
     },
     {
@@ -2662,10 +2662,10 @@
       "properties": {
         "id": "68eb27349652ac8eba52ded032faf320",
         "name": "Madalińskiego - Kazimierzowska",
-        "free_bikes": 4,
-        "empty_slots": 5,
-        "occupancy_pct": 44.4,
-        "updated_at": "2026-09-01T16:25:48.372134+00:00Z"
+        "free_bikes": 5,
+        "empty_slots": 4,
+        "occupancy_pct": 55.6,
+        "updated_at": "2026-09-01T16:27:49.970247+00:00Z"
       }
     },
     {
@@ -2683,7 +2683,7 @@
         "free_bikes": 4,
         "empty_slots": 5,
         "occupancy_pct": 44.4,
-        "updated_at": "2026-09-01T16:25:48.447580+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973017+00:00Z"
       }
     },
     {
@@ -2701,7 +2701,7 @@
         "free_bikes": 9,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.372263+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970457+00:00Z"
       }
     },
     {
@@ -2719,7 +2719,7 @@
         "free_bikes": 2,
         "empty_slots": 5,
         "occupancy_pct": 28.6,
-        "updated_at": "2026-09-01T16:25:48.368738+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.902780+00:00Z"
       }
     },
     {
@@ -2737,7 +2737,7 @@
         "free_bikes": 5,
         "empty_slots": 3,
         "occupancy_pct": 62.5,
-        "updated_at": "2026-09-01T16:25:48.370031+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906581+00:00Z"
       }
     },
     {
@@ -2752,10 +2752,10 @@
       "properties": {
         "id": "6d3ea001496b0944d6451270a392f43b",
         "name": "Puławska - Idzikowskiego",
-        "free_bikes": 9,
+        "free_bikes": 7,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.372417+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970745+00:00Z"
       }
     },
     {
@@ -2773,7 +2773,7 @@
         "free_bikes": 16,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.372897+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971175+00:00Z"
       }
     },
     {
@@ -2788,10 +2788,10 @@
       "properties": {
         "id": "6f5af0d621a54683bfba369121bbe6cd",
         "name": "Metro Dworzec Wileński - Targowa",
-        "free_bikes": 9,
-        "empty_slots": 3,
-        "occupancy_pct": 75.0,
-        "updated_at": "2026-09-01T16:25:48.370940+00:00Z"
+        "free_bikes": 8,
+        "empty_slots": 4,
+        "occupancy_pct": 66.7,
+        "updated_at": "2026-09-01T16:27:49.907776+00:00Z"
       }
     },
     {
@@ -2806,10 +2806,10 @@
       "properties": {
         "id": "6fd7663fbb02f104ed81055be6ad8a76",
         "name": "Obozowa - Radziwie",
-        "free_bikes": 4,
-        "empty_slots": 10,
-        "occupancy_pct": 28.6,
-        "updated_at": "2026-09-01T16:25:48.369377+00:00Z"
+        "free_bikes": 3,
+        "empty_slots": 11,
+        "occupancy_pct": 21.4,
+        "updated_at": "2026-09-01T16:27:49.906105+00:00Z"
       }
     },
     {
@@ -2824,10 +2824,10 @@
       "properties": {
         "id": "7028eceb065d9b8167570fb49174a387",
         "name": "Bielany-Ratusz",
-        "free_bikes": 6,
-        "empty_slots": 6,
-        "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:25:48.368874+00:00Z"
+        "free_bikes": 4,
+        "empty_slots": 8,
+        "occupancy_pct": 33.3,
+        "updated_at": "2026-09-01T16:27:49.902988+00:00Z"
       }
     },
     {
@@ -2845,7 +2845,7 @@
         "free_bikes": 4,
         "empty_slots": 5,
         "occupancy_pct": 44.4,
-        "updated_at": "2026-09-01T16:25:48.449097+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973796+00:00Z"
       }
     },
     {
@@ -2863,7 +2863,7 @@
         "free_bikes": 3,
         "empty_slots": 11,
         "occupancy_pct": 21.4,
-        "updated_at": "2026-09-01T16:25:48.446272+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972287+00:00Z"
       }
     },
     {
@@ -2881,7 +2881,7 @@
         "free_bikes": 5,
         "empty_slots": 5,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:25:48.368758+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.902811+00:00Z"
       }
     },
     {
@@ -2899,7 +2899,7 @@
         "free_bikes": 18,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.450047+00:00Z"
+        "updated_at": "2026-09-01T16:27:50.157448+00:00Z"
       }
     },
     {
@@ -2914,10 +2914,10 @@
       "properties": {
         "id": "72274a77dcce044b22a351b14810ede2",
         "name": "Pętla Sadyba",
-        "free_bikes": 8,
-        "empty_slots": 2,
-        "occupancy_pct": 80.0,
-        "updated_at": "2026-09-01T16:25:48.372304+00:00Z"
+        "free_bikes": 7,
+        "empty_slots": 3,
+        "occupancy_pct": 70.0,
+        "updated_at": "2026-09-01T16:27:49.970569+00:00Z"
       }
     },
     {
@@ -2932,10 +2932,10 @@
       "properties": {
         "id": "736c2fcee7ae7250cd9b6b268cf68cc1",
         "name": "Metro Nowy Świat - Uniwersytet",
-        "free_bikes": 3,
-        "empty_slots": 11,
-        "occupancy_pct": 21.4,
-        "updated_at": "2026-09-01T16:25:48.370659+00:00Z"
+        "free_bikes": 2,
+        "empty_slots": 12,
+        "occupancy_pct": 14.3,
+        "updated_at": "2026-09-01T16:27:49.907359+00:00Z"
       }
     },
     {
@@ -2953,7 +2953,7 @@
         "free_bikes": 0,
         "empty_slots": 7,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:25:48.371834+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.969716+00:00Z"
       }
     },
     {
@@ -2971,7 +2971,7 @@
         "free_bikes": 9,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.450023+00:00Z"
+        "updated_at": "2026-09-01T16:27:50.157414+00:00Z"
       }
     },
     {
@@ -2989,7 +2989,7 @@
         "free_bikes": 8,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.372557+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970971+00:00Z"
       }
     },
     {
@@ -3007,7 +3007,7 @@
         "free_bikes": 19,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.370703+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907422+00:00Z"
       }
     },
     {
@@ -3025,7 +3025,7 @@
         "free_bikes": 5,
         "empty_slots": 7,
         "occupancy_pct": 41.7,
-        "updated_at": "2026-09-01T16:25:48.368856+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.902952+00:00Z"
       }
     },
     {
@@ -3043,7 +3043,7 @@
         "free_bikes": 7,
         "empty_slots": 3,
         "occupancy_pct": 70.0,
-        "updated_at": "2026-09-01T16:25:48.369909+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906415+00:00Z"
       }
     },
     {
@@ -3061,7 +3061,7 @@
         "free_bikes": 2,
         "empty_slots": 6,
         "occupancy_pct": 25.0,
-        "updated_at": "2026-09-01T16:25:48.446612+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972511+00:00Z"
       }
     },
     {
@@ -3079,7 +3079,7 @@
         "free_bikes": 3,
         "empty_slots": 7,
         "occupancy_pct": 30.0,
-        "updated_at": "2026-09-01T16:25:48.368839+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.902926+00:00Z"
       }
     },
     {
@@ -3097,7 +3097,7 @@
         "free_bikes": 6,
         "empty_slots": 2,
         "occupancy_pct": 75.0,
-        "updated_at": "2026-09-01T16:25:48.371144+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907988+00:00Z"
       }
     },
     {
@@ -3115,7 +3115,7 @@
         "free_bikes": 0,
         "empty_slots": 11,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:25:48.370561+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907220+00:00Z"
       }
     },
     {
@@ -3133,7 +3133,7 @@
         "free_bikes": 29,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.373002+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971218+00:00Z"
       }
     },
     {
@@ -3148,10 +3148,10 @@
       "properties": {
         "id": "7d9bc8d9c698d98d50cba8a8e866f825",
         "name": "Dworzec Wschodni - Kijowska",
-        "free_bikes": 13,
+        "free_bikes": 12,
         "empty_slots": 1,
-        "occupancy_pct": 92.9,
-        "updated_at": "2026-09-01T16:25:48.447129+00:00Z"
+        "occupancy_pct": 92.3,
+        "updated_at": "2026-09-01T16:27:49.972641+00:00Z"
       }
     },
     {
@@ -3169,7 +3169,7 @@
         "free_bikes": 11,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.450093+00:00Z"
+        "updated_at": "2026-09-01T16:27:50.157815+00:00Z"
       }
     },
     {
@@ -3187,7 +3187,7 @@
         "free_bikes": 30,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.447595+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973037+00:00Z"
       }
     },
     {
@@ -3205,7 +3205,7 @@
         "free_bikes": 15,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.450138+00:00Z"
+        "updated_at": "2026-09-01T16:27:50.157896+00:00Z"
       }
     },
     {
@@ -3223,7 +3223,7 @@
         "free_bikes": 30,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.447365+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972813+00:00Z"
       }
     },
     {
@@ -3241,7 +3241,7 @@
         "free_bikes": 4,
         "empty_slots": 8,
         "occupancy_pct": 33.3,
-        "updated_at": "2026-09-01T16:25:48.447262+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972749+00:00Z"
       }
     },
     {
@@ -3259,7 +3259,7 @@
         "free_bikes": 14,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.448580+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973591+00:00Z"
       }
     },
     {
@@ -3277,7 +3277,7 @@
         "free_bikes": 12,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.446197+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972202+00:00Z"
       }
     },
     {
@@ -3295,7 +3295,7 @@
         "free_bikes": 12,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.372698+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971087+00:00Z"
       }
     },
     {
@@ -3313,7 +3313,7 @@
         "free_bikes": 4,
         "empty_slots": 5,
         "occupancy_pct": 44.4,
-        "updated_at": "2026-09-01T16:25:48.372403+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970724+00:00Z"
       }
     },
     {
@@ -3331,7 +3331,7 @@
         "free_bikes": 7,
         "empty_slots": 3,
         "occupancy_pct": 70.0,
-        "updated_at": "2026-09-01T16:25:48.372023+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970068+00:00Z"
       }
     },
     {
@@ -3346,10 +3346,10 @@
       "properties": {
         "id": "86213faf7aee9deee68aacfd79f115a5",
         "name": "1 Sierpnia – DK Włochy",
-        "free_bikes": 11,
+        "free_bikes": 12,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.449726+00:00Z"
+        "updated_at": "2026-09-01T16:27:50.155829+00:00Z"
       }
     },
     {
@@ -3364,10 +3364,10 @@
       "properties": {
         "id": "862daac2d5bd444089c6e2a3d6e635f6",
         "name": "Metro Racławicka",
-        "free_bikes": 8,
-        "empty_slots": 4,
-        "occupancy_pct": 66.7,
-        "updated_at": "2026-09-01T16:25:48.372206+00:00Z"
+        "free_bikes": 7,
+        "empty_slots": 5,
+        "occupancy_pct": 58.3,
+        "updated_at": "2026-09-01T16:27:49.970363+00:00Z"
       }
     },
     {
@@ -3385,7 +3385,7 @@
         "free_bikes": 13,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.373459+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971600+00:00Z"
       }
     },
     {
@@ -3403,7 +3403,7 @@
         "free_bikes": 6,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.449980+00:00Z"
+        "updated_at": "2026-09-01T16:27:50.156603+00:00Z"
       }
     },
     {
@@ -3418,10 +3418,10 @@
       "properties": {
         "id": "883843fcc89347492750f8430b5001f2",
         "name": "Plac Na Rozdrożu",
-        "free_bikes": 0,
-        "empty_slots": 12,
-        "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:25:48.371869+00:00Z"
+        "free_bikes": 6,
+        "empty_slots": 6,
+        "occupancy_pct": 50.0,
+        "updated_at": "2026-09-01T16:27:49.969774+00:00Z"
       }
     },
     {
@@ -3439,7 +3439,7 @@
         "free_bikes": 5,
         "empty_slots": 2,
         "occupancy_pct": 71.4,
-        "updated_at": "2026-09-01T16:25:48.369172+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.903313+00:00Z"
       }
     },
     {
@@ -3457,7 +3457,7 @@
         "free_bikes": 6,
         "empty_slots": 4,
         "occupancy_pct": 60.0,
-        "updated_at": "2026-09-01T16:25:48.371937+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.969930+00:00Z"
       }
     },
     {
@@ -3472,10 +3472,10 @@
       "properties": {
         "id": "8a17b41486a0371cd1114e063539fa70",
         "name": "Rondo Jazdy Polskiej",
-        "free_bikes": 4,
-        "empty_slots": 8,
-        "occupancy_pct": 33.3,
-        "updated_at": "2026-09-01T16:25:48.371806+00:00Z"
+        "free_bikes": 3,
+        "empty_slots": 9,
+        "occupancy_pct": 25.0,
+        "updated_at": "2026-09-01T16:27:49.969661+00:00Z"
       }
     },
     {
@@ -3493,7 +3493,7 @@
         "free_bikes": 20,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.370719+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907445+00:00Z"
       }
     },
     {
@@ -3511,7 +3511,7 @@
         "free_bikes": 1,
         "empty_slots": 9,
         "occupancy_pct": 10.0,
-        "updated_at": "2026-09-01T16:25:48.448538+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973548+00:00Z"
       }
     },
     {
@@ -3529,7 +3529,7 @@
         "free_bikes": 8,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.369544+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906213+00:00Z"
       }
     },
     {
@@ -3547,7 +3547,7 @@
         "free_bikes": 6,
         "empty_slots": 4,
         "occupancy_pct": 60.0,
-        "updated_at": "2026-09-01T16:25:48.370816+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907583+00:00Z"
       }
     },
     {
@@ -3565,7 +3565,7 @@
         "free_bikes": 10,
         "empty_slots": 7,
         "occupancy_pct": 58.8,
-        "updated_at": "2026-09-01T16:25:48.372080+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970152+00:00Z"
       }
     },
     {
@@ -3583,7 +3583,7 @@
         "free_bikes": 8,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.372377+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970680+00:00Z"
       }
     },
     {
@@ -3598,10 +3598,10 @@
       "properties": {
         "id": "9096675176d48fd14e21ece181e8ec0d",
         "name": "Solec – Al. 3 Maja",
-        "free_bikes": 18,
+        "free_bikes": 19,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.450162+00:00Z"
+        "updated_at": "2026-09-01T16:27:50.157918+00:00Z"
       }
     },
     {
@@ -3619,7 +3619,7 @@
         "free_bikes": 2,
         "empty_slots": 8,
         "occupancy_pct": 20.0,
-        "updated_at": "2026-09-01T16:25:48.450072+00:00Z"
+        "updated_at": "2026-09-01T16:27:50.157473+00:00Z"
       }
     },
     {
@@ -3637,7 +3637,7 @@
         "free_bikes": 12,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.449792+00:00Z"
+        "updated_at": "2026-09-01T16:27:50.156201+00:00Z"
       }
     },
     {
@@ -3652,10 +3652,10 @@
       "properties": {
         "id": "91d7841c3126136107f10ba492ade25b",
         "name": "Metro Imielin",
-        "free_bikes": 10,
-        "empty_slots": 2,
-        "occupancy_pct": 83.3,
-        "updated_at": "2026-09-01T16:25:48.373129+00:00Z"
+        "free_bikes": 11,
+        "empty_slots": 1,
+        "occupancy_pct": 91.7,
+        "updated_at": "2026-09-01T16:27:49.971333+00:00Z"
       }
     },
     {
@@ -3673,7 +3673,7 @@
         "free_bikes": 1,
         "empty_slots": 9,
         "occupancy_pct": 10.0,
-        "updated_at": "2026-09-01T16:25:48.371107+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907934+00:00Z"
       }
     },
     {
@@ -3688,10 +3688,10 @@
       "properties": {
         "id": "927f3c2f2f8db9b54f1b8c8c2c5e2dbf",
         "name": "Kruczkowskiego – PKP Powiśle",
-        "free_bikes": 12,
+        "free_bikes": 10,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.371159+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.908009+00:00Z"
       }
     },
     {
@@ -3709,7 +3709,7 @@
         "free_bikes": 17,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.370060+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906625+00:00Z"
       }
     },
     {
@@ -3727,7 +3727,7 @@
         "free_bikes": 3,
         "empty_slots": 9,
         "occupancy_pct": 25.0,
-        "updated_at": "2026-09-01T16:25:48.369156+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.903289+00:00Z"
       }
     },
     {
@@ -3745,7 +3745,7 @@
         "free_bikes": 3,
         "empty_slots": 7,
         "occupancy_pct": 30.0,
-        "updated_at": "2026-09-01T16:25:48.371080+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907896+00:00Z"
       }
     },
     {
@@ -3760,10 +3760,10 @@
       "properties": {
         "id": "941a2754b428e4351e6d06b848657eaa",
         "name": "Kondratowicza - Przy Grodzisku",
-        "free_bikes": 12,
-        "empty_slots": 0,
-        "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.445778+00:00Z"
+        "free_bikes": 11,
+        "empty_slots": 1,
+        "occupancy_pct": 91.7,
+        "updated_at": "2026-09-01T16:27:49.971844+00:00Z"
       }
     },
     {
@@ -3778,10 +3778,10 @@
       "properties": {
         "id": "955eccdf9e7e03a937c70add89106883",
         "name": "Sierakowskiego - Kłopotowskiego",
-        "free_bikes": 22,
+        "free_bikes": 21,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.446554+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972485+00:00Z"
       }
     },
     {
@@ -3796,10 +3796,10 @@
       "properties": {
         "id": "95720fed751b8bedd9441ff872d406cb",
         "name": "Ostrobramska - Motorowa",
-        "free_bikes": 5,
-        "empty_slots": 4,
-        "occupancy_pct": 55.6,
-        "updated_at": "2026-09-01T16:25:48.446323+00:00Z"
+        "free_bikes": 6,
+        "empty_slots": 3,
+        "occupancy_pct": 66.7,
+        "updated_at": "2026-09-01T16:27:49.972354+00:00Z"
       }
     },
     {
@@ -3817,7 +3817,7 @@
         "free_bikes": 13,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.372319+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970592+00:00Z"
       }
     },
     {
@@ -3832,10 +3832,10 @@
       "properties": {
         "id": "95cb4a7c9e78b4331587abde11ec16fa",
         "name": "Puławska - Dworkowa",
-        "free_bikes": 9,
-        "empty_slots": 1,
-        "occupancy_pct": 90.0,
-        "updated_at": "2026-09-01T16:25:48.372147+00:00Z"
+        "free_bikes": 8,
+        "empty_slots": 2,
+        "occupancy_pct": 80.0,
+        "updated_at": "2026-09-01T16:27:49.970269+00:00Z"
       }
     },
     {
@@ -3853,7 +3853,7 @@
         "free_bikes": 16,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.369188+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.903336+00:00Z"
       }
     },
     {
@@ -3868,10 +3868,10 @@
       "properties": {
         "id": "95e38653a5d4f2d98073d5d186929a70",
         "name": "Raszyńska - Wawelska",
-        "free_bikes": 2,
-        "empty_slots": 10,
-        "occupancy_pct": 16.7,
-        "updated_at": "2026-09-01T16:25:48.371649+00:00Z"
+        "free_bikes": 3,
+        "empty_slots": 9,
+        "occupancy_pct": 25.0,
+        "updated_at": "2026-09-01T16:27:49.969509+00:00Z"
       }
     },
     {
@@ -3889,7 +3889,7 @@
         "free_bikes": 5,
         "empty_slots": 5,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:25:48.372121+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970224+00:00Z"
       }
     },
     {
@@ -3904,10 +3904,10 @@
       "properties": {
         "id": "960f6b8b77b67d709ad31a93c731c6a0",
         "name": "Krakowskie Przedmieście - Trębacka",
-        "free_bikes": 7,
+        "free_bikes": 8,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.370262+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906818+00:00Z"
       }
     },
     {
@@ -3922,10 +3922,10 @@
       "properties": {
         "id": "96760da57565fc67c48b4cbd377f717b",
         "name": "Żelazna - Sienna",
-        "free_bikes": 1,
-        "empty_slots": 11,
-        "occupancy_pct": 8.3,
-        "updated_at": "2026-09-01T16:25:48.370734+00:00Z"
+        "free_bikes": 0,
+        "empty_slots": 12,
+        "occupancy_pct": 0.0,
+        "updated_at": "2026-09-01T16:27:49.907468+00:00Z"
       }
     },
     {
@@ -3940,10 +3940,10 @@
       "properties": {
         "id": "96d9dfdbd90fae3eaa6ef4b041d45a6a",
         "name": "Metro Kabaty",
-        "free_bikes": 19,
+        "free_bikes": 18,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.373390+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971532+00:00Z"
       }
     },
     {
@@ -3961,7 +3961,7 @@
         "free_bikes": 12,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.372720+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971106+00:00Z"
       }
     },
     {
@@ -3976,10 +3976,10 @@
       "properties": {
         "id": "9930fd615f8131dcb643f272df690648",
         "name": "Koneser",
-        "free_bikes": 6,
-        "empty_slots": 3,
-        "occupancy_pct": 66.7,
-        "updated_at": "2026-09-01T16:25:48.368695+00:00Z"
+        "free_bikes": 7,
+        "empty_slots": 2,
+        "occupancy_pct": 77.8,
+        "updated_at": "2026-09-01T16:27:49.902726+00:00Z"
       }
     },
     {
@@ -3997,7 +3997,7 @@
         "free_bikes": 0,
         "empty_slots": 13,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:25:48.371909+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.969883+00:00Z"
       }
     },
     {
@@ -4015,7 +4015,7 @@
         "free_bikes": 2,
         "empty_slots": 6,
         "occupancy_pct": 25.0,
-        "updated_at": "2026-09-01T16:25:48.370547+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907202+00:00Z"
       }
     },
     {
@@ -4033,7 +4033,7 @@
         "free_bikes": 10,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.372390+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970702+00:00Z"
       }
     },
     {
@@ -4051,7 +4051,7 @@
         "free_bikes": 4,
         "empty_slots": 6,
         "occupancy_pct": 40.0,
-        "updated_at": "2026-09-01T16:25:48.448764+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973653+00:00Z"
       }
     },
     {
@@ -4069,7 +4069,7 @@
         "free_bikes": 13,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.370309+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906883+00:00Z"
       }
     },
     {
@@ -4084,10 +4084,10 @@
       "properties": {
         "id": "a107ddb793497db8db7ba3ef2fd364a8",
         "name": "Stefana Banacha - UW",
-        "free_bikes": 2,
-        "empty_slots": 18,
-        "occupancy_pct": 10.0,
-        "updated_at": "2026-09-01T16:25:48.371952+00:00Z"
+        "free_bikes": 4,
+        "empty_slots": 16,
+        "occupancy_pct": 20.0,
+        "updated_at": "2026-09-01T16:27:49.969953+00:00Z"
       }
     },
     {
@@ -4105,7 +4105,7 @@
         "free_bikes": 2,
         "empty_slots": 2,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:25:48.371789+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.969639+00:00Z"
       }
     },
     {
@@ -4123,7 +4123,7 @@
         "free_bikes": 9,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.372008+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970045+00:00Z"
       }
     },
     {
@@ -4141,7 +4141,7 @@
         "free_bikes": 10,
         "empty_slots": 4,
         "occupancy_pct": 71.4,
-        "updated_at": "2026-09-01T16:25:48.446138+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972115+00:00Z"
       }
     },
     {
@@ -4156,10 +4156,10 @@
       "properties": {
         "id": "a60bac12ba693d9c5dbfd690a93de8a7",
         "name": "al. Jana Pawła II - Złota",
-        "free_bikes": 2,
-        "empty_slots": 6,
-        "occupancy_pct": 25.0,
-        "updated_at": "2026-09-01T16:25:48.370749+00:00Z"
+        "free_bikes": 4,
+        "empty_slots": 4,
+        "occupancy_pct": 50.0,
+        "updated_at": "2026-09-01T16:27:49.907484+00:00Z"
       }
     },
     {
@@ -4174,10 +4174,10 @@
       "properties": {
         "id": "a69a3992939c18925fdd7b33b83974d0",
         "name": "Emilii Plater - Wspólna",
-        "free_bikes": 1,
-        "empty_slots": 7,
-        "occupancy_pct": 12.5,
-        "updated_at": "2026-09-01T16:25:48.371036+00:00Z"
+        "free_bikes": 0,
+        "empty_slots": 8,
+        "occupancy_pct": 0.0,
+        "updated_at": "2026-09-01T16:27:49.907839+00:00Z"
       }
     },
     {
@@ -4195,7 +4195,7 @@
         "free_bikes": 3,
         "empty_slots": 9,
         "occupancy_pct": 25.0,
-        "updated_at": "2026-09-01T16:25:48.450116+00:00Z"
+        "updated_at": "2026-09-01T16:27:50.157873+00:00Z"
       }
     },
     {
@@ -4210,10 +4210,10 @@
       "properties": {
         "id": "a7ee14a54200db4583278e146135e61a",
         "name": "Kaliskiego - Kocjana ",
-        "free_bikes": 11,
+        "free_bikes": 10,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.373753+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971801+00:00Z"
       }
     },
     {
@@ -4228,10 +4228,10 @@
       "properties": {
         "id": "a8c263a71bc4de9282d29753359b3d63",
         "name": "al. Rzeczypospolitej - Klimczaka",
-        "free_bikes": 18,
+        "free_bikes": 17,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.372677+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971068+00:00Z"
       }
     },
     {
@@ -4249,7 +4249,7 @@
         "free_bikes": 13,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.372489+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970862+00:00Z"
       }
     },
     {
@@ -4267,7 +4267,7 @@
         "free_bikes": 11,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.448789+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973673+00:00Z"
       }
     },
     {
@@ -4285,7 +4285,7 @@
         "free_bikes": 3,
         "empty_slots": 9,
         "occupancy_pct": 25.0,
-        "updated_at": "2026-09-01T16:25:48.369391+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906127+00:00Z"
       }
     },
     {
@@ -4300,10 +4300,10 @@
       "properties": {
         "id": "a9a6d175f9140492e710a63f02566383",
         "name": "Dworzec Zachodni",
-        "free_bikes": 7,
-        "empty_slots": 3,
-        "occupancy_pct": 70.0,
-        "updated_at": "2026-09-01T16:25:48.370104+00:00Z"
+        "free_bikes": 8,
+        "empty_slots": 2,
+        "occupancy_pct": 80.0,
+        "updated_at": "2026-09-01T16:27:49.906687+00:00Z"
       }
     },
     {
@@ -4321,7 +4321,7 @@
         "free_bikes": 3,
         "empty_slots": 7,
         "occupancy_pct": 30.0,
-        "updated_at": "2026-09-01T16:25:48.372066+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970131+00:00Z"
       }
     },
     {
@@ -4339,7 +4339,7 @@
         "free_bikes": 2,
         "empty_slots": 8,
         "occupancy_pct": 20.0,
-        "updated_at": "2026-09-01T16:25:48.369300+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.905987+00:00Z"
       }
     },
     {
@@ -4357,7 +4357,7 @@
         "free_bikes": 8,
         "empty_slots": 2,
         "occupancy_pct": 80.0,
-        "updated_at": "2026-09-01T16:25:48.372162+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970292+00:00Z"
       }
     },
     {
@@ -4372,10 +4372,10 @@
       "properties": {
         "id": "abe949ab6d27b114fee8fddf824538f9",
         "name": "Kasprzaka - Karolkowa",
-        "free_bikes": 0,
-        "empty_slots": 8,
-        "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:25:48.370381+00:00Z"
+        "free_bikes": 1,
+        "empty_slots": 7,
+        "occupancy_pct": 12.5,
+        "updated_at": "2026-09-01T16:27:49.907031+00:00Z"
       }
     },
     {
@@ -4393,7 +4393,7 @@
         "free_bikes": 4,
         "empty_slots": 1,
         "occupancy_pct": 80.0,
-        "updated_at": "2026-09-01T16:25:48.450002+00:00Z"
+        "updated_at": "2026-09-01T16:27:50.156622+00:00Z"
       }
     },
     {
@@ -4411,7 +4411,7 @@
         "free_bikes": 9,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.449136+00:00Z"
+        "updated_at": "2026-09-01T16:27:50.155316+00:00Z"
       }
     },
     {
@@ -4429,7 +4429,7 @@
         "free_bikes": 4,
         "empty_slots": 4,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:25:48.373212+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971424+00:00Z"
       }
     },
     {
@@ -4447,7 +4447,7 @@
         "free_bikes": 10,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.370245+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906796+00:00Z"
       }
     },
     {
@@ -4465,7 +4465,7 @@
         "free_bikes": 2,
         "empty_slots": 12,
         "occupancy_pct": 14.3,
-        "updated_at": "2026-09-01T16:25:48.447960+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973197+00:00Z"
       }
     },
     {
@@ -4483,7 +4483,7 @@
         "free_bikes": 7,
         "empty_slots": 3,
         "occupancy_pct": 70.0,
-        "updated_at": "2026-09-01T16:25:48.371174+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.969376+00:00Z"
       }
     },
     {
@@ -4501,7 +4501,7 @@
         "free_bikes": 1,
         "empty_slots": 7,
         "occupancy_pct": 12.5,
-        "updated_at": "2026-09-01T16:25:48.370435+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907109+00:00Z"
       }
     },
     {
@@ -4519,7 +4519,7 @@
         "free_bikes": 4,
         "empty_slots": 4,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:25:48.448559+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973569+00:00Z"
       }
     },
     {
@@ -4537,7 +4537,7 @@
         "free_bikes": 1,
         "empty_slots": 13,
         "occupancy_pct": 7.1,
-        "updated_at": "2026-09-01T16:25:48.370763+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907505+00:00Z"
       }
     },
     {
@@ -4555,7 +4555,7 @@
         "free_bikes": 20,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.449851+00:00Z"
+        "updated_at": "2026-09-01T16:27:50.156460+00:00Z"
       }
     },
     {
@@ -4570,10 +4570,10 @@
       "properties": {
         "id": "b02a9ff6c5ea679dc82ea54ad1449765",
         "name": "Jagiellońska - Plac Hallera",
-        "free_bikes": 11,
-        "empty_slots": 0,
-        "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.446212+00:00Z"
+        "free_bikes": 6,
+        "empty_slots": 3,
+        "occupancy_pct": 66.7,
+        "updated_at": "2026-09-01T16:27:49.972222+00:00Z"
       }
     },
     {
@@ -4588,10 +4588,10 @@
       "properties": {
         "id": "b05d7c141016747a42174a3c8352cb5e",
         "name": "Praga-Południe-Ratusz",
-        "free_bikes": 22,
+        "free_bikes": 21,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.447235+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972725+00:00Z"
       }
     },
     {
@@ -4609,7 +4609,7 @@
         "free_bikes": 1,
         "empty_slots": 5,
         "occupancy_pct": 16.7,
-        "updated_at": "2026-09-01T16:25:48.449036+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973739+00:00Z"
       }
     },
     {
@@ -4627,7 +4627,7 @@
         "free_bikes": 11,
         "empty_slots": 11,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:25:48.370687+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907400+00:00Z"
       }
     },
     {
@@ -4645,7 +4645,7 @@
         "free_bikes": 5,
         "empty_slots": 4,
         "occupancy_pct": 55.6,
-        "updated_at": "2026-09-01T16:25:48.373049+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971265+00:00Z"
       }
     },
     {
@@ -4663,7 +4663,7 @@
         "free_bikes": 7,
         "empty_slots": 3,
         "occupancy_pct": 70.0,
-        "updated_at": "2026-09-01T16:25:48.446022+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972003+00:00Z"
       }
     },
     {
@@ -4681,7 +4681,7 @@
         "free_bikes": 16,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.373598+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971736+00:00Z"
       }
     },
     {
@@ -4699,7 +4699,7 @@
         "free_bikes": 22,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.446092+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972069+00:00Z"
       }
     },
     {
@@ -4717,7 +4717,7 @@
         "free_bikes": 15,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.449889+00:00Z"
+        "updated_at": "2026-09-01T16:27:50.156512+00:00Z"
       }
     },
     {
@@ -4735,7 +4735,7 @@
         "free_bikes": 25,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.447473+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972881+00:00Z"
       }
     },
     {
@@ -4753,7 +4753,7 @@
         "free_bikes": 11,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.372349+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970636+00:00Z"
       }
     },
     {
@@ -4768,10 +4768,10 @@
       "properties": {
         "id": "b633a43366e782d27f579878c66a1eb0",
         "name": "Plac Szembeka",
-        "free_bikes": 36,
+        "free_bikes": 37,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.447528+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972930+00:00Z"
       }
     },
     {
@@ -4786,10 +4786,10 @@
       "properties": {
         "id": "b71348ae8cf50c5bcd1b324064016f5d",
         "name": "Powązkowska - Plac Niemena",
-        "free_bikes": 4,
-        "empty_slots": 4,
-        "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:25:48.369269+00:00Z"
+        "free_bikes": 6,
+        "empty_slots": 2,
+        "occupancy_pct": 75.0,
+        "updated_at": "2026-09-01T16:27:49.905925+00:00Z"
       }
     },
     {
@@ -4807,7 +4807,7 @@
         "free_bikes": 1,
         "empty_slots": 9,
         "occupancy_pct": 10.0,
-        "updated_at": "2026-09-01T16:25:48.373551+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971691+00:00Z"
       }
     },
     {
@@ -4822,10 +4822,10 @@
       "properties": {
         "id": "ba589cf061c780a6315f04c52b2e44de",
         "name": "Okopowa - Anielewicza",
-        "free_bikes": 5,
-        "empty_slots": 4,
-        "occupancy_pct": 55.6,
-        "updated_at": "2026-09-01T16:25:48.369723+00:00Z"
+        "free_bikes": 6,
+        "empty_slots": 3,
+        "occupancy_pct": 66.7,
+        "updated_at": "2026-09-01T16:27:49.906235+00:00Z"
       }
     },
     {
@@ -4840,10 +4840,10 @@
       "properties": {
         "id": "ba7299f75bd03aae54e41a68a8564b9b",
         "name": "Metro Plac Wilsona",
-        "free_bikes": 12,
-        "empty_slots": 0,
-        "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.369085+00:00Z"
+        "free_bikes": 11,
+        "empty_slots": 1,
+        "occupancy_pct": 91.7,
+        "updated_at": "2026-09-01T16:27:49.903183+00:00Z"
       }
     },
     {
@@ -4861,7 +4861,7 @@
         "free_bikes": 2,
         "empty_slots": 6,
         "occupancy_pct": 25.0,
-        "updated_at": "2026-09-01T16:25:48.369123+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.903239+00:00Z"
       }
     },
     {
@@ -4876,10 +4876,10 @@
       "properties": {
         "id": "bd0fdc4afb317d4931a9687c98eb9004",
         "name": "Smocza - Nowolipki",
-        "free_bikes": 8,
-        "empty_slots": 0,
-        "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.370017+00:00Z"
+        "free_bikes": 6,
+        "empty_slots": 2,
+        "occupancy_pct": 75.0,
+        "updated_at": "2026-09-01T16:27:49.906560+00:00Z"
       }
     },
     {
@@ -4894,10 +4894,10 @@
       "properties": {
         "id": "bd43ae4c312c550b27009fe8c946bd4e",
         "name": "Kleszczowa – Krańcowa",
-        "free_bikes": 1,
-        "empty_slots": 7,
-        "occupancy_pct": 12.5,
-        "updated_at": "2026-09-01T16:25:48.449678+00:00Z"
+        "free_bikes": 0,
+        "empty_slots": 8,
+        "occupancy_pct": 0.0,
+        "updated_at": "2026-09-01T16:27:50.155524+00:00Z"
       }
     },
     {
@@ -4912,10 +4912,10 @@
       "properties": {
         "id": "bda5f678ffa9abaf2618f975a302634e",
         "name": "Rakowiecka - Św. A. Boboli",
-        "free_bikes": 6,
-        "empty_slots": 3,
-        "occupancy_pct": 66.7,
-        "updated_at": "2026-09-01T16:25:48.372039+00:00Z"
+        "free_bikes": 9,
+        "empty_slots": 0,
+        "occupancy_pct": 100.0,
+        "updated_at": "2026-09-01T16:27:49.970091+00:00Z"
       }
     },
     {
@@ -4933,7 +4933,7 @@
         "free_bikes": 12,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.373527+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971668+00:00Z"
       }
     },
     {
@@ -4948,10 +4948,10 @@
       "properties": {
         "id": "be3a6d79762e1dcf61de3e4c4d272fbd",
         "name": "Puławska - Dolna",
-        "free_bikes": 5,
-        "empty_slots": 5,
-        "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:25:48.372219+00:00Z"
+        "free_bikes": 4,
+        "empty_slots": 6,
+        "occupancy_pct": 40.0,
+        "updated_at": "2026-09-01T16:27:49.970384+00:00Z"
       }
     },
     {
@@ -4966,10 +4966,10 @@
       "properties": {
         "id": "be5966b93a9db0e2c58b9341585193a7",
         "name": "Waszyngtona - Kinowa",
-        "free_bikes": 13,
+        "free_bikes": 14,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.447402+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972836+00:00Z"
       }
     },
     {
@@ -4984,10 +4984,10 @@
       "properties": {
         "id": "bf358040b8f10282b36fb2b1c1bb4886",
         "name": "Metro Stadion Narodowy",
-        "free_bikes": 2,
-        "empty_slots": 6,
-        "occupancy_pct": 25.0,
-        "updated_at": "2026-09-01T16:25:48.447156+00:00Z"
+        "free_bikes": 0,
+        "empty_slots": 8,
+        "occupancy_pct": 0.0,
+        "updated_at": "2026-09-01T16:27:49.972664+00:00Z"
       }
     },
     {
@@ -5002,10 +5002,10 @@
       "properties": {
         "id": "bffdedd60a450ff517e8e8b6a3f2bf56",
         "name": "Dolina Służewiecka - Nowoursynowska",
-        "free_bikes": 0,
-        "empty_slots": 10,
-        "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:25:48.449119+00:00Z"
+        "free_bikes": 2,
+        "empty_slots": 8,
+        "occupancy_pct": 20.0,
+        "updated_at": "2026-09-01T16:27:49.973819+00:00Z"
       }
     },
     {
@@ -5020,10 +5020,10 @@
       "properties": {
         "id": "c00f91f263d02c365e492294fd5e6398",
         "name": "Sobieskiego - Chełmska",
-        "free_bikes": 26,
+        "free_bikes": 27,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.372233+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970405+00:00Z"
       }
     },
     {
@@ -5038,10 +5038,10 @@
       "properties": {
         "id": "c05c20c0e678da08d8b45e0b8fc191f9",
         "name": "Bora-Komorowskiego - Umińskiego",
-        "free_bikes": 14,
+        "free_bikes": 15,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.447689+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973110+00:00Z"
       }
     },
     {
@@ -5059,7 +5059,7 @@
         "free_bikes": 1,
         "empty_slots": 13,
         "occupancy_pct": 7.1,
-        "updated_at": "2026-09-01T16:25:48.369974+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906499+00:00Z"
       }
     },
     {
@@ -5077,7 +5077,7 @@
         "free_bikes": 2,
         "empty_slots": 4,
         "occupancy_pct": 33.3,
-        "updated_at": "2026-09-01T16:25:48.370076+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906648+00:00Z"
       }
     },
     {
@@ -5095,7 +5095,7 @@
         "free_bikes": 2,
         "empty_slots": 7,
         "occupancy_pct": 22.2,
-        "updated_at": "2026-09-01T16:25:48.449009+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973718+00:00Z"
       }
     },
     {
@@ -5113,7 +5113,7 @@
         "free_bikes": 5,
         "empty_slots": 3,
         "occupancy_pct": 62.5,
-        "updated_at": "2026-09-01T16:25:48.373481+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971623+00:00Z"
       }
     },
     {
@@ -5131,7 +5131,7 @@
         "free_bikes": 6,
         "empty_slots": 3,
         "occupancy_pct": 66.7,
-        "updated_at": "2026-09-01T16:25:48.446384+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972375+00:00Z"
       }
     },
     {
@@ -5149,7 +5149,7 @@
         "free_bikes": 8,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.369959+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906478+00:00Z"
       }
     },
     {
@@ -5167,7 +5167,7 @@
         "free_bikes": 2,
         "empty_slots": 10,
         "occupancy_pct": 16.7,
-        "updated_at": "2026-09-01T16:25:48.373786+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971825+00:00Z"
       }
     },
     {
@@ -5185,7 +5185,7 @@
         "free_bikes": 10,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.369344+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906056+00:00Z"
       }
     },
     {
@@ -5203,7 +5203,7 @@
         "free_bikes": 13,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.370191+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906731+00:00Z"
       }
     },
     {
@@ -5221,7 +5221,7 @@
         "free_bikes": 3,
         "empty_slots": 7,
         "occupancy_pct": 30.0,
-        "updated_at": "2026-09-01T16:25:48.370645+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907338+00:00Z"
       }
     },
     {
@@ -5236,10 +5236,10 @@
       "properties": {
         "id": "d02e28bf8ed332ed2bb609634b176cde",
         "name": "Metro Ulrychów",
-        "free_bikes": 11,
+        "free_bikes": 9,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.371664+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.969530+00:00Z"
       }
     },
     {
@@ -5254,10 +5254,10 @@
       "properties": {
         "id": "d169043eae15ae9dd1d73da300918444",
         "name": "Metro Świętokrzyska",
-        "free_bikes": 3,
-        "empty_slots": 11,
-        "occupancy_pct": 21.4,
-        "updated_at": "2026-09-01T16:25:48.370616+00:00Z"
+        "free_bikes": 4,
+        "empty_slots": 10,
+        "occupancy_pct": 28.6,
+        "updated_at": "2026-09-01T16:27:49.907298+00:00Z"
       }
     },
     {
@@ -5275,7 +5275,7 @@
         "free_bikes": 11,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.369205+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.903361+00:00Z"
       }
     },
     {
@@ -5293,7 +5293,7 @@
         "free_bikes": 2,
         "empty_slots": 11,
         "occupancy_pct": 15.4,
-        "updated_at": "2026-09-01T16:25:48.370404+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907067+00:00Z"
       }
     },
     {
@@ -5311,7 +5311,7 @@
         "free_bikes": 15,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.448391+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973405+00:00Z"
       }
     },
     {
@@ -5329,7 +5329,7 @@
         "free_bikes": 6,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.449914+00:00Z"
+        "updated_at": "2026-09-01T16:27:50.156539+00:00Z"
       }
     },
     {
@@ -5344,10 +5344,10 @@
       "properties": {
         "id": "d2b1bdeddc6271b7fc6dafcadd338d5d",
         "name": "Dzielna - Bellottiego",
-        "free_bikes": 7,
-        "empty_slots": 1,
-        "occupancy_pct": 87.5,
-        "updated_at": "2026-09-01T16:25:48.369988+00:00Z"
+        "free_bikes": 5,
+        "empty_slots": 3,
+        "occupancy_pct": 62.5,
+        "updated_at": "2026-09-01T16:27:49.906520+00:00Z"
       }
     },
     {
@@ -5362,10 +5362,10 @@
       "properties": {
         "id": "d36a43744d0527ec6805d5966b7290e6",
         "name": "Wysockiego - Matki Teresy z Kalkuty",
-        "free_bikes": 3,
-        "empty_slots": 5,
-        "occupancy_pct": 37.5,
-        "updated_at": "2026-09-01T16:25:48.445953+00:00Z"
+        "free_bikes": 1,
+        "empty_slots": 7,
+        "occupancy_pct": 12.5,
+        "updated_at": "2026-09-01T16:27:49.971941+00:00Z"
       }
     },
     {
@@ -5383,7 +5383,7 @@
         "free_bikes": 11,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.373662+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971759+00:00Z"
       }
     },
     {
@@ -5401,7 +5401,7 @@
         "free_bikes": 5,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.373077+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971289+00:00Z"
       }
     },
     {
@@ -5419,7 +5419,7 @@
         "free_bikes": 6,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.449958+00:00Z"
+        "updated_at": "2026-09-01T16:27:50.156584+00:00Z"
       }
     },
     {
@@ -5434,10 +5434,10 @@
       "properties": {
         "id": "d7c52788b274af9a1326e272b25c3e36",
         "name": "Bulwar - most Śląsko - Dąbrowski",
-        "free_bikes": 10,
+        "free_bikes": 9,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.448454+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973466+00:00Z"
       }
     },
     {
@@ -5455,7 +5455,7 @@
         "free_bikes": 6,
         "empty_slots": 3,
         "occupancy_pct": 66.7,
-        "updated_at": "2026-09-01T16:25:48.449770+00:00Z"
+        "updated_at": "2026-09-01T16:27:50.156034+00:00Z"
       }
     },
     {
@@ -5473,7 +5473,7 @@
         "free_bikes": 1,
         "empty_slots": 8,
         "occupancy_pct": 11.1,
-        "updated_at": "2026-09-01T16:25:48.446070+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972048+00:00Z"
       }
     },
     {
@@ -5491,7 +5491,7 @@
         "free_bikes": 12,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.449936+00:00Z"
+        "updated_at": "2026-09-01T16:27:50.156563+00:00Z"
       }
     },
     {
@@ -5509,7 +5509,7 @@
         "free_bikes": 13,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.370294+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906859+00:00Z"
       }
     },
     {
@@ -5527,7 +5527,7 @@
         "free_bikes": 16,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.448002+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973239+00:00Z"
       }
     },
     {
@@ -5545,7 +5545,7 @@
         "free_bikes": 9,
         "empty_slots": 3,
         "occupancy_pct": 75.0,
-        "updated_at": "2026-09-01T16:25:48.372334+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970614+00:00Z"
       }
     },
     {
@@ -5563,7 +5563,7 @@
         "free_bikes": 1,
         "empty_slots": 11,
         "occupancy_pct": 8.3,
-        "updated_at": "2026-09-01T16:25:48.369860+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906379+00:00Z"
       }
     },
     {
@@ -5581,7 +5581,7 @@
         "free_bikes": 2,
         "empty_slots": 6,
         "occupancy_pct": 25.0,
-        "updated_at": "2026-09-01T16:25:48.370630+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907319+00:00Z"
       }
     },
     {
@@ -5599,7 +5599,7 @@
         "free_bikes": 11,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.373107+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971310+00:00Z"
       }
     },
     {
@@ -5614,10 +5614,10 @@
       "properties": {
         "id": "e22a2724f3b38d58015cc3ea38dd5bdf",
         "name": "Ordonówny - Światowida",
-        "free_bikes": 14,
+        "free_bikes": 13,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.373365+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971509+00:00Z"
       }
     },
     {
@@ -5635,7 +5635,7 @@
         "free_bikes": 7,
         "empty_slots": 3,
         "occupancy_pct": 70.0,
-        "updated_at": "2026-09-01T16:25:48.369945+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906456+00:00Z"
       }
     },
     {
@@ -5653,7 +5653,7 @@
         "free_bikes": 1,
         "empty_slots": 9,
         "occupancy_pct": 10.0,
-        "updated_at": "2026-09-01T16:25:48.370776+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907524+00:00Z"
       }
     },
     {
@@ -5671,7 +5671,7 @@
         "free_bikes": 0,
         "empty_slots": 9,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:25:48.371858+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.969758+00:00Z"
       }
     },
     {
@@ -5689,7 +5689,7 @@
         "free_bikes": 2,
         "empty_slots": 8,
         "occupancy_pct": 20.0,
-        "updated_at": "2026-09-01T16:25:48.450276+00:00Z"
+        "updated_at": "2026-09-01T16:27:50.158030+00:00Z"
       }
     },
     {
@@ -5704,10 +5704,10 @@
       "properties": {
         "id": "e579c1463140a7354c3d946f14954492",
         "name": "Metro Centrum",
-        "free_bikes": 3,
-        "empty_slots": 8,
-        "occupancy_pct": 27.3,
-        "updated_at": "2026-09-01T16:25:48.371051+00:00Z"
+        "free_bikes": 1,
+        "empty_slots": 10,
+        "occupancy_pct": 9.1,
+        "updated_at": "2026-09-01T16:27:49.907856+00:00Z"
       }
     },
     {
@@ -5725,7 +5725,7 @@
         "free_bikes": 5,
         "empty_slots": 5,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:25:48.370211+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906755+00:00Z"
       }
     },
     {
@@ -5740,10 +5740,10 @@
       "properties": {
         "id": "e961095c829525ac0ebd172fc1c9c0f0",
         "name": "Metro Wilanowska - Dworzec Południowy",
-        "free_bikes": 1,
-        "empty_slots": 11,
-        "occupancy_pct": 8.3,
-        "updated_at": "2026-09-01T16:25:48.372460+00:00Z"
+        "free_bikes": 5,
+        "empty_slots": 7,
+        "occupancy_pct": 41.7,
+        "updated_at": "2026-09-01T16:27:49.970817+00:00Z"
       }
     },
     {
@@ -5758,10 +5758,10 @@
       "properties": {
         "id": "ead62a829d31b7f274630647c7872939",
         "name": "Wileńska - Rzeszotarskiej",
-        "free_bikes": 12,
+        "free_bikes": 10,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.446485+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972419+00:00Z"
       }
     },
     {
@@ -5779,7 +5779,7 @@
         "free_bikes": 3,
         "empty_slots": 7,
         "occupancy_pct": 30.0,
-        "updated_at": "2026-09-01T16:25:48.372504+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970885+00:00Z"
       }
     },
     {
@@ -5794,10 +5794,10 @@
       "properties": {
         "id": "ec1e71bc9b35c03590a4b84aa3ab0f90",
         "name": "Park Rozwoju",
-        "free_bikes": 2,
-        "empty_slots": 8,
-        "occupancy_pct": 20.0,
-        "updated_at": "2026-09-01T16:25:48.448697+00:00Z"
+        "free_bikes": 1,
+        "empty_slots": 9,
+        "occupancy_pct": 10.0,
+        "updated_at": "2026-09-01T16:27:49.973633+00:00Z"
       }
     },
     {
@@ -5815,7 +5815,7 @@
         "free_bikes": 2,
         "empty_slots": 9,
         "occupancy_pct": 18.2,
-        "updated_at": "2026-09-01T16:25:48.369503+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906170+00:00Z"
       }
     },
     {
@@ -5833,7 +5833,7 @@
         "free_bikes": 13,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.371965+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.969978+00:00Z"
       }
     },
     {
@@ -5851,7 +5851,7 @@
         "free_bikes": 0,
         "empty_slots": 5,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:25:48.449057+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.973760+00:00Z"
       }
     },
     {
@@ -5869,7 +5869,7 @@
         "free_bikes": 1,
         "empty_slots": 11,
         "occupancy_pct": 8.3,
-        "updated_at": "2026-09-01T16:25:48.370873+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907670+00:00Z"
       }
     },
     {
@@ -5884,10 +5884,10 @@
       "properties": {
         "id": "f3dc094f861511f5a87c9c0baef0d681",
         "name": "Broniewskiego - Perzyńskiego",
-        "free_bikes": 20,
+        "free_bikes": 19,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.369030+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.903127+00:00Z"
       }
     },
     {
@@ -5902,10 +5902,10 @@
       "properties": {
         "id": "f3e3f126b052eadf7277990497b47010",
         "name": "Rechniewskiego - Nowaka-Jeziorańskiego",
-        "free_bikes": 11,
-        "empty_slots": 1,
-        "occupancy_pct": 91.7,
-        "updated_at": "2026-09-01T16:25:48.447898+00:00Z"
+        "free_bikes": 12,
+        "empty_slots": 0,
+        "occupancy_pct": 100.0,
+        "updated_at": "2026-09-01T16:27:49.973156+00:00Z"
       }
     },
     {
@@ -5920,10 +5920,10 @@
       "properties": {
         "id": "f3fa39306feef2cc835be43515910cbd",
         "name": "Pileckiego - Alternatywy",
-        "free_bikes": 14,
+        "free_bikes": 13,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.373169+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971378+00:00Z"
       }
     },
     {
@@ -5938,10 +5938,10 @@
       "properties": {
         "id": "f438ccf980631ce180a2e538cb31ed03",
         "name": "Rondo Wiatraczna",
-        "free_bikes": 25,
+        "free_bikes": 26,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.447451+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972858+00:00Z"
       }
     },
     {
@@ -5956,10 +5956,10 @@
       "properties": {
         "id": "f489d21812382065c51b1745c3b47f77",
         "name": "al. Jana Pawła II - Anielewicza",
-        "free_bikes": 10,
-        "empty_slots": 4,
-        "occupancy_pct": 71.4,
-        "updated_at": "2026-09-01T16:25:48.369776+00:00Z"
+        "free_bikes": 9,
+        "empty_slots": 5,
+        "occupancy_pct": 64.3,
+        "updated_at": "2026-09-01T16:27:49.906300+00:00Z"
       }
     },
     {
@@ -5974,10 +5974,10 @@
       "properties": {
         "id": "f7820c4a0c1dc61fdee21037e26a9f32",
         "name": "Szczęśliwicka - APS",
-        "free_bikes": 5,
-        "empty_slots": 5,
-        "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:25:48.371560+00:00Z"
+        "free_bikes": 4,
+        "empty_slots": 6,
+        "occupancy_pct": 40.0,
+        "updated_at": "2026-09-01T16:27:49.969438+00:00Z"
       }
     },
     {
@@ -5992,10 +5992,10 @@
       "properties": {
         "id": "f7a19fb353ec95cab1cd958a92fa75c4",
         "name": "Warsaw Spire",
-        "free_bikes": 0,
-        "empty_slots": 10,
-        "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:25:48.448248+00:00Z"
+        "free_bikes": 1,
+        "empty_slots": 9,
+        "occupancy_pct": 10.0,
+        "updated_at": "2026-09-01T16:27:49.973320+00:00Z"
       }
     },
     {
@@ -6013,7 +6013,7 @@
         "free_bikes": 0,
         "empty_slots": 9,
         "occupancy_pct": 0.0,
-        "updated_at": "2026-09-01T16:25:48.371120+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907953+00:00Z"
       }
     },
     {
@@ -6028,10 +6028,10 @@
       "properties": {
         "id": "f909f4c68472c02d6972fdd7710311ee",
         "name": "Pętla Gocławek",
-        "free_bikes": 7,
-        "empty_slots": 1,
-        "occupancy_pct": 87.5,
-        "updated_at": "2026-09-01T16:25:48.447548+00:00Z"
+        "free_bikes": 9,
+        "empty_slots": 0,
+        "occupancy_pct": 100.0,
+        "updated_at": "2026-09-01T16:27:49.972971+00:00Z"
       }
     },
     {
@@ -6049,7 +6049,7 @@
         "free_bikes": 3,
         "empty_slots": 8,
         "occupancy_pct": 27.3,
-        "updated_at": "2026-09-01T16:25:48.372447+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970796+00:00Z"
       }
     },
     {
@@ -6067,7 +6067,7 @@
         "free_bikes": 1,
         "empty_slots": 9,
         "occupancy_pct": 10.0,
-        "updated_at": "2026-09-01T16:25:48.370913+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907737+00:00Z"
       }
     },
     {
@@ -6085,7 +6085,7 @@
         "free_bikes": 5,
         "empty_slots": 3,
         "occupancy_pct": 62.5,
-        "updated_at": "2026-09-01T16:25:48.371586+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.969461+00:00Z"
       }
     },
     {
@@ -6103,7 +6103,7 @@
         "free_bikes": 10,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.446421+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972397+00:00Z"
       }
     },
     {
@@ -6118,10 +6118,10 @@
       "properties": {
         "id": "fc44cd1da7de747f202ec9bb0c105ab9",
         "name": "Wolska - Hubalczyków ",
-        "free_bikes": 6,
-        "empty_slots": 4,
-        "occupancy_pct": 60.0,
-        "updated_at": "2026-09-01T16:25:48.370601+00:00Z"
+        "free_bikes": 7,
+        "empty_slots": 3,
+        "occupancy_pct": 70.0,
+        "updated_at": "2026-09-01T16:27:49.907277+00:00Z"
       }
     },
     {
@@ -6139,7 +6139,7 @@
         "free_bikes": 5,
         "empty_slots": 5,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:25:48.373150+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971356+00:00Z"
       }
     },
     {
@@ -6157,7 +6157,7 @@
         "free_bikes": 5,
         "empty_slots": 5,
         "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:25:48.446641+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972532+00:00Z"
       }
     },
     {
@@ -6175,7 +6175,7 @@
         "free_bikes": 12,
         "empty_slots": 6,
         "occupancy_pct": 66.7,
-        "updated_at": "2026-09-01T16:25:48.445865+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971867+00:00Z"
       }
     },
     {
@@ -6193,7 +6193,7 @@
         "free_bikes": 25,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.447296+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.972790+00:00Z"
       }
     },
     {
@@ -6208,10 +6208,10 @@
       "properties": {
         "id": "fda32f025901aa9743b1596d43969ab3",
         "name": "al. Jerozolimskie - Krucza",
-        "free_bikes": 4,
-        "empty_slots": 4,
-        "occupancy_pct": 50.0,
-        "updated_at": "2026-09-01T16:25:48.370789+00:00Z"
+        "free_bikes": 3,
+        "empty_slots": 5,
+        "occupancy_pct": 37.5,
+        "updated_at": "2026-09-01T16:27:49.907543+00:00Z"
       }
     },
     {
@@ -6229,7 +6229,7 @@
         "free_bikes": 23,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.445896+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.971889+00:00Z"
       }
     },
     {
@@ -6247,7 +6247,7 @@
         "free_bikes": 2,
         "empty_slots": 7,
         "occupancy_pct": 22.2,
-        "updated_at": "2026-09-01T16:25:48.370572+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.907236+00:00Z"
       }
     },
     {
@@ -6265,7 +6265,7 @@
         "free_bikes": 7,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.372290+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.970545+00:00Z"
       }
     },
     {
@@ -6283,7 +6283,7 @@
         "free_bikes": 14,
         "empty_slots": 0,
         "occupancy_pct": 100.0,
-        "updated_at": "2026-09-01T16:25:48.370227+00:00Z"
+        "updated_at": "2026-09-01T16:27:49.906775+00:00Z"
       }
     }
   ]

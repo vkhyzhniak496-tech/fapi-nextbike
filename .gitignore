@@ -5,6 +5,11 @@ __pycache__/
 
 # C extensions
 *.so
+.venv/
+venv/
+__pycache__/
+*.pyc
+
 
 # Distribution / packaging
 .Python
@@ -216,3 +221,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+
+resources/stations_cache.json
+resources/history_cache.json
