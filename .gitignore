@@ -228,7 +228,6 @@ resources/stations_cache.json
 resources/history_cache.json
 
 
-# SQLite database & WAL files
-veturilo_history.db
-veturilo_history.db-wal
-veturilo_history.db-shm
+resources/*.db
+resources/*.db-wal
+resources/*.db-shm

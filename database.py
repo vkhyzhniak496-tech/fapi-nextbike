@@ -4,8 +4,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-DB_PATH = Path("veturilo_history.db")
-JSON_CACHE_PATH = Path("history_cache.json")
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent
+
+RESOURCES_DIR = BASE_DIR / "resources"
+DB_PATH = RESOURCES_DIR / "veturilo_history.db"
+JSON_CACHE_PATH = RESOURCES_DIR / "history_cache.json"
 
 
 def get_connection() -> sqlite3.Connection:
