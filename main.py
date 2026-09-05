@@ -167,6 +167,7 @@ def list_stations():
         rows = conn.execute("SELECT station_id, name FROM stations ORDER BY name ASC;").fetchall()
         return [dict(r) for r in rows]
 
+
 @app.get("/analytics/events/{station_id}")
 def get_station_deltas(station_id: str, start_time: str, end_time: str) -> List[Dict[str, Any]]:
     """Wyciąga punkty zmian (+1 / -1) dopasowując daty jako prefikse lub zakres tekstowy."""
@@ -191,6 +192,7 @@ def get_station_deltas(station_id: str, start_time: str, end_time: str) -> List[
         rows = conn.execute(query, (station_id, start_time, end_time)).fetchall()
         return [dict(row) for row in rows]
 
+
 @app.get("/analytics/series/{station_id}")
 def get_station_time_series(station_id: str, limit: Optional[int] = None):
     """Seria czasowa pod wykresy."""
@@ -198,6 +200,7 @@ def get_station_time_series(station_id: str, limit: Optional[int] = None):
     if not series:
         raise HTTPException(status_code=404, detail="Brak danych dla stacji")
     return {"station_id": station_id, "points": len(series), "data": series}
+
 
 @app.get("/analytics/debug/{station_id}")
 def debug_station(station_id: str):
@@ -208,6 +211,16 @@ def debug_station(station_id: str):
             (station_id,)
         ).fetchall()
         return [dict(r) for r in rows]
+
+
+@app.post("/admin/sync-json")
+def sync_latest_json():
+    """Wymusza ponowne zczytanie danych z history_cache.json do SQLite (np. po pullu)."""
+    try:
+        database.migrate_json_to_db(database.JSON_CACHE_PATH)
+        return {"status": "success", "message": "Zsynchronizowano dane z pliku JSON do bazy SQLite."}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Błąd synchronizacji: {str(e)}")
 
 if __name__ == "__main__":
     import uvicorn
