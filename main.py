@@ -2,19 +2,22 @@ from datetime import datetime, timezone
 import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
-from fastapi import FastAPI, HTTPException
+from typing import Any, Dict, List, Tuple,Optional
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
+from contextlib import asynccontextmanager
 import httpx
 
 from av_service import router as av_router
 from models import Station
 from network_service import router as network_router
 from storage import load_stations_cache, save_stations_cache
+import database
 
 logger = logging.getLogger(__name__)
 
+database.init_db()
 app = FastAPI(title="Nextbike & Safe Cycleways GIS")
 app.include_router(network_router)
 app.include_router(av_router)
@@ -151,6 +154,60 @@ async def get_leaderboard_view():
 async def favicon():
     return Response(status_code=204)
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    database.init_db()
+    yield
+
+
+@app.get("/stations")
+def list_stations():
+    """Zwraca listę wszystkich zaimportowanych stacji."""
+    with database.get_connection() as conn:
+        rows = conn.execute("SELECT station_id, name FROM stations ORDER BY name ASC;").fetchall()
+        return [dict(r) for r in rows]
+
+@app.get("/analytics/events/{station_id}")
+def get_station_deltas(station_id: str, start_time: str, end_time: str) -> List[Dict[str, Any]]:
+    """Wyciąga punkty zmian (+1 / -1) dopasowując daty jako prefikse lub zakres tekstowy."""
+    query = """
+        WITH calculated_deltas AS (
+            SELECT 
+                timestamp,
+                bikes,
+                bikes - LAG(bikes) OVER (ORDER BY timestamp) AS delta
+            FROM station_snapshots
+            WHERE station_id = ? 
+              AND timestamp >= ? 
+              AND timestamp <= ?
+        )
+        SELECT timestamp, bikes, delta
+        FROM calculated_deltas
+        WHERE delta IS NOT NULL AND delta != 0
+        ORDER BY timestamp ASC;
+    """
+    with database.get_connection() as conn:
+        # Doklejamy wildcardy lub pełne dopasowanie, albo po prostu przekazujemy parametry
+        rows = conn.execute(query, (station_id, start_time, end_time)).fetchall()
+        return [dict(row) for row in rows]
+
+@app.get("/analytics/series/{station_id}")
+def get_station_time_series(station_id: str, limit: Optional[int] = None):
+    """Seria czasowa pod wykresy."""
+    series = database.get_series_for_chart(station_id, limit=limit)
+    if not series:
+        raise HTTPException(status_code=404, detail="Brak danych dla stacji")
+    return {"station_id": station_id, "points": len(series), "data": series}
+
+@app.get("/analytics/debug/{station_id}")
+def debug_station(station_id: str):
+    """Zwraca pierwsze 5 surowych wpisów dla stacji z bazy."""
+    with database.get_connection() as conn:
+        rows = conn.execute(
+            "SELECT timestamp, bikes FROM station_snapshots WHERE station_id = ? ORDER BY timestamp ASC LIMIT 5;",
+            (station_id,)
+        ).fetchall()
+        return [dict(r) for r in rows]
 
 if __name__ == "__main__":
     import uvicorn
