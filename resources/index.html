@@ -22,6 +22,10 @@
             <span>Wydzielona droga (DDR)</span>
         </div>
         <div class="legend-item">
+            <span class="legend-line" style="background: #f39c12;"></span>
+            <span>Pas rowerowy w jezdni</span>
+        </div>
+        <div class="legend-item">
             <span class="legend-line" style="background: #2980b9;"></span>
             <span>Strefa zamieszkania / Woonerf</span>
         </div>
@@ -46,7 +50,7 @@
         function formatTime(val) {
             if (!val) return "Brak danych";
             const date = new Date(val);
-            if (isNaN(date.getTime())) return "Aktualne";
+            if (isNaN(date.getTime())) return "Błąd daty";
             return date.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
         }
 
@@ -57,7 +61,6 @@
             zoom: 13
         });
 
-        // Kontrolki nawigacji w prawym górnym rogu
         map.addControl(new maplibregl.NavigationControl(), 'top-right');
         map.addControl(new maplibregl.GeolocateControl({
             positionOptions: { enableHighAccuracy: true },
@@ -66,14 +69,16 @@
         }), 'top-right');
 
         function createPopupHTML(id, name, freeBikes, emptySlots) {
-            const timestamp = new Date().getTime();
             const encodedName = encodeURIComponent(name);
+            // Minutowy cache busters zamiast milisekundowego - nie dobija serwera generowaniem wykresów w kółko
+            const cacheKey = Math.floor(Date.now() / 60000);
+            
             return `
                 <h4 style="margin:0 0 6px 0;">${name}</h4>
-                ${freeBikes !== undefined ? `🚲 Dostępne rowery: <b>${freeBikes}</b><br/>` : ''}
-                ${emptySlots !== undefined ? `🅿️ Wolne stojaki: <b>${emptySlots}</b><br/>` : ''}
+                ${freeBikes !== undefined && freeBikes !== null ? `🚲 Dostępne rowery: <b>${freeBikes}</b><br/>` : ''}
+                ${emptySlots !== undefined && emptySlots !== null ? `🅿️ Wolne stojaki: <b>${emptySlots}</b><br/>` : ''}
                 <img 
-                    src="/analytics/station/${id}/chart.png?name=${encodedName}&t=${timestamp}" 
+                    src="/analytics/station/${id}/chart.png?name=${encodedName}&t=${cacheKey}" 
                     class="station-chart-img" 
                     alt="Wykres trendu (ładowanie...)" 
                     onerror="this.style.display='none'"
@@ -83,9 +88,13 @@
 
         async function refreshBikeData() {
             try {
-                const res = await fetch('/bikes/citybikes/warsaw?t=' + new Date().getTime());
+                // Odpytujemy wyłącznie nasz lokalny serwer (który czyta ze storage)
+                const res = await fetch('/bikes/citybikes/warsaw');
                 const data = await res.json();
-                document.getElementById('last-update-label').innerText = formatTime(data.last_update);
+                
+                if (data.last_update) {
+                    document.getElementById('last-update-label').innerText = formatTime(data.last_update);
+                }
 
                 const source = map.getSource('veturilo-stations');
                 if (source) {
@@ -117,12 +126,13 @@
                         }
                     });
                 }
+                return data;
             } catch (err) {
                 console.error("Błąd stacji:", err);
             }
         }
 
-        map.on('load', () => {
+        map.on('load', async () => {
             map.addSource('safe-cycleways', {
                 type: 'geojson',
                 data: '/network/safe-cycleways'
@@ -135,10 +145,10 @@
                 layout: { 'line-join': 'round', 'line-cap': 'round' },
                 paint: {
                     'line-color': [
-                        'match',
-                        ['get', 'highway'],
-                        'cycleway', '#27ae60',
-                        'living_street', '#2980b9',
+                        'case',
+                        ['==', ['get', 'highway'], 'cycleway'], '#27ae60',
+                        ['has', 'cycleway'], '#f39c12',
+                        ['==', ['get', 'highway'], 'living_street'], '#2980b9',
                         '#3498db'
                     ],
                     'line-width': 3,
@@ -146,7 +156,7 @@
                 }
             });
 
-            refreshBikeData();
+            const initialData = await refreshBikeData();
             setInterval(refreshBikeData, 30000);
 
             // Obsługa kliknięcia w stację
@@ -176,9 +186,20 @@
                 });
 
                 if (targetId) {
+                    // Wyciągamy aktualny stan stacji z pobranego geojsona, aby nie mieć pustych pól
+                    let currentBikes = undefined;
+                    let currentSlots = undefined;
+                    if (initialData && initialData.features) {
+                        const matched = initialData.features.find(f => f.properties.id === targetId);
+                        if (matched) {
+                            currentBikes = matched.properties.free_bikes;
+                            currentSlots = matched.properties.empty_slots;
+                        }
+                    }
+
                     new maplibregl.Popup()
                         .setLngLat([targetLng, targetLat])
-                        .setHTML(createPopupHTML(targetId, targetName))
+                        .setHTML(createPopupHTML(targetId, targetName, currentBikes, currentSlots))
                         .addTo(map);
                 }
             }
