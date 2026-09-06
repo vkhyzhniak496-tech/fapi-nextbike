@@ -6,7 +6,7 @@ import logging
 from typing import Any, Dict, List, Optional
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, HTTPException, Query, Response
+from fastapi import APIRouter, HTTPException, Response
 import httpx
 import matplotlib
 
@@ -17,6 +17,7 @@ from matplotlib.ticker import MaxNLocator
 
 import database
 from models import Station
+from storage import set_cached_stations
 
 logger = logging.getLogger(__name__)
 
@@ -31,12 +32,11 @@ HTTP_HEADERS = {
     "Accept": "application/json",
 }
 
-# Podręczny stan w pamięci wyłącznie do detekcji zmian (delta-check bez SELECT-ów)
 LAST_KNOWN_BIKES: Dict[str, int] = {}
 
 
 async def _history_poller_worker():
-  """Worker odpytujący CityBikes i zapisujący zmiany wprost do SQLite."""
+  """Worker odpytujący CityBikes, zasilający bazę SQLite oraz odświeżający cache GeoJSON dla mapy."""
   backoff_delay = 45
 
   async with httpx.AsyncClient(
@@ -48,15 +48,21 @@ async def _history_poller_worker():
 
         if res.status_code == 200:
           backoff_delay = 45
-          stations = res.json().get("network", {}).get("stations", [])
-          now_warsaw_iso = datetime.now(WARSAW_TZ).isoformat()
+          network_data = res.json().get("network", {})
+          stations = network_data.get("stations", [])
+          now_warsaw = datetime.now(WARSAW_TZ)
+          now_warsaw_iso = now_warsaw.isoformat()
 
+          features = []
           for st in stations:
             s_id = str(st.get("id"))
             s_name = str(st.get("name", "Stacja"))
             current_bikes = int(st.get("free_bikes") or 0)
+            empty_slots = int(st.get("empty_slots") or 0)
+            lat = st.get("latitude")
+            lng = st.get("longitude")
 
-            # Logujemy tylko pierwszy pomiar stacji lub realną zmianę stanu
+            # 1. Zapis delty do bazy SQLite
             if (
                 s_id not in LAST_KNOWN_BIKES
                 or LAST_KNOWN_BIKES[s_id] != current_bikes
@@ -69,6 +75,42 @@ async def _history_poller_worker():
               )
               LAST_KNOWN_BIKES[s_id] = current_bikes
 
+            # 2. Budowanie cech GeoJSON pod mapę
+            if lat is not None and lng is not None:
+              features.append({
+                  "type": "Feature",
+                  "geometry": {
+                      "type": "Point",
+                      "coordinates": [float(lng), float(lat)],
+                  },
+                  "properties": {
+                      "id": s_id,
+                      "name": s_name,
+                      "free_bikes": current_bikes,
+                      "empty_slots": empty_slots,
+                      "occupancy_pct": (
+                          round(
+                              (current_bikes / (current_bikes + empty_slots))
+                              * 100,
+                              1,
+                          )
+                          if (current_bikes + empty_slots) > 0
+                          else 0.0
+                      ),
+                      "updated_at": now_warsaw_iso,
+                  },
+              })
+
+          # 3. Zapis do cache (RAM + dysk) poprzez moduł storage
+          geojson_payload = {
+              "type": "FeatureCollection",
+              "system_name": network_data.get("name", "VETURILO 3.0"),
+              "total_stations": len(features),
+              "last_update": now_warsaw_iso,
+              "features": features,
+          }
+          set_cached_stations(geojson_payload)
+
         elif res.status_code == 429:
           retry_after = res.headers.get("Retry-After")
           wait_time = (
@@ -80,9 +122,11 @@ async def _history_poller_worker():
               f"Otrzymano 429 Rate Limit. Wstrzymuję odpytywanie na {wait_time}s..."
           )
           backoff_delay = wait_time
+
         else:
           logger.warning(
-              f"CityBikes API zwróciło nieoczekiwany status: {res.status_code}"
+              f"CityBikes API zwróciło status: {res.status_code}. Ponawiam za"
+              " 60s..."
           )
           backoff_delay = 60
 
@@ -98,7 +142,6 @@ async def _history_poller_worker():
 
 @asynccontextmanager
 async def analytics_lifespan(router: APIRouter):
-  """Zarządzanie tłem workera na poziomie routera."""
   task = asyncio.create_task(_history_poller_worker())
   yield
   task.cancel()
@@ -156,13 +199,11 @@ async def get_stations_leaderboard(top_n: int = 50):
 def get_station_deltas(
     station_id: str, start_time: str, end_time: str
 ) -> List[Dict[str, Any]]:
-  """Wyciąga punkty zmian (+1 / -1) bezpośrednio z SQLite."""
   return database.get_station_deltas(station_id, start_time, end_time)
 
 
 @router.get("/series/{station_id}")
 def get_station_time_series(station_id: str, limit: Optional[int] = None):
-  """Seria czasowa z bazy danych pod wykresy."""
   series = database.get_series_for_chart(station_id, limit=limit)
   if not series:
     raise HTTPException(
@@ -170,37 +211,44 @@ def get_station_time_series(station_id: str, limit: Optional[int] = None):
     )
   return {"station_id": station_id, "points": len(series), "data": series}
 
-
 @router.get("/station/{station_id}/chart.png")
-def get_station_chart_image(station_id: str, name: Optional[str] = None):
-  """Rysuje wykres schodkowy na podstawie danych historycznych z bazy SQLite."""
-  series = database.get_series_for_chart(station_id, limit=100)
-  if not series:
+def get_station_chart_image(
+    station_id: str,
+    name: Optional[str] = None,
+    limit: Optional[int] = None,  # Domyślnie brak limitu — pobiera całą historię
+):
+  """Rysuje pełny wykres schodkowy na podstawie danych historycznych z bazy SQLite."""
+  series = database.get_series_for_chart(station_id, limit=limit)
+  if not series or len(series) < 2:
     raise HTTPException(
-        status_code=404, detail="Brak zarejestrowanych danych dla tej stacji"
+        status_code=404,
+        detail="Brak wystarczającej liczby danych do wygenerowania wykresu",
     )
 
   resolved_name = name or "Stacja Veturilo"
   dates = [datetime.fromisoformat(row["datetime"]) for row in series]
   values = [row["bikes"] for row in series]
 
-  fig, ax = plt.subplots(figsize=(6, 2.8), dpi=100)
+  fig, ax = plt.subplots(figsize=(6.5, 3.0), dpi=100)
 
-  if len(values) == 1:
-    ax.scatter(dates, values, color="#007cbf", s=40)
-    ax.axhline(y=values[0], color="#007cbf", linestyle=":", alpha=0.6)
+  ax.step(
+      dates,
+      values,
+      where="post",
+      color="#007cbf",
+      marker="o",
+      markersize=3.0,
+      linewidth=1.5,
+  )
+
+  # Dynamiczne dopasowanie etykiet: gdy mamy > 1 dzień, pokazujemy dzień i godzinę (np. 05.09 14:00)
+  delta_time = dates[-1] - dates[0]
+  if delta_time.days >= 1:
+    time_fmt = mdates.DateFormatter("%d.%m %H:%M", tz=WARSAW_TZ)
   else:
-    ax.step(
-        dates,
-        values,
-        where="post",
-        color="#007cbf",
-        marker="o",
-        markersize=3.5,
-        linewidth=1.8,
-    )
+    time_fmt = mdates.DateFormatter("%H:%M", tz=WARSAW_TZ)
 
-  ax.xaxis.set_major_formatter(mdates.DateFormatter("%H:%M", tz=WARSAW_TZ))
+  ax.xaxis.set_major_formatter(time_fmt)
   ax.xaxis.set_major_locator(mdates.AutoDateLocator(tz=WARSAW_TZ))
 
   ax.set_title(
