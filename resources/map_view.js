@@ -199,3 +199,22 @@ if (document.readyState === 'loading') {
 } else {
     initMap();
 }
+
+function toggleMobileFilters() {
+    const legend = document.getElementById('legend');
+    if (legend) {
+        legend.classList.toggle('active');
+    }
+}
+
+// Zamykanie arkusza po dotknięciu tła mapy na telefonie
+map.on('click', (e) => {
+    // Jeśli kliknięto poza punktem stacji, zwiń panel
+    const features = map.queryRenderedFeatures(e.point, { layers: ['stations-point'] });
+    if (!features.length) {
+        const legend = document.getElementById('legend');
+        if (legend && legend.classList.contains('active')) {
+            legend.classList.remove('active');
+        }
+    }
+});
