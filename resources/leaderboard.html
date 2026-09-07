@@ -9,17 +9,17 @@
 <body class="leaderboard-body">
     <div class="leaderboard-container">
         <header class="leaderboard-header">
-            <h1 style="margin: 0; font-size: 22px;">🏆 Ranking Stacji Veturilo</h1>
+            <h1>🏆 Ranking Stacji Veturilo</h1>
             <a href="/map" class="btn-map">🗺️ Otwórz Mapę</a>
         </header>
 
-        <section class="leaderboard-section">
-            <h2 style="font-size: 16px; color: #333;">🔥 Największe Huby (Dostępne rowery)</h2>
+        <section>
+            <div class="section-title">🔥 Największe Huby (Najwięcej wolnych rowerów)</div>
             <div id="hubs-grid" class="cards-grid">Ładowanie rankingu...</div>
         </section>
 
-        <section class="leaderboard-section">
-            <h2 style="font-size: 16px; color: #333;">⚠️ Stacje Przepełnione</h2>
+        <section>
+            <div class="section-title">⚠️ Stacje Przepełnione (Wysokie obłożenie stojaków)</div>
             <div id="overflow-grid" class="cards-grid">Ładowanie rankingu...</div>
         </section>
     </div>
@@ -35,17 +35,18 @@
                         <div class="station-card-title">${st.name}</div>
                         <div class="station-card-metrics">
                             <span>🚲 Rowery: <b>${st.free_bikes}</b></span>
-                            <span>🅿️ Wolne stojaki: <b>${st.empty_slots}</b></span>
-                            <span>📊 Obłożenie: <b>${st.occupancy_pct}%</b></span>
+                            <span>🅿️ Stojaki: <b>${st.empty_slots}</b></span>
+                            <span>📊 <b>${st.occupancy_pct}%</b></span>
                         </div>
-                        <div class="teleport-hint">Kliknij, aby otworzyć na mapie ➔</div>
+                        <div class="teleport-hint">Pokaż na mapie ➔</div>
                     </div>
                 `;
 
-                document.getElementById('hubs-grid').innerHTML = data.top_hubs.map(renderCard).join('');
-                document.getElementById('overflow-grid').innerHTML = data.top_overflow.map(renderCard).join('');
+                document.getElementById('hubs-grid').innerHTML = (data.top_hubs || []).map(renderCard).join('');
+                document.getElementById('overflow-grid').innerHTML = (data.top_overflow || []).map(renderCard).join('');
             } catch (err) {
-                console.error("Błąd pobierania rankingu:", err);
+                console.error("Błąd rankingu:", err);
+                document.getElementById('hubs-grid').innerText = "Nie udało się pobrać danych.";
             }
         }
 

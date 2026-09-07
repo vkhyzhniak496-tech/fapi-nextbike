@@ -9,31 +9,39 @@
     <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-    <div id="info-box">
-        <span class="pulse"></span><b>Veturilo 3.0 Live</b><br/>
-        <b>Aktualizacja:</b> <span id="last-update-label">Ładowanie...</span><br/>
-        <a href="/leaderboard" class="btn-nav-leaderboard">🏆 Zobacz Ranking Stacji</a>
+    <div id="info-box" class="glass-panel">
+        <div class="status-row">
+            <span class="pulse"></span>
+            <span>Veturilo 3.0 Live</span>
+        </div>
+        <div class="update-time">Aktualizacja: <span id="last-update-label">Ładowanie...</span></div>
+        <a href="/leaderboard" class="btn-nav-leaderboard">🏆 Ranking stacji</a>
     </div>
 
-    <div id="legend">
-        <div class="legend-title">Infrastruktura rowerowa</div>
-        <div class="legend-item">
+    <!-- Interaktywny filtr warstw -->
+    <div id="legend" class="glass-panel">
+        <div class="legend-title">Filtruj infrastrukturę</div>
+        <label class="legend-toggle">
+            <input type="checkbox" id="filter-ddr" checked onchange="updateCyclewaysFilter()">
             <span class="legend-line" style="background: #27ae60;"></span>
             <span>Wydzielona droga (DDR)</span>
-        </div>
-        <div class="legend-item">
+        </label>
+        <label class="legend-toggle">
+            <input type="checkbox" id="filter-lane" checked onchange="updateCyclewaysFilter()">
             <span class="legend-line" style="background: #f39c12;"></span>
             <span>Pas rowerowy w jezdni</span>
-        </div>
-        <div class="legend-item">
+        </label>
+        <label class="legend-toggle">
+            <input type="checkbox" id="filter-woonerf" checked onchange="updateCyclewaysFilter()">
             <span class="legend-line" style="background: #2980b9;"></span>
             <span>Strefa zamieszkania / Woonerf</span>
-        </div>
-        <div class="legend-item">
+        </label>
+        <label class="legend-toggle">
+            <input type="checkbox" id="filter-tempo30" checked onchange="updateCyclewaysFilter()">
             <span class="legend-line" style="background: #3498db;"></span>
             <span>Ulica Tempo 30 (uspokojona)</span>
-        </div>
-        <hr style="margin: 6px 0; border: 0; border-top: 1px solid #eee;" />
+        </label>
+        <hr class="legend-divider" />
         <div class="legend-item">
             <span class="legend-dot" style="background: #2ecc71;"></span>
             <span>Stacja (dostępne rowery)</span>
@@ -44,166 +52,10 @@
         </div>
     </div>
 
+    <!-- Kontener mapy MUSI być zdefiniowany przed załadowaniem skryptu -->
     <div id="map"></div>
 
-    <script>
-        function formatTime(val) {
-            if (!val) return "Brak danych";
-            const date = new Date(val);
-            if (isNaN(date.getTime())) return "Błąd daty";
-            return date.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        }
-
-        const map = new maplibregl.Map({
-            container: 'map',
-            style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-            center: [21.012, 52.230],
-            zoom: 13
-        });
-
-        map.addControl(new maplibregl.NavigationControl(), 'top-right');
-        map.addControl(new maplibregl.GeolocateControl({
-            positionOptions: { enableHighAccuracy: true },
-            trackUserLocation: true,
-            showUserLocation: true
-        }), 'top-right');
-
-        function createPopupHTML(id, name, freeBikes, emptySlots) {
-            const encodedName = encodeURIComponent(name);
-            // Minutowy cache busters zamiast milisekundowego - nie dobija serwera generowaniem wykresów w kółko
-            const cacheKey = Math.floor(Date.now() / 60000);
-            
-            return `
-                <h4 style="margin:0 0 6px 0;">${name}</h4>
-                ${freeBikes !== undefined && freeBikes !== null ? `🚲 Dostępne rowery: <b>${freeBikes}</b><br/>` : ''}
-                ${emptySlots !== undefined && emptySlots !== null ? `🅿️ Wolne stojaki: <b>${emptySlots}</b><br/>` : ''}
-                <img 
-                    src="/analytics/station/${id}/chart.png?name=${encodedName}&t=${cacheKey}" 
-                    class="station-chart-img" 
-                    alt="Wykres trendu (ładowanie...)" 
-                    onerror="this.style.display='none'"
-                />
-            `;
-        }
-
-        async function refreshBikeData() {
-            try {
-                // Odpytujemy wyłącznie nasz lokalny serwer (który czyta ze storage)
-                const res = await fetch('/bikes/citybikes/warsaw');
-                const data = await res.json();
-                
-                if (data.last_update) {
-                    document.getElementById('last-update-label').innerText = formatTime(data.last_update);
-                }
-
-                const source = map.getSource('veturilo-stations');
-                if (source) {
-                    source.setData(data);
-                } else {
-                    map.addSource('veturilo-stations', {
-                        type: 'geojson',
-                        data: data
-                    });
-
-                    map.addLayer({
-                        id: 'stations-point',
-                        type: 'circle',
-                        source: 'veturilo-stations',
-                        paint: {
-                            'circle-radius': [
-                                'interpolate', ['linear'], ['get', 'free_bikes'],
-                                0, 4,
-                                5, 7,
-                                15, 12
-                            ],
-                            'circle-color': [
-                                'case',
-                                ['==', ['get', 'free_bikes'], 0], '#e74c3c',
-                                '#2ecc71'
-                            ],
-                            'circle-stroke-width': 1.5,
-                            'circle-stroke-color': '#ffffff'
-                        }
-                    });
-                }
-                return data;
-            } catch (err) {
-                console.error("Błąd stacji:", err);
-            }
-        }
-
-        map.on('load', async () => {
-            map.addSource('safe-cycleways', {
-                type: 'geojson',
-                data: '/network/safe-cycleways'
-            });
-
-            map.addLayer({
-                id: 'cycleways-lines',
-                type: 'line',
-                source: 'safe-cycleways',
-                layout: { 'line-join': 'round', 'line-cap': 'round' },
-                paint: {
-                    'line-color': [
-                        'case',
-                        ['==', ['get', 'highway'], 'cycleway'], '#27ae60',
-                        ['has', 'cycleway'], '#f39c12',
-                        ['==', ['get', 'highway'], 'living_street'], '#2980b9',
-                        '#3498db'
-                    ],
-                    'line-width': 3,
-                    'line-opacity': 0.85
-                }
-            });
-
-            const initialData = await refreshBikeData();
-            setInterval(refreshBikeData, 30000);
-
-            // Obsługa kliknięcia w stację
-            map.on('click', 'stations-point', (e) => {
-                const p = e.features[0].properties;
-                new maplibregl.Popup()
-                    .setLngLat(e.lngLat)
-                    .setHTML(createPopupHTML(p.id, p.name, p.free_bikes, p.empty_slots))
-                    .addTo(map);
-            });
-
-            map.on('mouseenter', 'stations-point', () => { map.getCanvas().style.cursor = 'pointer'; });
-            map.on('mouseleave', 'stations-point', () => { map.getCanvas().style.cursor = ''; });
-
-            // Obsługa przeskoku z widoku /leaderboard
-            const urlParams = new URLSearchParams(window.location.search);
-            const targetLat = parseFloat(urlParams.get('lat'));
-            const targetLng = parseFloat(urlParams.get('lng'));
-            const targetId = urlParams.get('id');
-            const targetName = decodeURIComponent(urlParams.get('name') || 'Wybrana stacja');
-
-            if (!isNaN(targetLat) && !isNaN(targetLng)) {
-                map.flyTo({
-                    center: [targetLng, targetLat],
-                    zoom: 16,
-                    essential: true
-                });
-
-                if (targetId) {
-                    // Wyciągamy aktualny stan stacji z pobranego geojsona, aby nie mieć pustych pól
-                    let currentBikes = undefined;
-                    let currentSlots = undefined;
-                    if (initialData && initialData.features) {
-                        const matched = initialData.features.find(f => f.properties.id === targetId);
-                        if (matched) {
-                            currentBikes = matched.properties.free_bikes;
-                            currentSlots = matched.properties.empty_slots;
-                        }
-                    }
-
-                    new maplibregl.Popup()
-                        .setLngLat([targetLng, targetLat])
-                        .setHTML(createPopupHTML(targetId, targetName, currentBikes, currentSlots))
-                        .addTo(map);
-                }
-            }
-        });
-    </script>
+    <!-- Skrypt umieszczony na samym końcu -->
+    <script src="/static/map_view.js" defer></script>
 </body>
 </html>

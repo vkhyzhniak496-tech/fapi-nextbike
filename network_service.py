@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 import sqlite3
 from typing import Generator, Optional
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Response
 import httpx
 
 from models import SyncCustomRequest
@@ -186,8 +186,8 @@ async def sync_overpass_to_db_task(custom_bbox: Optional[str] = None):
 
 
 @router.get("/safe-cycleways")
-async def get_safe_cycleways():
-  """Zwraca całą sieć dróg bezpośrednio z bazy SQLite."""
+async def get_safe_cycleways(response: Response):
+  """Zwraca całą sieć dróg bezpośrednio z bazy SQLite z nagłówkiem cache na 7 dni."""
   with get_network_db_cursor() as cursor:
     cursor.execute("""
             SELECT way_id, properties_json, coordinates_json 
@@ -216,6 +216,10 @@ async def get_safe_cycleways():
       }
       for r in rows
   ]
+
+  # Ustawiamy nagłówek Cache-Control PRZED zwróceniem słownika
+  # max-age=604800 oznacza 7 dni w sekundach
+  response.headers["Cache-Control"] = "public, max-age=604800, immutable"
 
   return {
       "type": "FeatureCollection",
