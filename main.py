@@ -7,7 +7,7 @@ import database
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
-from network_service import router as network_router
+from network_service import router as n_router
 from storage import get_cached_stations
 
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Nextbike & Safe Cycleways GIS", lifespan=lifespan
 )  # Cykl życia z inicjalizacją SQLite
-app.include_router(network_router)  
+app.include_router(n_router)  
 app.include_router(av_router)  
 
 app.mount(

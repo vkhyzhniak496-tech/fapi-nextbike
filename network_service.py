@@ -1,7 +1,9 @@
 import asyncio
+from contextlib import contextmanager
 import json
 from pathlib import Path
-from typing import Optional
+import sqlite3
+from typing import Generator, Optional
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 import httpx
 
@@ -10,7 +12,7 @@ from models import SyncCustomRequest
 router = APIRouter(prefix="/network", tags=["Network GIS"])
 
 RESOURCES_DIR = Path(__file__).parent / "resources"
-GEOJSON_PATH = RESOURCES_DIR / "cycleways.geojson"
+NETWORK_DB_PATH = RESOURCES_DIR / "cycleways_network.db"
 
 TILES = [
     {
@@ -37,8 +39,53 @@ HEADERS = {
 }
 
 
+# --- 1. ZARZĄDZANIE BAZĄ DANYCH SIECI TRAS ---
+
+
+@contextmanager
+def get_network_db_cursor() -> Generator[sqlite3.Cursor, None, None]:
+  """Zarządza dedykowanym połączeniem i transakcją do bazy sieci tras."""
+  conn = sqlite3.connect(NETWORK_DB_PATH, check_same_thread=False)
+  conn.row_factory = sqlite3.Row
+  try:
+    with conn:
+      yield conn.cursor()
+  finally:
+    conn.close()
+
+
+def init_network_db():
+  """Tworzy schemat tabeli i indeksy w cycleways_network.db."""
+  RESOURCES_DIR.mkdir(parents=True, exist_ok=True)
+  with get_network_db_cursor() as cur:
+    cur.execute("PRAGMA journal_mode=WAL;")
+    cur.execute("""
+            CREATE TABLE IF NOT EXISTS cycleway_edges (
+                way_id TEXT PRIMARY KEY,
+                highway TEXT,
+                cycleway TEXT,
+                name TEXT,
+                maxspeed INTEGER,
+                properties_json TEXT,
+                coordinates_json TEXT NOT NULL,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
+    cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_cycleway_highway 
+            ON cycleway_edges (highway);
+        """)
+
+
+# Inicjalizacja tabeli przy starcie aplikacji podczas importu routera:
+init_network_db()
+
+
+# --- 2. ZAPYTANIA DO OVERPASS API I ZAPIS SQL ---
+
+
 def build_tile_query(bbox: str) -> str:
-    return f"""
+  return f"""
     [out:json][timeout:120];
     (
       way["highway"="cycleway"]({bbox});
@@ -74,75 +121,108 @@ async def fetch_tile_with_retry(bbox: str, client: httpx.AsyncClient) -> list:
   return []
 
 
-async def sync_overpass_to_disk_task(custom_bbox: Optional[str] = None):
-  print("Rozpoczęto synchronizację sieci tras...")
-  seen_ids = set()
-  all_features = []
+def save_osm_elements_to_db(elements: list) -> int:
+  """Zapisuje kafelki Overpass bezpośrednio do SQLite w pojedynczej transakcji."""
+  rows = []
+  for el in elements:
+    if el.get("type") == "way" and "geometry" in el:
+      way_id = f"way/{el['id']}"
+      tags = el.get("tags", {})
+      coords = [[pt["lon"], pt["lat"]] for pt in el["geometry"]]
 
-  if GEOJSON_PATH.exists():
-    try:
-      cached = json.loads(GEOJSON_PATH.read_text(encoding="utf-8"))
-      for f in cached.get("features", []):
-        fid = f.get("id")
-        if fid:
-          seen_ids.add(fid)
-          all_features.append(f)
-      print(f"Załadowano {len(all_features)} istniejących tras z pliku.")
-    except Exception:
-      pass
+      maxspeed_val = tags.get("maxspeed", "")
+      maxspeed_int = int(maxspeed_val) if maxspeed_val.isdigit() else None
+
+      rows.append((
+          way_id,
+          tags.get("highway"),
+          tags.get("cycleway"),
+          tags.get("name"),
+          maxspeed_int,
+          json.dumps(tags, ensure_ascii=False),
+          json.dumps(coords),
+      ))
+
+  if not rows:
+    return 0
+
+  with get_network_db_cursor() as cursor:
+    cursor.executemany(
+        """
+            INSERT INTO cycleway_edges (
+                way_id, highway, cycleway, name, maxspeed, properties_json, coordinates_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(way_id) DO UPDATE SET
+                highway = excluded.highway,
+                cycleway = excluded.cycleway,
+                name = excluded.name,
+                maxspeed = excluded.maxspeed,
+                properties_json = excluded.properties_json,
+                coordinates_json = excluded.coordinates_json,
+                updated_at = CURRENT_TIMESTAMP;
+        """,
+        rows,
+    )
+  return len(rows)
+
+
+async def sync_overpass_to_db_task(custom_bbox: Optional[str] = None):
+  print("Rozpoczęto synchronizację sieci tras do bazy SQLite...")
+  total_saved = 0
 
   async with httpx.AsyncClient(timeout=120.0, headers=HEADERS) as client:
     targets = [custom_bbox] if custom_bbox else [t["bbox"] for t in TILES]
-
     for bbox in targets:
       elements = await fetch_tile_with_retry(bbox, client)
-      added_count = 0
-      for el in elements:
-        way_id = f"way/{el.get('id')}"
-        if (
-            el.get("type") == "way"
-            and "geometry" in el
-            and way_id not in seen_ids
-        ):
-          seen_ids.add(way_id)
-          coords = [[pt["lon"], pt["lat"]] for pt in el["geometry"]]
-          all_features.append({
-              "type": "Feature",
-              "id": way_id,
-              "properties": el.get("tags", {}),
-              "geometry": {"type": "LineString", "coordinates": coords},
-          })
-          added_count += 1
-      print(f"Pobrano kafelek: dodano {added_count} nowych tras.")
+      added = save_osm_elements_to_db(elements)
+      total_saved += added
+      print(f"Pobrano kafelek: zapisano/zaktualizowano {added} odcinków.")
       await asyncio.sleep(3)
 
-  geojson_output = {
-      "type": "FeatureCollection",
-      "generator": "overpass-live-sync",
-      "total_ways": len(all_features),
-      "features": all_features,
-  }
+  print(f"Zakończono synchronizację. Łącznie w SQLite: {total_saved} tras.")
 
-  RESOURCES_DIR.mkdir(parents=True, exist_ok=True)
-  GEOJSON_PATH.write_text(
-      json.dumps(geojson_output, ensure_ascii=False), encoding="utf-8"
-  )
-  print(
-      f"Zakończono synchronizację. Łącznie na dysku: {len(all_features)} tras."
-  )
+
+# --- 3. ENDPOINTY FASTAPI DLA SIECI TRAS ---
 
 
 @router.get("/safe-cycleways")
 async def get_safe_cycleways():
-  if not GEOJSON_PATH.exists():
+  """Zwraca całą sieć dróg bezpośrednio z bazy SQLite."""
+  with get_network_db_cursor() as cursor:
+    cursor.execute("""
+            SELECT way_id, properties_json, coordinates_json 
+            FROM cycleway_edges;
+        """)
+    rows = cursor.fetchall()
+
+  if not rows:
     raise HTTPException(
         status_code=404,
         detail=(
-            "Brak pliku cycleways.geojson. Wywołaj najpierw POST"
+            "Baza tras jest pusta. Uruchom synchronizację POST"
             " /network/safe-cycleways/sync"
         ),
     )
-  return json.loads(GEOJSON_PATH.read_text(encoding="utf-8"))
+
+  features = [
+      {
+          "type": "Feature",
+          "id": r["way_id"],
+          "properties": json.loads(r["properties_json"]),
+          "geometry": {
+              "type": "LineString",
+              "coordinates": json.loads(r["coordinates_json"]),
+          },
+      }
+      for r in rows
+  ]
+
+  return {
+      "type": "FeatureCollection",
+      "generator": "sqlite-network-engine",
+      "total_ways": len(features),
+      "features": features,
+  }
 
 
 @router.post("/safe-cycleways/sync")
@@ -150,9 +230,10 @@ async def trigger_cycleways_sync(
     background_tasks: BackgroundTasks,
     payload: Optional[SyncCustomRequest] = None,
 ):
+  """Pobiera trasy z Overpass i zapisuje bezpośrednio do bazy SQLite w tle."""
   custom_bbox = payload.bbox if payload else None
-  background_tasks.add_task(sync_overpass_to_disk_task, custom_bbox)
+  background_tasks.add_task(sync_overpass_to_db_task, custom_bbox)
   return {
       "status": "accepted",
-      "message": "Trwa pobieranie i dołączanie brakujących tras do pliku.",
+      "message": "Trwa synchronizacja sieci z Overpass do bazy SQLite.",
   }
