@@ -46,6 +46,20 @@ function updateCyclewaysFilter() {
     }
 }
 
+function toggleTramTracks() {
+    if (!map || !map.getLayer('tram-tracks')) return;
+    const checkbox = document.getElementById('filter-trams');
+    const isVisible = checkbox ? checkbox.checked : true;
+    map.setLayoutProperty('tram-tracks', 'visibility', isVisible ? 'visible' : 'none');
+}
+
+function toggleMobileFilters() {
+    const legend = document.getElementById('legend');
+    if (legend) {
+        legend.classList.toggle('active');
+    }
+}
+
 function createPopupHTML(id, name, freeBikes, emptySlots) {
     const encodedName = encodeURIComponent(name);
     const cacheKey = Math.floor(Date.now() / 60000);
@@ -106,6 +120,7 @@ function initMap() {
     }), 'top-right');
 
     map.on('load', async () => {
+        // 1. Ścieżki rowerowe
         map.addSource('safe-cycleways', {
             type: 'geojson',
             data: '/network/safe-cycleways'
@@ -129,6 +144,28 @@ function initMap() {
             }
         });
 
+        // 2. Torowiska tramwajowe
+        map.addSource('tram-network', {
+            type: 'geojson',
+            data: '/network/tram'
+        });
+
+        map.addLayer({
+            id: 'tram-tracks',
+            type: 'line',
+            source: 'tram-network',
+            layout: {
+                'line-join': 'round',
+                'line-cap': 'round'
+            },
+            paint: {
+                'line-color': '#3b0141',
+                'line-width': 2.5,
+                'line-opacity': 0.85
+            }
+        });
+
+        // 3. Stacje Veturilo
         map.addSource('veturilo-stations', {
             type: 'geojson',
             data: { type: 'FeatureCollection', features: [] }
@@ -169,6 +206,17 @@ function initMap() {
         map.on('mouseenter', 'stations-point', () => { map.getCanvas().style.cursor = 'pointer'; });
         map.on('mouseleave', 'stations-point', () => { map.getCanvas().style.cursor = ''; });
 
+        // Zamknięcie wysuwanego menu na mobile po dotknięciu tła mapy
+        map.on('click', (e) => {
+            const features = map.queryRenderedFeatures(e.point, { layers: ['stations-point'] });
+            if (!features.length) {
+                const legend = document.getElementById('legend');
+                if (legend && legend.classList.contains('active')) {
+                    legend.classList.remove('active');
+                }
+            }
+        });
+
         const params = new URLSearchParams(window.location.search);
         const lat = parseFloat(params.get('lat'));
         const lng = parseFloat(params.get('lng'));
@@ -193,28 +241,8 @@ function initMap() {
     });
 }
 
-// Inicjalizacja dopiero po upewnieniu się, że drzewo DOM jest gotowe
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initMap);
 } else {
     initMap();
 }
-
-function toggleMobileFilters() {
-    const legend = document.getElementById('legend');
-    if (legend) {
-        legend.classList.toggle('active');
-    }
-}
-
-// Zamykanie arkusza po dotknięciu tła mapy na telefonie
-map.on('click', (e) => {
-    // Jeśli kliknięto poza punktem stacji, zwiń panel
-    const features = map.queryRenderedFeatures(e.point, { layers: ['stations-point'] });
-    if (!features.length) {
-        const legend = document.getElementById('legend');
-        if (legend && legend.classList.contains('active')) {
-            legend.classList.remove('active');
-        }
-    }
-});
