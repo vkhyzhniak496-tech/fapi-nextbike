@@ -8,7 +8,7 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, Response
 import httpx
 
 from models import SyncCustomRequest
-
+from config import OVERPASS_HEADERS 
 router = APIRouter(prefix="/network/tram", tags=["Tram Network GIS"])
 
 RESOURCES_DIR = Path(__file__).parent / "resources"
@@ -38,13 +38,12 @@ def get_tram_db_cursor() -> Generator[sqlite3.Cursor, None, None]:
   finally:
     conn.close()
 
-
 def init_tram_db():
-  """Inicjalizuje schemat bazy danych torowisk tramwajowych w resources/."""
-  RESOURCES_DIR.mkdir(parents=True, exist_ok=True)
-  with get_tram_db_cursor() as cursor:
-    cursor.execute("PRAGMA journal_mode=WAL;")
-    cursor.execute("""
+    """Inicjalizuje schemat tabel w resources/tram_network.db."""
+    RESOURCES_DIR.mkdir(parents=True, exist_ok=True)
+    with get_tram_db_cursor() as cur:
+        cur.execute("PRAGMA journal_mode=WAL;")
+        cur.execute("""
             CREATE TABLE IF NOT EXISTS tram_edges (
                 way_id TEXT PRIMARY KEY,
                 properties_json TEXT NOT NULL,
@@ -53,6 +52,20 @@ def init_tram_db():
             );
         """)
 
+        # Jeśli w tabeli wciąż wisi stara kolumna geom_type, dropujemy tabelę
+        cur.execute("PRAGMA table_info(tram_platforms);")
+        cols = [r["name"] for r in cur.fetchall()]
+        if "geom_type" in cols:
+            cur.execute("DROP TABLE tram_platforms;")
+
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS tram_platforms (
+                osm_id TEXT PRIMARY KEY,
+                name TEXT,
+                coordinates_json TEXT NOT NULL,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+        """)
 
 init_tram_db()
 
@@ -177,3 +190,115 @@ async def trigger_tram_sync(
       "message": "Synchronizacja torowisk tramwajowych uruchomiona w tle.",
       "target": bbox,
   }
+
+
+# --- PRZYSTANKI TRAMWAJOWE (TYLKO PUNKTY) ---
+def build_tram_platforms_query(bbox: str) -> str:
+  # Tylko i wyłącznie punkty słupków tramwajowych
+  return f"""
+    [out:json][timeout:60];
+    (
+      node["railway"="tram_stop"]({bbox});
+    );
+    out body;
+    """
+
+
+async def sync_tram_platforms_task(bbox: str):
+  query = build_tram_platforms_query(bbox)
+  print(f"[PLATFORMS_GIS] Pobieranie słupków tramwajowych...", flush=True)
+
+  raw_elements = []
+  async with httpx.AsyncClient(timeout=90.0, headers=HEADERS) as client:
+    for server in OVERPASS_SERVERS:
+      try:
+        res = await client.post(server, data={"data": query})
+        if res.status_code == 200:
+          raw_elements = res.json().get("elements", [])
+          break
+        elif res.status_code == 429:
+          await asyncio.sleep(5)
+      except Exception:
+        continue
+
+  if not raw_elements:
+    print("[PLATFORMS_GIS] Brak danych z Overpass.", flush=True)
+    return
+
+  records = []
+  for el in raw_elements:
+    if el.get("type") == "node" and "lon" in el and "lat" in el:
+      name = el.get("tags", {}).get("name") or "Przystanek"
+      records.append((
+          f"node/{el['id']}",
+          name,
+          json.dumps([el["lon"], el["lat"]]),  # Czysty punkt [lon, lat]
+      ))
+
+  with get_tram_db_cursor() as cur:
+    cur.execute("DELETE FROM tram_platforms;")
+    cur.executemany(
+        """
+            INSERT INTO tram_platforms (osm_id, name, coordinates_json)
+            VALUES (?, ?, ?)
+            ON CONFLICT(osm_id) DO UPDATE SET
+                name=excluded.name,
+                coordinates_json=excluded.coordinates_json,
+                updated_at=CURRENT_TIMESTAMP;
+        """,
+        records,
+    )
+
+  print(
+      f"[PLATFORMS_GIS] Zapisano w SQLite {len(records)} unikalnych słupków.",
+      flush=True,
+  )
+
+
+@router.get("/platforms")
+async def get_tram_platforms():
+  """Zwraca wyłącznie punkty słupków jako lekki GeoJSON."""
+  with get_tram_db_cursor() as cur:
+    cur.execute("SELECT osm_id, name, coordinates_json FROM tram_platforms;")
+    rows = cur.fetchall()
+
+  if not rows:
+    raise HTTPException(
+        status_code=404, detail="Baza przystanków pusta. Uruchom sync."
+    )
+
+  features = [
+      {
+          "type": "Feature",
+          "id": r["osm_id"],
+          "properties": {"name": r["name"]},
+          "geometry": {
+              "type": "Point",
+              "coordinates": json.loads(r["coordinates_json"]),
+          },
+      }
+      for r in rows
+  ]
+
+  return {
+      "type": "FeatureCollection",
+      "total": len(features),
+      "features": features,
+  }
+
+@router.post("/platforms/sync")
+async def trigger_platforms_sync(
+    background_tasks: BackgroundTasks,
+    payload: Optional[SyncCustomRequest] = None
+):
+    """Pobiera wyłącznie węzły przystanków tramwajowych z OSM i zapisuje do SQLite."""
+    bbox = DEFAULT_WARSAW_BBOX
+    if payload and payload.bbox and payload.bbox.strip() not in ("", "string"):
+        bbox = payload.bbox.strip()
+
+    background_tasks.add_task(sync_tram_platforms_task, bbox)
+    return {
+        "status": "accepted",
+        "message": "Synchronizacja przystanków tramwajowych uruchomiona w tle.",
+        "target": bbox
+    }
