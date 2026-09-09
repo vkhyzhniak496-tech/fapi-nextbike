@@ -9,6 +9,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.staticfiles import StaticFiles
 from network_service import router as n_router
 from storage import get_cached_stations
+from tram_network_db import router as tram_network_router
 
 logger = logging.getLogger(__name__)
 RESOURCES_DIR = Path(__file__).parent / "resources"
@@ -25,6 +26,7 @@ app = FastAPI(
 )  # Cykl życia z inicjalizacją SQLite
 app.include_router(n_router)  
 app.include_router(av_router)  
+app.include_router(tram_network_router)
 
 app.mount(
     "/static", StaticFiles(directory=RESOURCES_DIR), name="static"
