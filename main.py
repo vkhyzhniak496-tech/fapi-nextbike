@@ -1,104 +1,131 @@
+import asyncio
 from contextlib import asynccontextmanager
 import logging
 from pathlib import Path
+from config import RESOURCES_DIR
 
-from av_service import router as av_router
-import database
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse, Response
+from fastapi import FastAPI, HTTPException, Response
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from network_service import router as n_router
-from storage import get_cached_stations
-from tram_network_db import router as tram_network_router
+from fastapi import Request
+from fastapi.responses import HTMLResponse, JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from config import RESOURCES_DIR
+from core.database import (
+    BIKES_DB_PATH,
+    get_db_cursor,
+    init_all_databases,
+)
+from modules.bikes.router import router as bikes_router
+from modules.bikes.worker import bike_history_poller_worker
+from modules.infrastructure.router import router as infra_router
+from modules.telemetry.router import router as telemetry_router
+from modules.telemetry.worker import tram_telemetry_poller_task
+from modules.bikes.storage import get_cached_stations
 
-logger = logging.getLogger(__name__)
-RESOURCES_DIR = Path(__file__).parent / "resources"
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+)
+logger = logging.getLogger("main")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-  database.init_db()
-  yield
+    # 1. Start: Inicjalizacja schematów 4 baz SQLite
+    init_all_databases()
+    logger.info("Zainicjalizowano schematy baz danych SQLite.")
+
+    # 2. Uruchomienie cyklicznych procesów zbierania danych w tle
+    tram_task = asyncio.create_task(tram_telemetry_poller_task())
+    bike_task = asyncio.create_task(bike_history_poller_worker())
+    logger.info("Uruchomiono workery telemetrii tramwajowej i stacji Veturilo.")
+
+    yield
+
+    # 3. Shutdown: Zatrzymanie workerów
+    logger.info("Zatrzymywanie workerów w tle...")
+    tram_task.cancel()
+    bike_task.cancel()
+    await asyncio.gather(tram_task, bike_task, return_exceptions=True)
+    logger.info("Aplikacja bezpiecznie wyłączona.")
 
 
 app = FastAPI(
-    title="Nextbike & Safe Cycleways GIS", lifespan=lifespan
-)  # Cykl życia z inicjalizacją SQLite
-app.include_router(n_router)  
-app.include_router(av_router)  
-app.include_router(tram_network_router)
+    title="Warsaw Transit & Safe Cycleways GIS",
+    lifespan=lifespan
+)
 
-app.mount(
-    "/static", StaticFiles(directory=RESOURCES_DIR), name="static"
-)  
+# Rejestracja modułów
+app.include_router(bikes_router)
+app.include_router(infra_router)
+app.include_router(telemetry_router)
+
+# Zasoby statyczne
+# main.py
+
+# Montujemy dokładnie podkatalog static wewnątrz resources:
+app.mount("/static", StaticFiles(directory=RESOURCES_DIR / "static"), name="static")
 
 
-@app.get("/health/check") 
+# --- Endpointy Główne & Widoki ---
+
+@app.get("/health/check")
 def health_check():
-  return {"SayHelloTo": "ctor2", "status": "running"}  
+    return {"status": "running", "service": "Warsaw GIS Engine"}
 
 
-@app.get("/")  
+@app.get("/")
 def root():
-  return RedirectResponse(url="/map")  
+    return RedirectResponse(url="/map")
 
-
-@app.get("/bikes/citybikes/warsaw")
-async def get_warsaw_bikes():
-  """Błyskawicznie serwuje stacje z pamięci RAM/dysku. Zero zapytań HTTP na zewnątrz!"""
-  cached = get_cached_stations()
-  if cached:
-    return cached
-
-  return {
-      "type": "FeatureCollection",
-      "system_name": "VETURILO 3.0",
-      "total_stations": 0,
-      "features": [],
-  }
-
-
-@app.get("/map", response_class=HTMLResponse) 
+@app.get("/map", response_class=HTMLResponse)
 async def get_map_view():
-  html_file = RESOURCES_DIR / "index.html"  
-  return HTMLResponse(html_file.read_text(encoding="utf-8"))  
+    html_file = RESOURCES_DIR / "templates" / "index.html"
+    if not html_file.exists():
+        raise HTTPException(status_code=404, detail="Brak pliku index.html w resources/templates")
+    return HTMLResponse(html_file.read_text(encoding="utf-8"))
 
+from fastapi import Request
+from fastapi.responses import HTMLResponse, JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from config import RESOURCES_DIR
 
-@app.get("/leaderboard", response_class=HTMLResponse)  
-async def get_leaderboard_view():
-  html_file = RESOURCES_DIR / "leaderboard.html"  
-  return HTMLResponse(html_file.read_text(encoding="utf-8"))  
+@app.exception_handler(StarletteHTTPException)
+async def custom_http_exception_handler(request: Request, exc: StarletteHTTPException):
+    if exc.status_code == 404:
+        # Jeśli zapytanie idzie z przeglądarki (żąda HTML)
+        accept_header = request.headers.get("accept", "")
+        if "text/html" in accept_header:
+            template_path = RESOURCES_DIR / "templates" / "404.html"
+            if template_path.exists():
+                return HTMLResponse(content=template_path.read_text(encoding="utf-8"), status_code=404)
+        
+        # Jeśli to zapytanie API (fetch / curl)
+        return JSONResponse(status_code=404, content={"detail": exc.detail or "Nie znaleziono zasobu"})
 
-
-@app.get("/favicon.ico", include_in_schema=False)  
-async def favicon():
-  return Response(status_code=204)  
+    return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+# @app.get("/leaderboard", response_class=HTMLResponse)
+# async def get_leaderboard_view():
+#     html_file = RESOURCES_DIR / "templates" / "leaderboard.html"
+#     if not html_file.exists():
+#         raise HTTPException(status_code=404, detail="Brak pliku leaderboard.html w resources/templates")
+#     return HTMLResponse(html_file.read_text(encoding="utf-8"))
 
 
 @app.get("/stations")
 def list_stations():
-  """Zwraca listę wszystkich zarejestrowanych stacji z bazy SQLite."""
-  with database.get_db_cursor() as cur:
-    cur.execute("SELECT station_id, name FROM stations ORDER BY name ASC;")
-    return [dict(r) for r in cur.fetchall()]
+    """Zwraca listę zarejestrowanych stacji Veturilo z bazy SQLite."""
+    with get_db_cursor(BIKES_DB_PATH) as cur:
+        cur.execute("SELECT station_id, name, capacity FROM stations ORDER BY name ASC;")
+        return [dict(r) for r in cur.fetchall()]
 
 
-@app.post("/admin/sync-json")
-def sync_latest_json():
-  """Wymusza ponowne zczytanie danych z history_cache.json do SQLite."""
-  try:
-    database.migrate_json_to_db(database.JSON_CACHE_PATH)
-    return {
-        "status": "success",
-        "message": "Zsynchronizowano dane z pliku JSON do bazy SQLite.",
-    }
-  except Exception as e:
-    raise HTTPException(
-        status_code=500, detail=f"Błąd synchronizacji: {str(e)}"
-    )
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return Response(status_code=204)
 
 
 if __name__ == "__main__":
-  import uvicorn
-
-  uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    import uvicorn
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)

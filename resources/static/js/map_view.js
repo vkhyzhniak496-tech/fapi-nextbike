@@ -1,4 +1,3 @@
-// 1. Zmienne filtrujące i definicje reguł ZAWSZE na samej górze
 const IS_DDR = ['==', ['get', 'highway'], 'cycleway'];
 const HAS_LANE = [
     'any',
@@ -52,10 +51,13 @@ function toggleTramTracks() {
     const isVisible = checkbox ? checkbox.checked : true;
     const state = isVisible ? 'visible' : 'none';
 
+    // Tory, perony, tramwaje i ich etykiety znikają razem
     const tramLayers = [
         'tram-tracks',
         'tram-platforms-circle',
-        'tram-platforms-label'
+        'tram-platforms-label',
+        'tram-live-layer',
+        'tram-live-labels'
     ];
 
     tramLayers.forEach(id => {
@@ -63,22 +65,9 @@ function toggleTramTracks() {
     });
 }
 
-function toggleTramPlatforms() {
-    if (!map) return;
-    const checkbox = document.getElementById('filter-platforms');
-    const isVisible = checkbox ? checkbox.checked : true;
-    const state = isVisible ? 'visible' : 'none';
-
-    ['tram-platforms-circle', 'tram-platforms-label'].forEach(id => {
-        if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', state);
-    });
-}
-
 function toggleMobileFilters() {
     const legend = document.getElementById('legend');
-    if (legend) {
-        legend.classList.toggle('active');
-    }
+    if (legend) legend.classList.toggle('active');
 }
 
 function createPopupHTML(id, name, freeBikes, emptySlots) {
@@ -119,12 +108,24 @@ async function fetchStations() {
     }
 }
 
+async function fetchLiveTrams() {
+    try {
+        const res = await fetch('/network/tram/live');
+        if (res.ok) {
+            const data = await res.json();
+            if (map) {
+                const source = map.getSource('tram-live-source');
+                if (source) source.setData(data);
+            }
+        }
+    } catch (err) {
+        console.warn("Błąd telemetrii tramwajów:", err);
+    }
+}
+
 function initMap() {
     const container = document.getElementById('map');
-    if (!container) {
-        console.error("Brak kontenera #map w drzewie DOM!");
-        return;
-    }
+    if (!container) return;
 
     map = new maplibregl.Map({
         container: 'map',
@@ -165,7 +166,7 @@ function initMap() {
             }
         });
 
-        // 2. Torowiska tramwajowe
+        // 2. Torowiska
         map.addSource('tram-network', {
             type: 'geojson',
             data: '/network/tram'
@@ -175,23 +176,20 @@ function initMap() {
             id: 'tram-tracks',
             type: 'line',
             source: 'tram-network',
-            layout: {
-                'line-join': 'round',
-                'line-cap': 'round'
-            },
+            layout: { 'line-join': 'round', 'line-cap': 'round' },
             paint: {
                 'line-color': '#3b0141',
                 'line-width': 2.5,
                 'line-opacity': 0.85
             }
         });
-        // --- 2a. PRZYSTANKI TRAMWAJOWE (PUNKTY I NAZWY) ---
+
+        // 2a. Przystanki
         map.addSource('tram-platforms', {
             type: 'geojson',
             data: '/network/tram/platforms'
         });
 
-        // Kółko przystanku
         map.addLayer({
             id: 'tram-platforms-circle',
             type: 'circle',
@@ -204,7 +202,6 @@ function initMap() {
             }
         });
 
-        // Nazwa przystanku z numerem słupka
         map.addLayer({
             id: 'tram-platforms-label',
             type: 'symbol',
@@ -224,7 +221,44 @@ function initMap() {
             }
         });
 
-        // 3. Stacje Veturilo
+        // 2b. Tramwaje na żywo - Kółka
+        map.addSource('tram-live-source', {
+            type: 'geojson',
+            data: { type: 'FeatureCollection', features: [] }
+        });
+
+        map.addLayer({
+            id: 'tram-live-layer',
+            type: 'circle',
+            source: 'tram-live-source',
+            paint: {
+                'circle-radius': 6.5,
+                'circle-color': '#e056fd',
+                'circle-stroke-width': 1.8,
+                'circle-stroke-color': '#ffffff'
+            }
+        });
+
+        // 2c. Tramwaje na żywo - Numery linii
+        map.addLayer({
+            id: 'tram-live-labels',
+            type: 'symbol',
+            source: 'tram-live-source',
+            layout: {
+                'text-field': ['get', 'line'],
+                'text-size': 11,
+                'text-offset': [0, -1.3],
+                'text-anchor': 'bottom',
+                'text-allow-overlap': true
+            },
+            paint: {
+                'text-color': '#2c3e50',
+                'text-halo-color': '#ffffff',
+                'text-halo-width': 2
+            }
+        });
+
+        // 3. Stacje rowerowe
         map.addSource('veturilo-stations', {
             type: 'geojson',
             data: { type: 'FeatureCollection', features: [] }
@@ -251,9 +285,36 @@ function initMap() {
             }
         });
 
+        // Start pobierania danych
         const initialData = await fetchStations();
         setInterval(fetchStations, 30000);
 
+        await fetchLiveTrams();
+        setInterval(fetchLiveTrams, 10000);
+
+        // Klik w tramwaj -> Dymek z prędkością
+        map.on('click', 'tram-live-layer', (e) => {
+            const p = e.features[0].properties;
+            const coords = e.features[0].geometry.coordinates.slice();
+            const speed = p.speed_kmh !== undefined ? Math.round(p.speed_kmh) : 0;
+            const vNum = p.vehicle_number || p.id || '---';
+
+            new maplibregl.Popup({ offset: 8 })
+                .setLngLat(coords)
+                .setHTML(`
+                    <div style="font-size: 14px; font-weight: 700; color: #8e44ad; margin-bottom: 4px;">
+                        🚋 Linia ${p.line} (#${vNum})
+                    </div>
+                    <div style="font-size: 13px;">⚡ Prędkość: <b>${speed} km/h</b></div>
+                    <div style="font-size: 12px; color: #64748b;">Brygada: <b>${p.brigade || '-'}</b></div>
+                    <div style="font-size: 11px; color: #94a3b8; margin-top: 4px;">GPS: ${p.time || ''}</div>
+                `)
+                .addTo(map);
+        });
+        map.on('mouseenter', 'tram-live-layer', () => { map.getCanvas().style.cursor = 'pointer'; });
+        map.on('mouseleave', 'tram-live-layer', () => { map.getCanvas().style.cursor = ''; });
+
+        // Klik w stację rowerową
         map.on('click', 'stations-point', (e) => {
             const p = e.features[0].properties;
             new maplibregl.Popup({ offset: 8 })
@@ -261,21 +322,19 @@ function initMap() {
                 .setHTML(createPopupHTML(p.id, p.name, p.free_bikes, p.empty_slots))
                 .addTo(map);
         });
-
         map.on('mouseenter', 'stations-point', () => { map.getCanvas().style.cursor = 'pointer'; });
         map.on('mouseleave', 'stations-point', () => { map.getCanvas().style.cursor = ''; });
 
-        // Zamknięcie wysuwanego menu na mobile po dotknięciu tła mapy
+        // Mobile popup zamykany tłem
         map.on('click', (e) => {
-            const features = map.queryRenderedFeatures(e.point, { layers: ['stations-point'] });
-            if (!features.length) {
+            const f = map.queryRenderedFeatures(e.point, { layers: ['stations-point', 'tram-live-layer'] });
+            if (!f.length) {
                 const legend = document.getElementById('legend');
-                if (legend && legend.classList.contains('active')) {
-                    legend.classList.remove('active');
-                }
+                if (legend && legend.classList.contains('active')) legend.classList.remove('active');
             }
         });
 
+        // Teleport do stacji z URL
         const params = new URLSearchParams(window.location.search);
         const lat = parseFloat(params.get('lat'));
         const lng = parseFloat(params.get('lng'));
@@ -286,7 +345,7 @@ function initMap() {
             map.flyTo({ center: [lng, lat], zoom: 16, essential: true });
             let freeBikes = undefined, emptySlots = undefined;
             if (initialData && initialData.features) {
-                const match = initialData.features.find(f => f.properties.id === targetId);
+                const match = initialData.features.find(item => item.properties.id === targetId);
                 if (match) {
                     freeBikes = match.properties.free_bikes;
                     emptySlots = match.properties.empty_slots;

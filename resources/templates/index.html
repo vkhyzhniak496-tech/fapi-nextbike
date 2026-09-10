@@ -6,7 +6,7 @@
     <title>Warszawa - Veturilo & Safe Cycleways</title>
     <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
     <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
-    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
     <div id="info-box" class="glass-panel">
@@ -18,7 +18,6 @@
         <a href="/leaderboard" class="btn-nav-leaderboard"> Ranking stacji</a>
     </div>
 
-    <!-- Pływający przycisk filtrów na mobile (FAB) -->
     <button id="btn-toggle-filters" class="fab-filters" onclick="toggleMobileFilters()" aria-label="Filtry warstw">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
@@ -27,7 +26,6 @@
         </svg>
     </button>
 
-    <!-- Interaktywny filtr warstw -->
     <div id="legend" class="glass-panel">
         <div class="legend-header-mobile">
             <div class="legend-title" style="margin: 0;">Filtruj infrastrukturę</div>
@@ -69,9 +67,8 @@
         </div>
     </div>
 
-    <!-- Kontener mapy MUSI być zdefiniowany przed załadowaniem skryptu -->
     <div id="map"></div>
 
-    <script src="/static/map_view.js" defer></script>
+    <script src="/static/js/map_view.js" defer></script>
 </body>
 </html>
