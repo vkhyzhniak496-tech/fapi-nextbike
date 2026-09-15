@@ -35,4 +35,3 @@ python main.py
 
 ---
 
-*Text automatically formatted with [Format Magic](https://formatmagic.ai)*

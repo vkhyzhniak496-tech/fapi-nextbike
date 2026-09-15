@@ -1,9 +1,8 @@
 import json
 from pathlib import Path
 from typing import Any, Dict, Optional
-
-RESOURCES_DIR = Path(__file__).resolve().parent / "resources"
-STATIONS_CACHE_PATH = RESOURCES_DIR / "stations_cache.json"
+from config import RESOURCES_DIR as RD
+STATIONS_CACHE_PATH = RD / "stations_cache.json"
 
 # Bufor RAM żyjący w storage
 _MEM_STATIONS_CACHE: Optional[Dict[str, Any]] = None

@@ -71,39 +71,42 @@ async def trigger_cycleways_sync(
 
 @router.get("/tram")
 async def get_tram_network(response: Response):
-  """Zwraca geometrię torowisk tramwajowych."""
-  with get_db_cursor(TRAM_DB_PATH) as cur:
-    cur.execute(
-        "SELECT way_id, properties_json, coordinates_json FROM tram_edges;"
-    )
-    rows = cur.fetchall()
+    """Zwraca geometrię torowisk tramwajowych."""
+    with get_db_cursor(TRAM_DB_PATH) as cur:
+        cur.execute(
+            "SELECT way_id, properties_json, coordinates_json FROM tram_edges;"
+        )
+        rows = cur.fetchall()
 
-  if not rows:
-    raise HTTPException(
-        status_code=404,
-        detail="Baza torowisk jest pusta. Uruchom POST /network/tram/sync.",
-    )
+    if not rows:
+        raise HTTPException(
+            status_code=404,
+            detail="Baza torowisk jest pusta. Uruchom POST /network/tram/sync.",
+        )
 
-  features = [
-      {
-          "type": "Feature",
-          "id": r["way_id"],
-          "properties": json.loads(r["properties_json"]),
-          "geometry": {
-              "type": "LineString",
-              "coordinates": json.loads(r["coordinates_json"]),
-          },
-      }
-      for r in rows
-  ]
+    features = [
+        {
+            "type": "Feature",
+            "id": r["way_id"],
+            "properties": json.loads(r["properties_json"]),
+            "geometry": {
+                "type": "LineString",
+                "coordinates": json.loads(r["coordinates_json"]),
+            },
+        }
+        for r in rows
+    ]
 
-  response.headers["Cache-Control"] = "public, max-age=604800, immutable"
-  return {
-      "type": "FeatureCollection",
-      "generator": "sqlite-tram-engine",
-      "total_ways": len(features),
-      "features": features,
-  }
+    # widzieć świeże tory od razu
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    return {
+        "type": "FeatureCollection",
+        "generator": "sqlite-tram-engine",
+        "total_ways": len(features),
+        "features": features,
+    }
+
+
 
 
 @router.post("/tram/sync")

@@ -57,10 +57,12 @@ def build_cycleways_query(bbox: str) -> str:
 
 
 def build_tram_tracks_query(bbox: str) -> str:
-  return f"""
+    return f"""
     [out:json][timeout:120];
     (
       way["railway"="tram"]({bbox});
+      way["railway"="construction"]["construction"="tram"]({bbox});
+      way["railway"="disused"]({bbox});
     );
     out body geom;
     """
@@ -82,19 +84,23 @@ def build_tram_platforms_query(bbox: str) -> str:
 async def execute_overpass_query(
     query: str, client: httpx.AsyncClient, max_retries: int = 3
 ) -> List[Dict[str, Any]]:
-  for server in OVERPASS_SERVERS:
-    for attempt in range(1, max_retries + 1):
-      try:
-        res = await client.post(server, data={"data": query})
-        if res.status_code == 200:
-          return res.json().get("elements", [])
-        if res.status_code == 429:
-          await asyncio.sleep(attempt * 5)
-        else:
-          await asyncio.sleep(2)
-      except Exception:
-        await asyncio.sleep(2)
-  return []
+    for server in OVERPASS_SERVERS:
+        for attempt in range(1, max_retries + 1):
+            try:
+                res = await client.post(server, data={"data": query})
+                if res.status_code == 200:
+                    payload = res.json()
+                    if "remark" in payload:
+                        logger.error(f"[INFRA_GIS] Błąd składni Overpass na {server}: {payload['remark']}")
+                    return payload.get("elements", [])
+                if res.status_code == 429:
+                    await asyncio.sleep(attempt * 5)
+                else:
+                    await asyncio.sleep(2)
+            except Exception as e:
+                logger.warning(f"[INFRA_GIS] Błąd połączenia z {server}: {e}")
+                await asyncio.sleep(2)
+    return []
 
 
 # --- 3. ZAPIS DO BAZ SQLITE ---
@@ -144,33 +150,45 @@ def save_cycleways_to_db(elements: List[Dict[str, Any]]) -> int:
 
 
 def save_tram_tracks_to_db(elements: List[Dict[str, Any]]) -> int:
-  records = []
-  for el in elements:
-    if el.get("type") == "way" and "geometry" in el:
-      coords = [[pt["lon"], pt["lat"]] for pt in el["geometry"]]
-      records.append((
-          f"way/{el['id']}",
-          json.dumps(el.get("tags", {}), ensure_ascii=False),
-          json.dumps(coords),
-      ))
+    records = []
+    seen_ways = set()
 
-  if not records:
-    return 0
+    for el in elements:
+        if el.get("type") == "way" and "geometry" in el:
+            way_key = f"way/{el['id']}"
+            # Zabezpieczenie przed dublami w ramach jednej odpowiedzi Overpassa
+            if way_key in seen_ways:
+                continue
+            seen_ways.add(way_key)
 
-  with get_db_cursor(TRAM_DB_PATH) as cur:
-    with transaction(cur):
-      cur.executemany(
-          """
+            coords = [[pt["lon"], pt["lat"]] for pt in el["geometry"]]
+            records.append((
+                way_key,
+                json.dumps(el.get("tags", {}), ensure_ascii=False),
+                json.dumps(coords),
+            ))
+
+    if not records:
+        return 0
+
+    with get_db_cursor(TRAM_DB_PATH) as cur:
+        with transaction(cur):
+            # 1. Czyścimy tabelę przed zasileniem świeżymi danymi
+            cur.execute("DELETE FROM tram_edges;")
+
+            # 2. Wstawiamy czyste, aktualne odcinki
+            cur.executemany(
+                """
                 INSERT INTO tram_edges (way_id, properties_json, coordinates_json)
                 VALUES (?, ?, ?)
                 ON CONFLICT(way_id) DO UPDATE SET
                     properties_json=excluded.properties_json,
                     coordinates_json=excluded.coordinates_json,
                     updated_at=CURRENT_TIMESTAMP;
-            """,
-          records,
-      )
-  return len(records)
+                """,
+                records,
+            )
+    return len(records)
 
 
 def save_tram_platforms_to_db(elements: List[Dict[str, Any]]) -> int:
