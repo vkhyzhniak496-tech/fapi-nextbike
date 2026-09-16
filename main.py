@@ -46,7 +46,7 @@ async def lifespan(app: FastAPI):
     ingest_task = asyncio.create_task(tram_telemetry_poller_task())
     analytics_task = asyncio.create_task(tram_analytics_worker_task())
     backfill_task = asyncio.create_task(run_initial_backfill())
-
+    analytics_engine.ensure_initialized()
     try:
         yield
     finally:

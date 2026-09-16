@@ -17,11 +17,18 @@ from core.models import TramDwellEvent
 
 
 class TelemetryAnalyticsEngine:
-    def __init__(self):
-        self.plat_tree: Optional[cKDTree] = None
-        self.plat_names: Optional[np.ndarray] = None
-        self.plat_clusters: Optional[np.ndarray] = None
-        self._load_platforms()
+
+  def __init__(self):
+    self.plat_names = []
+    self.plat_clusters = []
+    self.plat_tree = None
+    self.initialized = False
+
+  def ensure_initialized(self):
+    """Ładuje perony dopiero po wykonaniu migracji, a nie przy imporcie modułu."""
+    if not self.initialized:
+      self._load_platforms()
+      self.initialized = True
 
     def _load_platforms(self) -> None:
         """Ładuje infrastrukturę przystankową do pamięci RAM raz przy starcie."""
