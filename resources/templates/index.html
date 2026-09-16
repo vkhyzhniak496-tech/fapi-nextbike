@@ -15,10 +15,10 @@
             <span>Veturilo 3.0 Live</span>
         </div>
         <div class="update-time">Aktualizacja: <span id="last-update-label">Ładowanie...</span></div>
-        <a href="/leaderboard" class="btn-nav-leaderboard"> Ranking stacji</a>
+        <a href="/analytics/tram" class="btn-nav-leaderboard">Tramy</a>
     </div>
 
-    <button id="btn-toggle-filters" class="fab-filters" onclick="toggleMobileFilters()" aria-label="Filtry warstw">
+    <button id="btn-toggle-filters" class="fab-filters" aria-label="Filtry warstw">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
             <polyline points="2 17 12 22 22 17"></polyline>
@@ -29,30 +29,30 @@
     <div id="legend" class="glass-panel">
         <div class="legend-header-mobile">
             <div class="legend-title" style="margin: 0;">Filtruj infrastrukturę</div>
-            <button class="btn-close-mobile" onclick="toggleMobileFilters()">&times;</button>
+            <button class="btn-close-mobile">&times;</button>
         </div>
         <label class="legend-toggle">
-            <input type="checkbox" id="filter-ddr" checked onchange="updateCyclewaysFilter()">
+            <input type="checkbox" id="filter-ddr" checked>
             <span class="legend-line" style="background: #27ae60;"></span>
             <span>Wydzielona droga (DDR)</span>
         </label>
         <label class="legend-toggle">
-            <input type="checkbox" id="filter-lane" checked onchange="updateCyclewaysFilter()">
+            <input type="checkbox" id="filter-lane" checked>
             <span class="legend-line" style="background: #f39c12;"></span>
             <span>Pas rowerowy w jezdni</span>
         </label>
         <label class="legend-toggle">
-            <input type="checkbox" id="filter-woonerf" checked onchange="updateCyclewaysFilter()">
+            <input type="checkbox" id="filter-woonerf" checked>
             <span class="legend-line" style="background: #2980b9;"></span>
             <span>Strefa zamieszkania / Woonerf</span>
         </label>
         <label class="legend-toggle">
-            <input type="checkbox" id="filter-tempo30" checked onchange="updateCyclewaysFilter()">
+            <input type="checkbox" id="filter-tempo30" checked>
             <span class="legend-line" style="background: #3498db;"></span>
             <span>Ulica Tempo 30 (uspokojona)</span>
         </label>
         <label class="legend-toggle">
-            <input type="checkbox" id="filter-trams" checked onchange="toggleTramTracks()">
+            <input type="checkbox" id="filter-trams" checked>
             <span class="legend-line" style="background: #3b0141;"></span>
             <span>Torowiska tramwajowe</span>
         </label>
@@ -69,6 +69,7 @@
 
     <div id="map"></div>
 
-    <script src="/static/js/map_view.js" defer></script>
+    <!-- Załadowanie jako moduł ES -->
+    <script type="module" src="/static/js/map_view.js"></script>
 </body>
 </html>

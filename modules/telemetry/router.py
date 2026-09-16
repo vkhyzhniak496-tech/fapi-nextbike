@@ -1,10 +1,11 @@
 from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
-
+import json
 from core.database import (
     TRAM_ANALYTICS_DB_PATH,
     TRAM_LIVE_DB_PATH,
+    TRAM_DB_PATH,
     get_db_cursor,
 )
 from core.models import StopDwellStats, TramDwellEvent
@@ -111,6 +112,19 @@ async def get_vehicle_track(
         "features": [track_line_feature] + sample_points,
     }
 
+@router.get("/dwells/lines")
+async def get_available_lines():
+  """Zwraca listę wszystkich linii tramwajowych obecnych w bazie zdarzeń."""
+  with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
+    cur.execute("""
+            SELECT DISTINCT line 
+            FROM tram_dwell_events 
+            WHERE line IS NOT NULL AND line != ''
+            ORDER BY CAST(line AS INTEGER), line ASC;
+        """)
+    lines = [r["line"] for r in cur.fetchall()]
+  return {"lines": lines}
+
 
 @router.get("/dwells/vehicle/{vehicle_number}", response_model=List[TramDwellEvent])
 async def get_vehicle_dwell_events(
@@ -135,48 +149,84 @@ async def get_vehicle_dwell_events(
 
     return [TramDwellEvent(**dict(r)) for r in rows]
 
-
 @router.get("/dwells/line/{line}/stats")
 async def get_line_dwell_stats(line: str) -> Dict[str, Any]:
-    """Zwraca statystyki czasów wymiany pasażerskiej dla przystanków na danej linii w formacie GeoJSON."""
+    """Zwraca statystyki postojów dla linii jako GeoJSON z prawidłowymi punktami geometrycznymi."""
     line_clean = line.strip()
 
+    # 1. Pobieramy mapowanie współrzędnych po pełnej nazwie oraz po zespole (cluster)
+    coords_by_stop = {}
+    coords_by_cluster = {}
+
+    with get_db_cursor(TRAM_DB_PATH) as cur:
+        cur.execute("""
+            SELECT name, cluster_name, lat, lon, coordinates_json 
+            FROM tram_platforms;
+        """)
+        for r in cur.fetchall():
+            lat, lon = r["lat"], r["lon"]
+            # Fallback jeśli lat/lon nie były zmigrowane jako pojedyncze kolumny:
+            if (lat is None or lon is None) and r["coordinates_json"]:
+                try:
+                    c = json.loads(r["coordinates_json"])
+                    lon, lat = float(c[0]), float(c[1])
+                except Exception:
+                    continue
+
+            if lat is not None and lon is not None:
+                if r["name"]:
+                    coords_by_stop[r["name"]] = (lon, lat)
+                if r["cluster_name"] and r["cluster_name"] not in coords_by_cluster:
+                    coords_by_cluster[r["cluster_name"]] = (lon, lat)
+
+    # 2. Agregacja z bazy analitycznej
     with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
-        cur.execute(
-            """
+        cur.execute("""
             SELECT 
                 d.stop_name,
                 d.cluster_name,
                 ROUND(AVG(d.duration_sec), 1) AS avg_dwell_sec,
+                ROUND(MIN(d.duration_sec), 1) AS min_dwell_sec,
+                ROUND(MAX(d.duration_sec), 1) AS max_dwell_sec,
                 COUNT(*) AS samples_count,
                 SUM(CASE WHEN d.min_speed_kmh > 3.0 THEN 1 ELSE 0 END) AS slow_passes_count
             FROM tram_dwell_events d
             WHERE d.line = ?
             GROUP BY d.stop_name, d.cluster_name
             ORDER BY samples_count DESC;
-            """,
-            (line_clean,),
-        )
+        """, (line_clean,))
         dwell_rows = cur.fetchall()
 
     features = []
     for r in dwell_rows:
+        stop_name = r["stop_name"]
+        cluster_name = r["cluster_name"]
+
+        # Dopasowanie: najpierw dokładny słupek, a w razie braku cały zespół przystankowy
+        coords = coords_by_stop.get(stop_name) or coords_by_cluster.get(cluster_name)
+        if not coords:
+            continue
+
         features.append({
             "type": "Feature",
-            "properties": {
-                "stop_name": r["stop_name"],
-                "cluster_name": r["cluster_name"],
-                "avg_dwell_sec": r["avg_dwell_sec"],
-                "samples_count": r["samples_count"],
-                "slow_passes_count": r["slow_passes_count"],
+            "geometry": {
+                "type": "Point",
+                "coordinates": [coords[0], coords[1]]
             },
-            # Współrzędne peronu można pobrać przez JOIN z tram_platforms
-            "geometry": None,
+            "properties": {
+                "stop_name": stop_name,
+                "cluster_name": cluster_name,
+                "avg_dwell_sec": r["avg_dwell_sec"],
+                "min_dwell_sec": r["min_dwell_sec"],
+                "max_dwell_sec": r["max_dwell_sec"],
+                "samples_count": r["samples_count"],
+                "slow_passes_count": r["slow_passes_count"]
+            }
         })
 
     return {
         "type": "FeatureCollection",
         "line": line_clean,
         "stops_count": len(features),
-        "features": features,
+        "features": features
     }

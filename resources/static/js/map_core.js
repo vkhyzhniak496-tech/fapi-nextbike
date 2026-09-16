@@ -1,27 +1,11 @@
-let map = null;
+export let map = null;
 
-function formatTime(val) {
-    if (!val) return "Brak danych";
-    const date = new Date(val);
-    return isNaN(date.getTime()) ? "Aktualne" : date.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-}
-
-function toggleMobileFilters() {
-    const legend = document.getElementById('legend');
-    if (legend) {
-        legend.classList.toggle('active');
-    }
-}
-
-function initMap() {
-    const container = document.getElementById('map');
-    if (!container) {
-        console.error("Brak kontenera #map w drzewie DOM!");
-        return;
-    }
+export function initMapInstance(containerId = 'map', onMapReady) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
 
     map = new maplibregl.Map({
-        container: 'map',
+        container: containerId,
         style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
         center: [21.012, 52.230],
         zoom: 13
@@ -34,16 +18,16 @@ function initMap() {
         showUserLocation: true
     }), 'top-right');
 
-    map.on('load', async () => {
-        initInfrastructureLayers(map);
-        await initBikesLayer(map);
-        initTramLiveLayer(map);
+    map.on('load', () => {
+        if (onMapReady) onMapReady(map);
     });
 
-    // Zamknięcie wysuwanego menu na mobile po kliknięciu w tło mapy
     map.on('click', (e) => {
-        const features = map.queryRenderedFeatures(e.point, { layers: ['stations-point'] });
-        if (!features.length) {
+        const interactiveLayers = ['stations-point', 'tram-live-layer', 'tram-dwell-points'];
+        const existingLayers = interactiveLayers.filter(id => map.getLayer(id));
+        const f = map.queryRenderedFeatures(e.point, { layers: existingLayers });
+        
+        if (!f.length) {
             const legend = document.getElementById('legend');
             if (legend && legend.classList.contains('active')) {
                 legend.classList.remove('active');
@@ -51,11 +35,5 @@ function initMap() {
         }
     });
 
-    window.gisMap = map;
-}
-
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initMap);
-} else {
-    initMap();
+    return map;
 }

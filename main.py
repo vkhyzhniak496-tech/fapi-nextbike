@@ -10,9 +10,10 @@ from fastapi.staticfiles import StaticFiles
 from fastapi import Request
 from fastapi.responses import HTMLResponse, JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
-from config import RESOURCES_DIR
+from config import RESOURCES_DIR, BASE_DIR
 from core.database import (
     BIKES_DB_PATH,
+    TRAM_DB_PATH,
     get_db_cursor,
     init_all_databases,
     migrate_tram_platforms, 
@@ -41,29 +42,21 @@ async def run_initial_backfill():
   
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 1. Start: Inicjalizacja schematów 4 baz SQLite
-    init_all_databases()
-    migrate_tram_platforms()
-    migrate_tram_edges()
-    logger.info("Zainicjalizowano schematy baz danych SQLite.")
-
-    # 2. Uruchomienie cyklicznych procesów zbierania danych w tle
-    tram_task = asyncio.create_task(tram_telemetry_poller_task())
-    bike_task = asyncio.create_task(bike_history_poller_worker())
+    # Start zadań
+    ingest_task = asyncio.create_task(tram_telemetry_poller_task())
     analytics_task = asyncio.create_task(tram_analytics_worker_task())
     backfill_task = asyncio.create_task(run_initial_backfill())
-    logger.info("Uruchomiono workery telemetrii tramwajowej i stacji Veturilo.")
 
-    yield
-
-    # 3. Shutdown: Zatrzymanie workerów
-    logger.info("Zatrzymywanie workerów w tle...")
-    tram_task.cancel()
-    bike_task.cancel()
-    analytics_task.cancel()
-    backfill_task.cancel()
-    await asyncio.gather(tram_task, bike_task, return_exceptions=True)
-    logger.info("Aplikacja bezpiecznie wyłączona.")
+    try:
+        yield
+    finally:
+        # Bezpieczne anulowanie tasków przy dowolnym sygnale wyjścia
+        for t in [ingest_task, analytics_task, backfill_task]:
+            if not t.done():
+                t.cancel()
+        
+        # Czekamy na domknięcie bez propagacji CancelledError w konsoli
+        await asyncio.gather(ingest_task, analytics_task, backfill_task, return_exceptions=True)
 
 
 app = FastAPI(
@@ -76,7 +69,7 @@ app.include_router(bikes_router)
 app.include_router(infra_router)
 app.include_router(telemetry_router)
 
-    
+
 
 # Montujemy dokładnie podkatalog static wewnątrz resources:
 app.mount("/static", StaticFiles(directory=RESOURCES_DIR / "static"), name="static")
@@ -119,12 +112,14 @@ async def custom_http_exception_handler(request: Request, exc: StarletteHTTPExce
         return JSONResponse(status_code=404, content={"detail": exc.detail or "Nie znaleziono zasobu"})
 
     return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
-# @app.get("/leaderboard", response_class=HTMLResponse)
-# async def get_leaderboard_view():
-#     html_file = RESOURCES_DIR / "templates" / "leaderboard.html"
-#     if not html_file.exists():
-#         raise HTTPException(status_code=404, detail="Brak pliku leaderboard.html w resources/templates")
-#     return HTMLResponse(html_file.read_text(encoding="utf-8"))
+
+
+
+@app.get("/analytics/tram", response_class=HTMLResponse)
+async def tram_analytics_page():
+  template_path = RESOURCES_DIR / "templates" / "tram_analytics.html"
+  with open(template_path, encoding="utf-8") as f:
+    return HTMLResponse(f.read())
 
 
 @app.get("/stations")

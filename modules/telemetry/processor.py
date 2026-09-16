@@ -216,8 +216,10 @@ class TelemetryAnalyticsEngine:
             tr_xy = [wgs84_to_epsg2180(lon, lat) for lon, lat in zip(df["lon"], df["lat"])]
             tr_x, tr_y = zip(*tr_xy)
 
-            dists, indices = self.plat_tree.query(np.column_stack([tr_x, tr_y]), distance_upper_bound=80.0)
-
+            # Zamiast 80.0 m, użyj 40.0 m - odcina przeciwległe jezdnie i perony sąsiednich ciągów
+            dists, indices = self.plat_tree.query(
+                np.column_stack([tr_x, tr_y]), distance_upper_bound=40.0
+)
             df["dist_to_stop_m"] = dists
             df["candidate_stop"] = [self.plat_names[idx] if idx < len(self.plat_names) else None for idx in indices]
             df["candidate_cluster"] = [self.plat_clusters[idx] if idx < len(self.plat_clusters) else None for idx in indices]

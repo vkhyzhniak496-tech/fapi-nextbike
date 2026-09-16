@@ -1,3 +1,11 @@
+function formatTime(val) {
+    if (!val) return "Brak danych";
+    const date = new Date(val);
+    return isNaN(date.getTime()) 
+        ? "Aktualne" 
+        : date.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
 function createPopupHTML(id, name, freeBikes, emptySlots) {
     const encodedName = encodeURIComponent(name);
     const cacheKey = Math.floor(Date.now() / 60000);
@@ -18,25 +26,7 @@ function createPopupHTML(id, name, freeBikes, emptySlots) {
     `;
 }
 
-async function fetchStations() {
-    try {
-        const res = await fetch('/bikes/citybikes/warsaw');
-        const data = await res.json();
-        if (data.last_update) {
-            const label = document.getElementById('last-update-label');
-            if (label) label.innerText = formatTime(data.last_update);
-        }
-        if (map) {
-            const source = map.getSource('veturilo-stations');
-            if (source) source.setData(data);
-        }
-        return data;
-    } catch (err) {
-        console.error("Błąd stacji:", err);
-    }
-}
-
-async function initBikesLayer(map) {
+export function setupBikeLayers(map) {
     map.addSource('veturilo-stations', {
         type: 'geojson',
         data: { type: 'FeatureCollection', features: [] }
@@ -63,9 +53,6 @@ async function initBikesLayer(map) {
         }
     });
 
-    const initialData = await fetchStations();
-    setInterval(fetchStations, 30000);
-
     map.on('click', 'stations-point', (e) => {
         const p = e.features[0].properties;
         new maplibregl.Popup({ offset: 8 })
@@ -76,8 +63,26 @@ async function initBikesLayer(map) {
 
     map.on('mouseenter', 'stations-point', () => { map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', 'stations-point', () => { map.getCanvas().style.cursor = ''; });
+}
 
-    // Obsługa przekierowania z leaderboarda z parametrami URL
+export async function fetchStations(map) {
+    try {
+        const res = await fetch('/bikes/citybikes/warsaw');
+        const data = await res.json();
+        if (data.last_update) {
+            const label = document.getElementById('last-update-label');
+            if (label) label.innerText = formatTime(data.last_update);
+        }
+        if (map && map.getSource('veturilo-stations')) {
+            map.getSource('veturilo-stations').setData(data);
+        }
+        return data;
+    } catch (err) {
+        console.error("Błąd pobierania stacji Veturilo:", err);
+    }
+}
+
+export function handleUrlStationTarget(map, initialData) {
     const params = new URLSearchParams(window.location.search);
     const lat = parseFloat(params.get('lat'));
     const lng = parseFloat(params.get('lng'));
@@ -86,9 +91,9 @@ async function initBikesLayer(map) {
 
     if (!isNaN(lat) && !isNaN(lng)) {
         map.flyTo({ center: [lng, lat], zoom: 16, essential: true });
-        let freeBikes = undefined, emptySlots = undefined;
-        if (initialData && initialData.features) {
-            const match = initialData.features.find(f => f.properties.id === targetId);
+        let freeBikes, emptySlots;
+        if (initialData?.features) {
+            const match = initialData.features.find(item => item.properties.id === targetId);
             if (match) {
                 freeBikes = match.properties.free_bikes;
                 emptySlots = match.properties.empty_slots;

@@ -70,41 +70,40 @@ async def trigger_cycleways_sync(
 
 
 @router.get("/tram")
-async def get_tram_network(response: Response):
-    """Zwraca geometrię torowisk tramwajowych."""
-    with get_db_cursor(TRAM_DB_PATH) as cur:
-        cur.execute(
-            "SELECT way_id, properties_json, coordinates_json FROM tram_edges;"
-        )
-        rows = cur.fetchall()
+async def get_tram_network():
+  """Zwraca wyłącznie eksploatowane torowiska tramwajowe."""
+  with get_db_cursor(TRAM_DB_PATH) as cur:
+    # 1. Musi być tramwajem ("railway": "tram")
+    # 2. Wykluczamy budowy, plany, nieużywane tory i bocznice
+    cur.execute("""
+            SELECT way_id, coordinates_json, properties_json 
+            FROM tram_edges 
+            WHERE (properties_json LIKE '%"railway": "tram"%' OR properties_json LIKE '%"railway":"tram"%')
+              AND properties_json NOT LIKE '%construction%'
+              AND properties_json NOT LIKE '%proposed%'
+              AND properties_json NOT LIKE '%abandoned%'
+              AND properties_json NOT LIKE '%disused%'
+              AND properties_json NOT LIKE '%"service": "yard"%'
+              AND properties_json NOT LIKE '%"service":"yard"%'
+              AND properties_json NOT LIKE '%"service": "siding"%'
+              AND properties_json NOT LIKE '%"service":"siding"%';
+        """)
+    rows = cur.fetchall()
 
-    if not rows:
-        raise HTTPException(
-            status_code=404,
-            detail="Baza torowisk jest pusta. Uruchom POST /network/tram/sync.",
-        )
+  features = []
+  for r in rows:
+    try:
+      coords = json.loads(r["coordinates_json"])
+      features.append({
+          "type": "Feature",
+          "id": r["way_id"],
+          "properties": {},
+          "geometry": {"type": "LineString", "coordinates": coords},
+      })
+    except Exception:
+      continue
 
-    features = [
-        {
-            "type": "Feature",
-            "id": r["way_id"],
-            "properties": json.loads(r["properties_json"]),
-            "geometry": {
-                "type": "LineString",
-                "coordinates": json.loads(r["coordinates_json"]),
-            },
-        }
-        for r in rows
-    ]
-
-    # widzieć świeże tory od razu
-    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    return {
-        "type": "FeatureCollection",
-        "generator": "sqlite-tram-engine",
-        "total_ways": len(features),
-        "features": features,
-    }
+  return {"type": "FeatureCollection", "features": features}
 
 
 

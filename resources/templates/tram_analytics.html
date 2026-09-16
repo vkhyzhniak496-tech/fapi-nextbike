@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analityka Tramwajowa - Czasy Wymiany</title>
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        .analytics-control {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px 16px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+        select.line-select {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            font-weight: 700;
+            font-size: 15px;
+            cursor: pointer;
+            outline: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="analytics-control glass-panel">
+        <label for="line-picker"><b></b></label>
+        <select id="line-picker" class="line-select">
+            <option value="">Ładowanie...</option>
+        </select>
+        <span id="stats-summary" style="font-size: 13px; color: #475569;">Pobieranie danych...</span>
+        <a href="/" class="btn-nav-leaderboard">Powrót do mapy</a>
+    </div>
+
+    <div id="map" style="width: 100vw; height: 100vh;"></div>
+
+    <script type="module">
+        const map = new maplibregl.Map({
+            container: 'map',
+            style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+            center: [21.012, 52.230],
+            zoom: 12.5
+        });
+
+        async function initLinePicker() {
+            try {
+                const res = await fetch('/network/tram/dwells/lines');
+                const data = await res.json();
+                const picker = document.getElementById('line-picker');
+                picker.innerHTML = '';
+
+                data.lines.forEach(line => {
+                    const opt = document.createElement('option');
+                    opt.value = line;
+                    opt.innerText = `Linia ${line}`;
+                    if (line === '16') opt.selected = true;
+                    picker.appendChild(opt);
+                });
+
+                picker.addEventListener('change', () => loadDwells(picker.value));
+                loadDwells(picker.value || data.lines[0]);
+            } catch (err) {
+                console.error("Błąd ładowania listy linii:", err);
+            }
+        }
+
+        async function loadDwells(line) {
+            if (!line) return;
+            try {
+                document.getElementById('stats-summary').innerText = 'Przeliczanie...';
+                const res = await fetch(`/network/tram/dwells/line/${line}/stats`);
+                const data = await res.json();
+                
+                document.getElementById('stats-summary').innerText = 
+                    `Obsłużone perony: ${data.stops_count || 0}`;
+
+                if (map.getSource('dwell-stats')) {
+                    map.getSource('dwell-stats').setData(data);
+                }
+            } catch (err) {
+                console.error("Błąd ładowania statystyk postojów:", err);
+            }
+        }
+
+        map.on('load', async () => {
+            // 1. Wyraźna sieć torowisk
+            map.addSource('tram-network', { type: 'geojson', data: '/network/tram' });
+            map.addLayer({
+                id: 'tram-tracks',
+                type: 'line',
+                source: 'tram-network',
+                layout: { 'line-join': 'round', 'line-cap': 'round' },
+                paint: {
+                    'line-color': '#475569',
+                    'line-width': 2.5,
+                    'line-opacity': 0.75
+                }
+            });
+
+            // 2. Punkty wymiany pasażerskiej
+            map.addSource('dwell-stats', {
+                type: 'geojson',
+                data: { type: 'FeatureCollection', features: [] }
+            });
+
+            map.addLayer({
+                id: 'dwell-circles',
+                type: 'circle',
+                source: 'dwell-stats',
+                paint: {
+                    'circle-radius': [
+                        'interpolate', ['linear'], ['get', 'avg_dwell_sec'],
+                        15, 6,
+                        35, 10,
+                        60, 15,
+                        120, 22
+                    ],
+                    'circle-color': [
+                        'interpolate', ['linear'], ['get', 'avg_dwell_sec'],
+                        20, '#2ecc71',
+                        40, '#f1c40f',
+                        65, '#e67e22',
+                        100, '#e74c3c'
+                    ],
+                    'circle-opacity': 0.85,
+                    'circle-stroke-width': 2,
+                    'circle-stroke-color': '#ffffff'
+                }
+            });
+
+            map.addLayer({
+                id: 'dwell-labels',
+                type: 'symbol',
+                source: 'dwell-stats',
+                minzoom: 12.5,
+                layout: {
+                    'text-field': ['concat', ['to-string', ['get', 'avg_dwell_sec']], 's'],
+                    'text-size': 11,
+                    'text-offset': [0, 1.4],
+                    'text-anchor': 'top',
+                    'text-allow-overlap': false
+                },
+                paint: {
+                    'text-color': '#0f172a',
+                    'text-halo-color': '#ffffff',
+                    'text-halo-width': 2
+                }
+            });
+
+            map.on('click', 'dwell-circles', (e) => {
+                const p = e.features[0].properties;
+                new maplibregl.Popup({ offset: 8 })
+                    .setLngLat(e.features[0].geometry.coordinates)
+                    .setHTML(`
+                        <div style="font-weight: 700; font-size: 14px; margin-bottom: 2px;">${p.stop_name}</div>
+                        <div style="font-size: 12px; color: #64748b; margin-bottom: 6px;">Zespół: ${p.cluster_name}</div>
+                        <div>⏱️ Średni postój: <b>${p.avg_dwell_sec} s</b></div>
+                        <div>📊 Liczba kursów: <b>${p.samples_count}</b></div>
+                        <div>🐢 Przejazdy wolne (>3 km/h): <b>${p.slow_passes_count}</b></div>
+                        <div>📈 Zakres: <b>${p.min_dwell_sec}s – ${p.max_dwell_sec}s</b></div>
+                    `)
+                    .addTo(map);
+            });
+
+            map.on('mouseenter', 'dwell-circles', () => { map.getCanvas().style.cursor = 'pointer'; });
+            map.on('mouseleave', 'dwell-circles', () => { map.getCanvas().style.cursor = ''; });
+
+            initLinePicker();
+        });
+    </script>
+</body>
+</html>
