@@ -165,3 +165,19 @@ async def tram_analytics_worker_task() -> None:
             logger.error(f"[TRAM_ANALYTICS] Błąd podczas przeliczania postojów: {e}")
 
         await asyncio.sleep(60)
+async def cleanup_old_telemetry_task():
+  """Uruchamia się raz na dobę i usuwa dane starsze niż 48h."""
+  while True:
+    await asyncio.sleep(86400)  # 24 godziny
+    try:
+      with get_db_cursor(TRAM_LIVE_DB_PATH) as cur:
+        with transaction(cur):
+          cur.execute("""
+                        DELETE FROM tram_telemetry_history 
+                        WHERE gps_time < datetime('now', '-2 days');
+                    """)
+      logger.info(
+          "[CLEANUP] Wyczyszczono stara telemetrie z tram_telemetry_history."
+      )
+    except Exception as e:
+      logger.error(f"[CLEANUP] Blad podczas usuwania historii: {e}")

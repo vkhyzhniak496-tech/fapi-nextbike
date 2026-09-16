@@ -23,7 +23,7 @@ from modules.bikes.router import router as bikes_router
 from modules.bikes.worker import bike_history_poller_worker
 from modules.infrastructure.router import router as infra_router
 from modules.telemetry.router import router as telemetry_router
-from modules.telemetry.worker import tram_telemetry_poller_task, tram_analytics_worker_task
+from modules.telemetry.worker import tram_telemetry_poller_task, tram_analytics_worker_task, cleanup_old_telemetry_task
 from modules.bikes.storage import get_cached_stations
 from modules.telemetry.processor import analytics_engine
 
@@ -47,6 +47,7 @@ async def lifespan(app: FastAPI):
     analytics_task = asyncio.create_task(tram_analytics_worker_task())
     backfill_task = asyncio.create_task(run_initial_backfill())
     analytics_engine.ensure_initialized()
+    asyncio.create_task(cleanup_old_telemetry_task())
     try:
         yield
     finally:

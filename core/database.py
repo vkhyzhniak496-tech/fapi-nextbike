@@ -24,6 +24,7 @@ def apply_wal_pragmas(cursor: sqlite3.Cursor) -> None:
   cursor.execute("PRAGMA cache_size=-64000;")
   # 5. Czas oczekiwania na zwolnienie blokady zanim rzuci 'database is locked'
   cursor.execute("PRAGMA busy_timeout=5000;")
+  cursor.execute("PRAGMA temp_store = MEMORY;")
 
 
 @contextmanager

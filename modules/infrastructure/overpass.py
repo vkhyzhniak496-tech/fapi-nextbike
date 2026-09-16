@@ -215,7 +215,7 @@ def save_tram_platforms_to_db(elements: List[Dict[str, Any]]) -> int:
                     coordinates_json=excluded.coordinates_json,
                     updated_at=CURRENT_TIMESTAMP;
             """,
-          records,
+          records,      
       )
   return len(records)
 
