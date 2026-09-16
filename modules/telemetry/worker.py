@@ -4,7 +4,6 @@ import logging
 from typing import Any, Dict, List, Optional
 import httpx
 from pydantic import ValidationError
-from modules.telemetry.processor import analytics_engine
 
 from config import (
     UM_WARSZAWA_RESOURCE_ID,
@@ -14,6 +13,7 @@ from config import (
 from core.database import TRAM_LIVE_DB_PATH, get_db_cursor, transaction
 from core.geo import calculate_speed_kmh
 from core.models import TramRawTelemetry
+from modules.telemetry.processor import analytics_engine
 
 logger = logging.getLogger(__name__)
 
@@ -22,8 +22,9 @@ logger = logging.getLogger(__name__)
 LAST_TRAM_POSITIONS: Dict[str, TramRawTelemetry] = {}
 
 
-def process_and_append_batch(items: List[Dict[str, Any]]) -> None:
+def process_and_append_batch(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     records_to_insert = []
+    enriched_live_items = []
 
     for item in items:
         v_num = str(item.get("VehicleNumber", "")).strip()
@@ -84,19 +85,30 @@ def process_and_append_batch(items: List[Dict[str, Any]]) -> None:
             telemetry.gps_time.strftime("%Y-%m-%d %H:%M:%S"),
         ))
 
-    if not records_to_insert:
-        return
+        # Przygotowanie zserializowanego słownika ze zliczoną prędkością dla analityki w locie
+        enriched_live_items.append({
+            "VehicleNumber": telemetry.vehicle_number,
+            "Lines": telemetry.line,
+            "Brigade": telemetry.brigade,
+            "Lat": telemetry.lat,
+            "Lon": telemetry.lon,
+            "Speed": telemetry.speed_kmh,
+            "Time": telemetry.gps_time.strftime("%Y-%m-%d %H:%M:%S"),
+        })
 
-    with get_db_cursor(TRAM_LIVE_DB_PATH) as cur:
-        with transaction(cur):
-            cur.executemany(
-                """
-                INSERT INTO tram_telemetry_history (
-                    vehicle_number, line, brigade, lat, lon, speed_kmh, gps_time
-                ) VALUES (?, ?, ?, ?, ?, ?, ?);
-                """,
-                records_to_insert,
-            )
+    if records_to_insert:
+        with get_db_cursor(TRAM_LIVE_DB_PATH) as cur:
+            with transaction(cur):
+                cur.executemany(
+                    """
+                    INSERT INTO tram_telemetry_history (
+                        vehicle_number, line, brigade, lat, lon, speed_kmh, gps_time
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?);
+                    """,
+                    records_to_insert,
+                )
+
+    return enriched_live_items
 
 
 async def tram_telemetry_poller_task() -> None:
@@ -118,9 +130,13 @@ async def tram_telemetry_poller_task() -> None:
                 res = await client.get(UM_WARSZAWA_VEHICLES_URL, params=params)
                 if res.status_code == 200:
                     data = res.json()
-                    items = data.get("result", [])
-                    if isinstance(items, list) and items:
-                        process_and_append_batch(items)
+                    raw_items = data.get("result", [])
+                    if isinstance(raw_items, list) and raw_items:
+                        # 1. Zapis do historii i obliczenie prędkości
+                        enriched = process_and_append_batch(raw_items)
+                        # 2. Błyskawiczna analiza postojów w pamięci RAM
+                        if enriched:
+                            analytics_engine.process_live_batch(enriched)
             except asyncio.CancelledError:
                 logger.info("[TRAM_TELEMETRY] Zatrzymano zadanie workera.")
                 break
@@ -130,16 +146,13 @@ async def tram_telemetry_poller_task() -> None:
             await asyncio.sleep(10)
 
 
-
 async def tram_analytics_worker_task() -> None:
     """Asynchroniczny worker periodycznie przeliczający postoje tramwajów w tle."""
     logger.info("[TRAM_ANALYTICS] Uruchomiono periodyczny proces analizy postojów...")
-    # Dajemy 15 sekund na wstępny rozruch serwera i zebranie pierwszych pingów
     await asyncio.sleep(15)
 
     while True:
         try:
-            # Uruchomienie obliczeń w osobnym wątku, aby nie mrozić FastAPI
             inserted_count = await asyncio.to_thread(
                 analytics_engine.analyze_recent_telemetry, lookback_minutes=60
             )
@@ -151,5 +164,4 @@ async def tram_analytics_worker_task() -> None:
         except Exception as e:
             logger.error(f"[TRAM_ANALYTICS] Błąd podczas przeliczania postojów: {e}")
 
-        # Odstęp między przeliczeniami (np. 60 sekund)
         await asyncio.sleep(60)
