@@ -49,27 +49,24 @@ class TelemetryAnalyticsEngine:
                 f"[PROCESSOR] Załadowano {len(rows)} peronów do indeksu"
                 " przestrzennego."
             )
-    def analyze_recent_telemetry(self) -> int:
-      """Analizuje najświeższe punkty telemetrii (np. z ostatnich 15 minut) w trybie ciągłym."""
-      self.ensure_initialized()
-      if not self.plat_tree:
-        return 0
+    def analyze_recent_telemetry(self, lookback_minutes: int = 15, *args, **kwargs) -> int:
+        """Analizuje telemetrię z ostatnich `lookback_minutes` minut."""
+        self.ensure_initialized()
+        if not self.plat_tree:
+            return 0
 
-      # Jeśli bieżąca analiza opiera się na Speed-Dip dla wozów, które zwolniły:
-      with get_db_cursor(TRAM_LIVE_DB_PATH) as cur:
-        cur.execute("""
+        with get_db_cursor(TRAM_LIVE_DB_PATH) as cur:
+            cur.execute(f"""
                 SELECT DISTINCT vehicle_number 
                 FROM tram_telemetry_history 
-                WHERE gps_time >= datetime('now', '-15 minutes');
+                WHERE gps_time >= datetime('now', '-{int(lookback_minutes)} minutes');
             """)
-        vehicles = [r["vehicle_number"] for r in cur.fetchall()]
+            vehicles = [r["vehicle_number"] for r in cur.fetchall()]
 
-      # Jeśli brak nowych wozów, kończymy
-      if not vehicles:
-        return 0
+        if not vehicles:
+            return 0
 
-      # Wywołujemy analitykę dla aktywnych wozów (lub pełny backfill jeśli kolejka jest pusta)
-      return self.backfill_all_history()
+        return self.backfill_all_history()
 
     
     def backfill_all_history(self) -> int:
