@@ -2,7 +2,6 @@ import asyncio
 from contextlib import asynccontextmanager
 import logging
 from pathlib import Path
-from config import RESOURCES_DIR
 
 from fastapi import FastAPI, HTTPException, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -42,23 +41,25 @@ async def run_initial_backfill():
   
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Start zadań
+    # Zadania tramwajowe
     ingest_task = asyncio.create_task(tram_telemetry_poller_task())
     analytics_task = asyncio.create_task(tram_analytics_worker_task())
     backfill_task = asyncio.create_task(run_initial_backfill())
+    cleanup_task = asyncio.create_task(cleanup_old_telemetry_task())
     analytics_engine.ensure_initialized()
-    asyncio.create_task(cleanup_old_telemetry_task())
+
+    # Zadanie rowerowe (Nextbike)
+    bikes_task = asyncio.create_task(bike_history_poller_worker())
+
+    all_tasks = [ingest_task, analytics_task, backfill_task, cleanup_task, bikes_task]
+
     try:
         yield
     finally:
-        # Bezpieczne anulowanie tasków przy dowolnym sygnale wyjścia
-        for t in [ingest_task, analytics_task, backfill_task]:
+        for t in all_tasks:
             if not t.done():
                 t.cancel()
-        
-        # Czekamy na domknięcie bez propagacji CancelledError w konsoli
-        await asyncio.gather(ingest_task, analytics_task, backfill_task, return_exceptions=True)
-
+        await asyncio.gather(*all_tasks, return_exceptions=True)
 
 app = FastAPI(
     title="Warsaw Transit & Safe Cycleways GIS",
