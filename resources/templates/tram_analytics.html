@@ -34,7 +34,7 @@
 </head>
 <body>
     <div class="analytics-control glass-panel">
-        <label for="line-picker"><b></b></label>
+        <label for="line-picker"><b>Linia:</b></label>
         <select id="line-picker" class="line-select">
             <option value="">Ładowanie...</option>
         </select>
@@ -51,6 +51,9 @@
             center: [21.012, 52.230],
             zoom: 12.5
         });
+
+        // Wystawienie instancji na window do szybkiego testowania z konsoli
+        window.gisMap = map;
 
         async function initLinePicker() {
             try {
@@ -93,7 +96,7 @@
         }
 
         map.on('load', async () => {
-            // 1. Wyraźna sieć torowisk
+            // 1. Torowiska tramwajowe
             map.addSource('tram-network', { type: 'geojson', data: '/network/tram' });
             map.addLayer({
                 id: 'tram-tracks',
@@ -107,12 +110,13 @@
                 }
             });
 
-            // 2. Punkty wymiany pasażerskiej
+            // 2. Źródło danych postojów dla wybranej linii
             map.addSource('dwell-stats', {
                 type: 'geojson',
                 data: { type: 'FeatureCollection', features: [] }
             });
 
+            // A. Punkty postojów (kółka)
             map.addLayer({
                 id: 'dwell-circles',
                 type: 'circle',
@@ -138,25 +142,53 @@
                 }
             });
 
+            // B. Nazwy przystanków widoczne z dużej odległości (minzoom: 10)
             map.addLayer({
-                id: 'dwell-labels',
+                id: 'dwell-stop-names',
                 type: 'symbol',
                 source: 'dwell-stats',
-                minzoom: 12.5,
+                minzoom: 10,
                 layout: {
-                    'text-field': ['concat', ['to-string', ['get', 'avg_dwell_sec']], 's'],
-                    'text-size': 11,
+                    'text-field': ['get', 'stop_name'],
+                    'text-size': [
+                        'interpolate', ['linear'], ['zoom'],
+                        10, 8.5,
+                        12, 10,
+                        15, 12
+                    ],
                     'text-offset': [0, 1.4],
                     'text-anchor': 'top',
+                    'text-max-width': 8,
                     'text-allow-overlap': false
                 },
                 paint: {
                     'text-color': '#0f172a',
                     'text-halo-color': '#ffffff',
-                    'text-halo-width': 2
+                    'text-halo-width': 2.5
                 }
             });
 
+            // C. Wartości sekundowe włączające się przy zbliżeniu (minzoom: 13)
+            map.addLayer({
+                id: 'dwell-seconds-label',
+                type: 'symbol',
+                source: 'dwell-stats',
+                minzoom: 13,
+                layout: {
+                    'text-field': ['concat', ['to-string', ['get', 'avg_dwell_sec']], 's'],
+                    'text-size': 10,
+                    'text-offset': [0, -1.4],
+                    'text-anchor': 'bottom',
+                    'text-allow-overlap': false
+                },
+                paint: {
+                    'text-color': '#334155',
+                    'text-halo-color': '#ffffff',
+                    'text-halo-width': 1.5
+                }
+            });
+
+            // 3. Interaktywny popup
             map.on('click', 'dwell-circles', (e) => {
                 const p = e.features[0].properties;
                 new maplibregl.Popup({ offset: 8 })
