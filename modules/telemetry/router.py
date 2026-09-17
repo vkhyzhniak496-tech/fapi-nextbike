@@ -230,3 +230,75 @@ async def get_line_dwell_stats(line: str) -> Dict[str, Any]:
         "stops_count": len(features),
         "features": features
     }
+
+# modules/telemetry/router.py
+
+@router.get("/dwells/all-stops")
+async def get_all_stops_dwell_stats() -> Dict[str, Any]:
+    """Zwraca wszystkie perony ze statystykami postojów i rozbiciem na linie."""
+    coords_by_stop = {}
+    with get_db_cursor(TRAM_DB_PATH) as cur:
+        cur.execute("SELECT name, cluster_name, lat, lon, coordinates_json FROM tram_platforms;")
+        for r in cur.fetchall():
+            lat, lon = r["lat"], r["lon"]
+            if (lat is None or lon is None) and r["coordinates_json"]:
+                try:
+                    c = json.loads(r["coordinates_json"])
+                    lon, lat = float(c[0]), float(c[1])
+                except Exception:
+                    continue
+            if lat is not None and lon is not None:
+                coords_by_stop[r["name"]] = (lon, lat)
+
+    with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
+        cur.execute("""
+            SELECT 
+                stop_name,
+                cluster_name,
+                line,
+                ROUND(AVG(duration_sec), 1) AS avg_dwell,
+                COUNT(*) AS samples
+            FROM tram_dwell_events
+            GROUP BY stop_name, line
+            ORDER BY stop_name, samples DESC;
+        """)
+        rows = cur.fetchall()
+
+    stops = {}
+    for r in rows:
+        name = r["stop_name"]
+        if name not in stops:
+            stops[name] = {
+                "stop_name": name,
+                "cluster_name": r["cluster_name"],
+                "total_samples": 0,
+                "weighted_sum": 0.0,
+                "lines": []
+            }
+        stops[name]["lines"].append({
+            "line": r["line"],
+            "avg_dwell_sec": r["avg_dwell"],
+            "samples": r["samples"]
+        })
+        stops[name]["total_samples"] += r["samples"]
+        stops[name]["weighted_sum"] += r["avg_dwell"] * r["samples"]
+
+    features = []
+    for name, s in stops.items():
+        coords = coords_by_stop.get(name)
+        if not coords:
+            continue
+        overall_avg = round(s["weighted_sum"] / s["total_samples"], 1) if s["total_samples"] else 0.0
+        features.append({
+            "type": "Feature",
+            "geometry": { "type": "Point", "coordinates": [coords[0], coords[1]] },
+            "properties": {
+                "stop_name": s["stop_name"],
+                "cluster_name": s["cluster_name"],
+                "avg_dwell_sec": overall_avg,
+                "samples_count": s["total_samples"],
+                "lines_json": json.dumps(s["lines"])
+            }
+        })
+
+    return { "type": "FeatureCollection", "features": features }
