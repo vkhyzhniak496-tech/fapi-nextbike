@@ -57,14 +57,24 @@
         window.gisMap = map;
 
         function updateSummary(count) {
-            document.getElementById('stats-summary').innerText = `Obsłużone perony: ${count}`;
+            const el = document.getElementById('stats-summary');
+            if (el) el.innerText = `Obsłużone perony: ${count}`;
+        }
+
+        function renderDataOnMap() {
+            const source = map.getSource('dwell-stats');
+            if (source && globalDwellData) {
+                source.setData(globalDwellData);
+                updateSummary(globalDwellData.features?.length || 0);
+            }
         }
 
         function filterByLine(selectedLine) {
-            if (!globalDwellData || !map.getSource('dwell-stats')) return;
+            const source = map.getSource('dwell-stats');
+            if (!globalDwellData || !source) return;
 
             if (selectedLine === 'ALL') {
-                map.getSource('dwell-stats').setData(globalDwellData);
+                source.setData(globalDwellData);
                 updateSummary(globalDwellData.features.length);
                 return;
             }
@@ -79,29 +89,25 @@
                 return lines.some(l => String(l.line) === String(selectedLine));
             });
 
-            map.getSource('dwell-stats').setData({
+            source.setData({
                 type: 'FeatureCollection',
                 features: filteredFeatures
             });
 
-            document.getElementById('stats-summary').innerText = 
-                `Perony linii ${selectedLine}: ${filteredFeatures.length}`;
+            const el = document.getElementById('stats-summary');
+            if (el) el.innerText = `Perony linii ${selectedLine}: ${filteredFeatures.length}`;
         }
 
         async function initData() {
             try {
-                // 1. Pobranie danych GeoJSON ze wszystkimi peronami
                 const res = await fetch('/network/tram/dwells/all-stops');
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 globalDwellData = await res.json();
 
-                // 2. Jeśli mapa już załadowała styl, od razu wstawiamy dane
-                if (map.isStyleLoaded() && map.getSource('dwell-stats')) {
-                    map.getSource('dwell-stats').setData(globalDwellData);
-                    updateSummary(globalDwellData.features?.length || 0);
-                }
+                // Próba wstrzyknięcia danych od razu po odebraniu JSON
+                renderDataOnMap();
 
-                // 3. Wypełnienie selektora unikalnymi liniami
+                // Wypełnienie selektora linii
                 const allLines = new Set();
                 globalDwellData.features.forEach(f => {
                     try {
@@ -124,15 +130,16 @@
                 picker.addEventListener('change', () => filterByLine(picker.value));
             } catch (err) {
                 console.error("Błąd pobierania danych:", err);
-                document.getElementById('stats-summary').innerText = 'Błąd wczytywania danych';
+                const el = document.getElementById('stats-summary');
+                if (el) el.innerText = 'Błąd wczytywania danych';
             }
         }
 
-        // Odpalamy pobieranie danych natychmiast, bez czekania na kafelki mapy
+        // Start pobierania danych równolegle do inicjalizacji silnika mapy
         initData();
 
         map.on('load', () => {
-            // 1. Torowiska
+            // 1. Torowiska tramwajowe
             map.addSource('tram-network', { type: 'geojson', data: '/network/tram' });
             map.addLayer({
                 id: 'tram-tracks',
@@ -146,17 +153,16 @@
                 }
             });
 
-            // 2. Źródło postojów
+            // 2. Źródło postojów (jeśli dane już przyszły z fetch, przypisujemy je wprost w opcji data)
             map.addSource('dwell-stats', {
                 type: 'geojson',
                 data: globalDwellData || { type: 'FeatureCollection', features: [] }
             });
 
-            if (globalDwellData) {
-                updateSummary(globalDwellData.features?.length || 0);
-            }
+            // Gwarancja załadowania danych w scenariuszu, gdy fetch skończył się w trakcie ładowania stylu
+            renderDataOnMap();
 
-            // Kółka postojów
+            // A. Kółka postojów
             map.addLayer({
                 id: 'dwell-circles',
                 type: 'circle',
@@ -182,7 +188,7 @@
                 }
             });
 
-            // Etykiety z nazwami peronów
+            // B. Nazwy peronów
             map.addLayer({
                 id: 'dwell-stop-names',
                 type: 'symbol',
@@ -207,7 +213,7 @@
                 }
             });
 
-            // Etykieta sekundowa
+            // C. Sekundy postoju
             map.addLayer({
                 id: 'dwell-seconds-label',
                 type: 'symbol',
@@ -227,7 +233,7 @@
                 }
             });
 
-            // Obsługa kliknięcia i popup z listą linii
+            // Popup po kliknięciu
             map.on('click', 'dwell-circles', (e) => {
                 const p = e.features[0].properties;
                 let lines = [];
