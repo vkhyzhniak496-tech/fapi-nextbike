@@ -7,30 +7,94 @@
     <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
     <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
     <link rel="stylesheet" href="/static/css/styles.css">
-    <style>
+<style>
+    /* Domyślny styl bazowy (Desktop) */
+    .analytics-control {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        z-index: 10;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 8px 14px;
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+    }
+
+    select.line-select {
+        padding: 6px 10px;
+        border-radius: 8px;
+        border: 1px solid #cbd5e1;
+        font-weight: 700;
+        font-size: 14px;
+        cursor: pointer;
+        outline: none;
+        background: #fff;
+    }
+
+    .btn-nav-leaderboard {
+        text-decoration: none;
+        background: #0284c7;
+        color: #ffffff;
+        font-weight: 600;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 13px;
+        white-space: nowrap;
+    }
+
+    /* ================= Responsywny pasek na Smartfonie ================= */
+    @media (max-width: 640px) {
         .analytics-control {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 10;
+            top: 10px;
+            left: 10px;
+            /* Zostawiamy 56px z prawej strony na przycisk lokalizacji GPS MapLibre */
+            right: 56px;
+            padding: 6px 10px;
+            gap: 8px;
+            border-radius: 10px;
             display: flex;
-            gap: 12px;
             align-items: center;
-            background: rgba(255, 255, 255, 0.95);
-            padding: 10px 16px;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            justify-content: space-between;
+            height: 40px; /* Stała, niska wysokość uniemożliwiająca rozciąganie */
+            box-sizing: border-box;
         }
+
+        /* Ukrywamy napis "Widok:", sam dropdown mówi za siebie */
+        .analytics-control label {
+            display: none;
+        }
+
         select.line-select {
-            padding: 6px 12px;
-            border-radius: 8px;
-            border: 1px solid #cbd5e1;
-            font-weight: 700;
-            font-size: 15px;
-            cursor: pointer;
-            outline: none;
+            padding: 4px 6px;
+            font-size: 13px;
+            max-width: 125px;
+            flex-shrink: 0;
         }
-    </style>
+
+        /* Licznik peronów: zwarty, jednoliniowy, nie łamie się na 3 wiersze */
+        #stats-summary {
+            font-size: 11px !important;
+            color: #475569;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: 0 4px;
+            flex-grow: 1;
+            text-align: center;
+        }
+
+        .btn-nav-leaderboard {
+            padding: 5px 8px;
+            font-size: 11px;
+            flex-shrink: 0;
+        }
+    }
+</style>
 </head>
 <body>
     <div class="analytics-control glass-panel">
