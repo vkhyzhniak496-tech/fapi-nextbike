@@ -7,48 +7,9 @@
     <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
     <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
     <link rel="stylesheet" href="/static/css/styles.css">
-    <style>
-        /* Styl dla przycisków nawigacyjnych w panelu statusu */
-        .nav-buttons-group {
-            display: flex;
-            gap: 6px;
-            margin-top: 8px;
-        }
-        .btn-nav-primary {
-            display: inline-block;
-            background: #0284c7;
-            color: #ffffff;
-            text-decoration: none;
-            padding: 5px 10px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 700;
-            text-align: center;
-            transition: background 0.2s;
-        }
-        .btn-nav-primary:hover {
-            background: #0369a1;
-        }
-        .btn-nav-tram-corridor {
-            display: inline-block;
-            background: #7c3aed;
-            color: #ffffff;
-            text-decoration: none;
-            padding: 5px 10px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 700;
-            text-align: center;
-            transition: background 0.2s;
-            box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
-        }
-        .btn-nav-tram-corridor:hover {
-            background: #6d28d9;
-        }
-    </style>
 </head>
 <body>
-<div id="info-box" class="glass-panel">
+    <div id="info-box" class="glass-panel">
         <div class="status-row">
             <span class="pulse"></span>
             <span>Veturilo 3.0 Live</span>
@@ -61,6 +22,7 @@
         </div>
     </div>
 
+    <!-- Pływający przycisk filtrów warstw (FAB) -->
     <button id="btn-toggle-filters" class="fab-filters" aria-label="Filtry warstw">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
@@ -73,7 +35,7 @@
     <div id="legend" class="glass-panel">
         <div class="legend-header-mobile">
             <div class="legend-title" style="margin: 0;">Filtruj infrastrukturę</div>
-            <button class="btn-close-mobile">&times;</button>
+            <button class="btn-close-mobile" id="btn-close-legend">&times;</button>
         </div>
 
         <label class="legend-row">
@@ -106,6 +68,8 @@
             <span class="legend-label">Torowiska tramwajowe</span>
         </label>
     </div>
+
+    <div id="map"></div>
 
     <script type="module" src="/static/js/map_view.js"></script>
 </body>

@@ -333,7 +333,7 @@ async def get_available_clusters():
 @router.get("/travel-time")
 async def get_tram_travel_time(
     from_stop: str = Query(..., description="Nazwa zespołu, np. 'Mangalia'"),
-    to_stop: str = Query(..., description="Nazwa zespołu, np. 'Dolna'"),
+    to_stop: str = Query(..., description="Nazwa zespołu, np. 'Centrum'"),
     line: Optional[str] = Query(None, description="Opcjonalna linia, np. '16'"),
 ):
   if from_stop.strip().lower() == to_stop.strip().lower():
@@ -345,9 +345,8 @@ async def get_tram_travel_time(
         "lines": [],
     }
 
-  # Błyskawiczne zapytanie oparte o 1 przelot indeksu idx_dwell_corridor_fast
   query = """
-    WITH trip_pairs AS (
+    WITH raw_pairs AS (
         SELECT 
             d1.line,
             d1.vehicle_number,
@@ -356,6 +355,7 @@ async def get_tram_travel_time(
         JOIN tram_dwell_events d2 
           ON d1.line = d2.line 
          AND d1.vehicle_number = d2.vehicle_number
+         -- Wybieramy PIERWSZY kolejny przyjazd na przystanek docelowy w oknie od 45s do 70 minut
          AND d2.arrival_time = (
              SELECT MIN(sub.arrival_time) 
              FROM tram_dwell_events sub
@@ -363,11 +363,23 @@ async def get_tram_travel_time(
                AND sub.vehicle_number = d1.vehicle_number
                AND sub.cluster_name = ?
                AND sub.arrival_time > d1.departure_time
-               -- Sztywne okno odcięcia: bezpośredni przelot to 45s do 22 minut (odcina kolejne pętle)
-               AND (strftime('%s', sub.arrival_time) - strftime('%s', d1.departure_time)) BETWEEN 45 AND 1320
+               AND (strftime('%s', sub.arrival_time) - strftime('%s', d1.departure_time)) BETWEEN 45 AND 4200
          )
         WHERE d1.cluster_name = ?
           AND (? IS NULL OR d1.line = ?)
+    ),
+    min_per_line AS (
+        SELECT line, MIN(duration_min) AS fastest_trip
+        FROM raw_pairs
+        GROUP BY line
+    ),
+    valid_trips AS (
+        -- Odrzucamy kursy trwające dłużej niż 1.8x czas minimalny + 6 minut buforu
+        -- Skutecznie odcina drugie kółko przez pętlę, zachowując długie trasy korytarzowe
+        SELECT r.line, r.duration_min
+        FROM raw_pairs r
+        JOIN min_per_line m ON r.line = m.line
+        WHERE r.duration_min <= (m.fastest_trip * 1.8 + 6.0)
     )
     SELECT 
         line,
@@ -375,7 +387,7 @@ async def get_tram_travel_time(
         ROUND(AVG(duration_min), 1) AS avg_time_min,
         ROUND(MIN(duration_min), 1) AS min_time_min,
         ROUND(MAX(duration_min), 1) AS max_time_min
-    FROM trip_pairs
+    FROM valid_trips
     GROUP BY line;
     """
 
