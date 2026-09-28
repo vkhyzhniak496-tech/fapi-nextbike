@@ -275,29 +275,50 @@ def get_available_clusters():
 def _read_corridor_stats(
     from_stop: str, to_stop: str, line: Optional[str]
 ) -> List[Dict[str, Any]]:
-  """Błyskawiczny odczyt gotowych danych ze stworzonej tabeli tram_corridor_stats."""
-  if line:
-    query = """
-            SELECT line, samples, avg_time_min, min_time_min, max_time_min
-            FROM tram_corridor_stats
-            WHERE from_stop = ? COLLATE NOCASE 
-              AND to_stop = ? COLLATE NOCASE
-              AND line = ?
-            ORDER BY CAST(line AS INTEGER), line ASC;
-        """
-    params = (from_stop, to_stop, line)
-  else:
-    query = """
-            SELECT line, samples, avg_time_min, min_time_min, max_time_min
-            FROM tram_corridor_stats
-            WHERE from_stop = ? COLLATE NOCASE 
-              AND to_stop = ? COLLATE NOCASE
-            ORDER BY CAST(line AS INTEGER), line ASC;
-        """
-    params = (from_stop, to_stop)
+  """Wyznacza czas przejazdu (zarówno dla odcinków bezpośrednich, jak i wieloskokowych)."""
 
+  # 1. Sprawdź relację bezpośrednią
+  query_direct = """
+        SELECT line, samples, avg_time_min, min_time_min, max_time_min
+        FROM tram_corridor_stats
+        WHERE from_stop = ? COLLATE NOCASE 
+          AND to_stop = ? COLLATE NOCASE
+          AND (? IS NULL OR line = ?)
+        ORDER BY CAST(line AS INTEGER), line ASC;
+    """
   with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
-    cur.execute(query, params)
+    cur.execute(query_direct, (from_stop, to_stop, line, line))
+    direct_rows = [dict(r) for r in cur.fetchall()]
+    if direct_rows:
+      return direct_rows
+
+  # 2. Jeśli brak bezpośredniego wpisu: zsumuj kolejne przeloty wzdłuż trasy linii (Graf w SQL)
+  query_route = """
+        WITH RECURSIVE journey(curr_stop, line, total_time, hops, min_samples) AS (
+            SELECT to_stop, line, avg_time_min, 1, samples
+            FROM tram_corridor_stats
+            WHERE from_stop = ? COLLATE NOCASE
+              AND (? IS NULL OR line = ?)
+            
+            UNION ALL
+            
+            SELECT s.to_stop, s.line, j.total_time + s.avg_time_min, j.hops + 1, MIN(j.min_samples, s.samples)
+            FROM tram_corridor_stats s
+            JOIN journey j ON s.from_stop = j.curr_stop AND s.line = j.line
+            WHERE j.hops < 30 AND j.curr_stop != ? COLLATE NOCASE
+        )
+        SELECT 
+            line,
+            min_samples AS samples,
+            ROUND(total_time, 1) AS avg_time_min,
+            ROUND(total_time * 0.85, 1) AS min_time_min,
+            ROUND(total_time * 1.25, 1) AS max_time_min
+        FROM journey
+        WHERE curr_stop = ? COLLATE NOCASE
+        GROUP BY line;
+    """
+  with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
+    cur.execute(query_route, (from_stop, line, line, to_stop, to_stop))
     return [dict(r) for r in cur.fetchall()]
 
 
