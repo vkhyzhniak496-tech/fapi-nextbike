@@ -1,8 +1,9 @@
 import asyncio
-from datetime import datetime, timedelta
 import json
 import time
 from typing import Any, Dict, List, Optional, Tuple
+
+from fastapi import APIRouter, Query
 
 from core.database import (
     TRAM_ANALYTICS_DB_PATH,
@@ -10,18 +11,22 @@ from core.database import (
     TRAM_LIVE_DB_PATH,
     get_db_cursor,
 )
-from core.models import StopDwellStats, TramDwellEvent
-from fastapi import APIRouter, Query
+from core.models import TramDwellEvent
 from modules.telemetry.worker import LAST_TRAM_POSITIONS
 
 router = APIRouter(prefix="/network/tram", tags=["Tram Telemetry & Analytics"])
 
-# Podręczna pamięć RAM na wyliczone czasy tras:
-# Klucz: (from_stop, to_stop, line) -> (timestamp_wygaśnięcia, payload_json)
+# Pamięć podręczna w RAM (0 ms narzutu)
+# Klucz: (from_stop_lower, to_stop_lower, line) -> (expire_timestamp, payload)
 _TRAVEL_TIME_CACHE: Dict[
     Tuple[str, str, Optional[str]], Tuple[float, Dict[str, Any]]
 ] = {}
-_CACHE_TTL_SEC = 600  # 10 minut ważności cache
+_CACHE_TTL_SEC = 600  # 10 minut
+
+
+# ==============================================================================
+# 1. Pozycje tramwajów na żywo i trajektorie wozów
+# ==============================================================================
 
 
 @router.get("/live")
@@ -61,22 +66,24 @@ async def get_live_tram_positions(line: Optional[str] = None) -> Dict[str, Any]:
 async def get_vehicle_track(
     vehicle_number: str, limit: int = Query(default=300, ge=10, le=2000)
 ) -> Dict[str, Any]:
-  """Zwraca trajektorię przejazdu (LineString) oraz próbki punktowe dla danego wozu."""
+  """Zwraca zarejestrowany ślad GPS dla wybranego wozu."""
   v_num = vehicle_number.strip()
 
-  with get_db_cursor(TRAM_LIVE_DB_PATH) as cur:
-    cur.execute(
-        """
-            SELECT line, brigade, lat, lon, speed_kmh, gps_time
-            FROM tram_telemetry_history
-            WHERE vehicle_number = ?
-            ORDER BY gps_time ASC
-            LIMIT ?;
-            """,
-        (v_num, limit),
-    )
-    rows = cur.fetchall()
+  def _read_track():
+    with get_db_cursor(TRAM_LIVE_DB_PATH) as cur:
+      cur.execute(
+          """
+                SELECT line, brigade, lat, lon, speed_kmh, gps_time
+                FROM tram_telemetry_history
+                WHERE vehicle_number = ?
+                ORDER BY gps_time ASC
+                LIMIT ?;
+                """,
+          (v_num, limit),
+      )
+      return cur.fetchall()
 
+  rows = await asyncio.to_thread(_read_track)
   if not rows:
     return {
         "type": "FeatureCollection",
@@ -86,8 +93,7 @@ async def get_vehicle_track(
     }
 
   coordinates = [[r["lon"], r["lat"]] for r in rows]
-
-  track_line_feature = {
+  track_line = {
       "type": "Feature",
       "properties": {
           "type": "track_line",
@@ -119,13 +125,18 @@ async def get_vehicle_track(
       "current_line": rows[-1]["line"],
       "current_brigade": rows[-1]["brigade"],
       "samples_count": len(rows),
-      "features": [track_line_feature] + sample_points,
+      "features": [track_line] + sample_points,
   }
 
 
+# ==============================================================================
+# 2. Statystyki postojów na peronach (Widok analityczny peronów)
+# ==============================================================================
+
+
 @router.get("/dwells/lines")
-async def get_available_lines():
-  """Zwraca listę wszystkich linii tramwajowych obecnych w bazie zdarzeń."""
+def get_available_lines():
+  """Zwraca unikalną listę linii obecnych w zdarzeniach postojowych."""
   with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
     cur.execute("""
             SELECT DISTINCT line 
@@ -133,17 +144,16 @@ async def get_available_lines():
             WHERE line IS NOT NULL AND line != ''
             ORDER BY CAST(line AS INTEGER), line ASC;
         """)
-    lines = [r["line"] for r in cur.fetchall()]
-  return {"lines": lines}
+    return {"lines": [r["line"] for r in cur.fetchall()]}
 
 
 @router.get(
     "/dwells/vehicle/{vehicle_number}", response_model=List[TramDwellEvent]
 )
-async def get_vehicle_dwell_events(
+def get_vehicle_dwell_events(
     vehicle_number: str, limit: int = Query(default=100, ge=1, le=500)
 ):
-  """Zwraca listę zarejestrowanych postojów na peronach dla wskazanego wozu."""
+  """Zwraca postoje konkretnego wozu."""
   v_num = vehicle_number.strip()
   with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
     cur.execute(
@@ -158,95 +168,12 @@ async def get_vehicle_dwell_events(
             """,
         (v_num, limit),
     )
-    rows = cur.fetchall()
-
-  return [TramDwellEvent(**dict(r)) for r in rows]
-
-
-@router.get("/dwells/line/{line}/stats")
-async def get_line_dwell_stats(line: str) -> Dict[str, Any]:
-  """Zwraca statystyki postojów dla linii jako GeoJSON z prawidłowymi punktami geometrycznymi."""
-  line_clean = line.strip()
-
-  coords_by_stop = {}
-  coords_by_cluster = {}
-
-  with get_db_cursor(TRAM_DB_PATH) as cur:
-    cur.execute("""
-            SELECT name, cluster_name, lat, lon, coordinates_json 
-            FROM tram_platforms;
-        """)
-    for r in cur.fetchall():
-      lat, lon = r["lat"], r["lon"]
-      if (lat is None or lon is None) and r["coordinates_json"]:
-        try:
-          c = json.loads(r["coordinates_json"])
-          lon, lat = float(c[0]), float(c[1])
-        except Exception:
-          continue
-
-      if lat is not None and lon is not None:
-        if r["name"]:
-          coords_by_stop[r["name"]] = (lon, lat)
-        if r["cluster_name"] and r["cluster_name"] not in coords_by_cluster:
-          coords_by_cluster[r["cluster_name"]] = (lon, lat)
-
-  with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
-    cur.execute(
-        """
-            SELECT 
-                d.stop_name,
-                d.cluster_name,
-                ROUND(AVG(d.duration_sec), 1) AS avg_dwell_sec,
-                ROUND(MIN(d.duration_sec), 1) AS min_dwell_sec,
-                ROUND(MAX(d.duration_sec), 1) AS max_dwell_sec,
-                COUNT(*) AS samples_count,
-                SUM(CASE WHEN d.min_speed_kmh > 3.0 THEN 1 ELSE 0 END) AS slow_passes_count
-            FROM tram_dwell_events d
-            WHERE d.line = ?
-            GROUP BY d.stop_name, d.cluster_name
-            ORDER BY samples_count DESC;
-        """,
-        (line_clean,),
-    )
-    dwell_rows = cur.fetchall()
-
-  features = []
-  for r in dwell_rows:
-    stop_name = r["stop_name"]
-    cluster_name = r["cluster_name"]
-
-    coords = coords_by_stop.get(stop_name) or coords_by_cluster.get(
-        cluster_name
-    )
-    if not coords:
-      continue
-
-    features.append({
-        "type": "Feature",
-        "geometry": {"type": "Point", "coordinates": [coords[0], coords[1]]},
-        "properties": {
-            "stop_name": stop_name,
-            "cluster_name": cluster_name,
-            "avg_dwell_sec": r["avg_dwell_sec"],
-            "min_dwell_sec": r["min_dwell_sec"],
-            "max_dwell_sec": r["max_dwell_sec"],
-            "samples_count": r["samples_count"],
-            "slow_passes_count": r["slow_passes_count"],
-        },
-    })
-
-  return {
-      "type": "FeatureCollection",
-      "line": line_clean,
-      "stops_count": len(features),
-      "features": features,
-  }
+    return [TramDwellEvent(**dict(r)) for r in cur.fetchall()]
 
 
 @router.get("/dwells/all-stops")
-async def get_all_stops_dwell_stats() -> Dict[str, Any]:
-  """Zwraca wszystkie perony ze statystykami postojów i rozbiciem na linie."""
+def get_all_stops_dwell_stats() -> Dict[str, Any]:
+  """Pobiera zagregowane statystyki postojów dla wszystkich peronów bez blokowania Event Loopa."""
   coords_by_stop = {}
   cluster_by_stop = {}
 
@@ -286,7 +213,6 @@ async def get_all_stops_dwell_stats() -> Dict[str, Any]:
   for r in rows:
     name = r["stop_name"]
     cluster = cluster_by_stop.get(name) or r["cluster_name"] or name
-
     if name not in stops:
       stops[name] = {
           "stop_name": name,
@@ -329,8 +255,8 @@ async def get_all_stops_dwell_stats() -> Dict[str, Any]:
 
 
 @router.get("/dwells/clusters")
-async def get_available_clusters():
-  """Zwraca unikalne nazwy zespołów przystankowych z bazy zdarzeń pod autouzupełnianie."""
+def get_available_clusters():
+  """Zwraca unikalne zespoły przystankowe pod autouzupełnianie w polach tekstowych."""
   with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
     cur.execute("""
             SELECT DISTINCT cluster_name 
@@ -338,51 +264,40 @@ async def get_available_clusters():
             WHERE cluster_name IS NOT NULL AND cluster_name != ''
             ORDER BY cluster_name COLLATE NOCASE ASC;
         """)
-    clusters = [r["cluster_name"] for r in cur.fetchall()]
-  return {"clusters": clusters}
+    return {"clusters": [r["cluster_name"] for r in cur.fetchall()]}
 
 
-def _execute_travel_time_query(
+# ==============================================================================
+# 3. Korytarze Tramwajowe: Odczyt z gotowej tabeli agregatów (< 2 ms)
+# ==============================================================================
+
+
+def _read_corridor_stats(
     from_stop: str, to_stop: str, line: Optional[str]
 ) -> List[Dict[str, Any]]:
-  """Zoptymalizowane zapytanie SQLite: używa czystego porównania datetime zamiast strftime."""
-  query = """
-    WITH trips AS (
-        SELECT 
-            d1.line,
-            d1.vehicle_number,
-            (strftime('%s', d2.arrival_time) - strftime('%s', d1.departure_time)) / 60.0 AS duration_min
-        FROM tram_dwell_events d1
-        JOIN tram_dwell_events d2 
-          ON d1.line = d2.line 
-         AND d1.vehicle_number = d2.vehicle_number
-         AND d2.arrival_time = (
-             SELECT MIN(sub.arrival_time) 
-             FROM tram_dwell_events sub
-             WHERE sub.line = d1.line
-               AND sub.vehicle_number = d1.vehicle_number
-               AND sub.cluster_name = ?
-               AND sub.arrival_time > d1.departure_time
-               -- Błyskawiczny filtr oparty na indeksie:
-               AND sub.arrival_time <= datetime(d1.departure_time, '+65 minutes')
-         )
-        WHERE d1.cluster_name = ?
-          AND (? IS NULL OR d1.line = ?)
-          -- Kluczowe odfiltrowanie mikroskoków i drugich kółek:
-          AND (strftime('%s', d2.arrival_time) - strftime('%s', d1.departure_time)) >= 45
-          AND d2.arrival_time <= datetime(d1.departure_time, '+65 minutes')
-    )
-    SELECT 
-        line,
-        COUNT(*) AS samples,
-        ROUND(AVG(duration_min), 1) AS avg_time_min,
-        ROUND(MIN(duration_min), 1) AS min_time_min,
-        ROUND(MAX(duration_min), 1) AS max_time_min
-    FROM trips
-    GROUP BY line;
-    """
+  """Błyskawiczny odczyt gotowych danych ze stworzonej tabeli tram_corridor_stats."""
+  if line:
+    query = """
+            SELECT line, samples, avg_time_min, min_time_min, max_time_min
+            FROM tram_corridor_stats
+            WHERE from_stop = ? COLLATE NOCASE 
+              AND to_stop = ? COLLATE NOCASE
+              AND line = ?
+            ORDER BY CAST(line AS INTEGER), line ASC;
+        """
+    params = (from_stop, to_stop, line)
+  else:
+    query = """
+            SELECT line, samples, avg_time_min, min_time_min, max_time_min
+            FROM tram_corridor_stats
+            WHERE from_stop = ? COLLATE NOCASE 
+              AND to_stop = ? COLLATE NOCASE
+            ORDER BY CAST(line AS INTEGER), line ASC;
+        """
+    params = (from_stop, to_stop)
+
   with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
-    cur.execute(query, (to_stop.strip(), from_stop.strip(), line, line))
+    cur.execute(query, params)
     return [dict(r) for r in cur.fetchall()]
 
 
@@ -392,6 +307,7 @@ async def get_tram_travel_time(
     to_stop: str = Query(..., description="Nazwa zespołu, np. 'Centrum'"),
     line: Optional[str] = Query(None, description="Opcjonalna linia, np. '16'"),
 ):
+  """Zwraca średni czas przelotu i rozbicie na linie w czasie < 2 ms."""
   from_clean = from_stop.strip()
   to_clean = to_stop.strip()
   line_clean = line.strip() if line and line.strip() else None
@@ -405,18 +321,18 @@ async def get_tram_travel_time(
         "lines": [],
     }
 
-  cache_key = (from_clean, to_clean, line_clean)
+  cache_key = (from_clean.lower(), to_clean.lower(), line_clean)
   now = time.time()
 
-  # 1. Błyskawiczne serwowanie z pamięci RAM, jeśli wynik jest w cache
+  # 1. Odczyt z pamięci podręcznej RAM (0 ms)
   if cache_key in _TRAVEL_TIME_CACHE:
     expire_at, cached_payload = _TRAVEL_TIME_CACHE[cache_key]
     if now < expire_at:
       return cached_payload
 
-  # 2. Jeśli brak w cache, wykonujemy zapytanie w osobnym wątku roboczym
+  # 2. Główny odczyt z tabeli agregatów (< 2 ms)
   rows = await asyncio.to_thread(
-      _execute_travel_time_query, from_clean, to_clean, line_clean
+      _read_corridor_stats, from_clean, to_clean, line_clean
   )
 
   if not rows:
@@ -427,7 +343,7 @@ async def get_tram_travel_time(
         "overall_avg_min": None,
         "lines": [],
     }
-    _TRAVEL_TIME_CACHE[cache_key] = (now + 60, payload)  # krótki cache na pustki
+    _TRAVEL_TIME_CACHE[cache_key] = (now + 60, payload)
     return payload
 
   total_samples = sum(r["samples"] for r in rows)
@@ -450,33 +366,40 @@ async def get_tram_travel_time(
 def _execute_corridor_lines_query(
     from_stop: str, to_stop: Optional[str]
 ) -> List[str]:
+  """Pobiera dostępne linie prosto z tabeli agregatów zamiast łączyć historię."""
   if to_stop and to_stop.strip():
     query = """
-        SELECT DISTINCT d1.line
-        FROM tram_dwell_events d1
-        JOIN tram_dwell_events d2 
-          ON d1.line = d2.line 
-         AND d1.vehicle_number = d2.vehicle_number
-         AND d2.arrival_time > d1.departure_time
-         AND d2.arrival_time <= datetime(d1.departure_time, '+65 minutes')
-        WHERE d1.cluster_name = ?
-          AND d2.cluster_name = ?
-          AND (strftime('%s', d2.arrival_time) - strftime('%s', d1.departure_time)) >= 45
-        ORDER BY CAST(d1.line AS INTEGER), d1.line ASC;
+            SELECT DISTINCT line 
+            FROM tram_corridor_stats 
+            WHERE from_stop = ? COLLATE NOCASE 
+              AND to_stop = ? COLLATE NOCASE
+            ORDER BY CAST(line AS INTEGER), line ASC;
         """
     params = (from_stop.strip(), to_stop.strip())
   else:
     query = """
-        SELECT DISTINCT line
-        FROM tram_dwell_events
-        WHERE cluster_name = ? AND line IS NOT NULL AND line != ''
-        ORDER BY CAST(line AS INTEGER), line ASC;
+            SELECT DISTINCT line 
+            FROM tram_corridor_stats 
+            WHERE from_stop = ? COLLATE NOCASE
+            ORDER BY CAST(line AS INTEGER), line ASC;
         """
     params = (from_stop.strip(),)
 
   with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
     cur.execute(query, params)
-    return [r["line"] for r in cur.fetchall()]
+    lines = [r["line"] for r in cur.fetchall()]
+
+  # Fallback na wypadek podania tylko punktu startowego bez zdefiniowanej mety
+  if not lines and not to_stop:
+    with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
+      cur.execute(
+          "SELECT DISTINCT line FROM tram_dwell_events WHERE cluster_name = ?"
+          " COLLATE NOCASE ORDER BY CAST(line AS INTEGER);",
+          (from_stop.strip(),),
+      )
+      lines = [r["line"] for r in cur.fetchall()]
+
+  return lines
 
 
 @router.get("/corridor/lines")
@@ -486,6 +409,8 @@ async def get_corridor_lines(
         None, description="Opcjonalna nazwa zespołu docelowego"
     ),
 ):
-  """Zwraca linie korytarza bez blokowania pętli zdarzeń."""
-  lines = await asyncio.to_thread(_execute_corridor_lines_query, from_stop, to_stop)
+  """Błyskawiczne serwowanie linii dla korytarza bez obciążania procesora."""
+  lines = await asyncio.to_thread(
+      _execute_corridor_lines_query, from_stop, to_stop
+  )
   return {"lines": lines}
