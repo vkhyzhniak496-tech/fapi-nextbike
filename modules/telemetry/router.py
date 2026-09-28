@@ -1,7 +1,7 @@
 from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Query
 from pydantic import BaseModel
-import json
+import json, asyncio
 from core.database import (
     TRAM_ANALYTICS_DB_PATH,
     TRAM_LIVE_DB_PATH,
@@ -329,6 +329,49 @@ async def get_available_clusters():
         """)
     clusters = [r["cluster_name"] for r in cur.fetchall()]
   return {"clusters": clusters}
+def _execute_travel_time_query(
+    from_stop: str, to_stop: str, line: Optional[str]
+) -> List[Dict[str, Any]]:
+  """Wykonuje zoptymalizowane zapytanie w osobnym wątku roboczym."""
+  # Uproszczone, szybkie zapytanie z natychmiastowym odcięciem outlierów
+  query = """
+    WITH trips AS (
+        SELECT 
+            d1.line,
+            d1.vehicle_number,
+            (strftime('%s', d2.arrival_time) - strftime('%s', d1.departure_time)) / 60.0 AS duration_min
+        FROM tram_dwell_events d1
+        JOIN tram_dwell_events d2 
+          ON d1.line = d2.line 
+         AND d1.vehicle_number = d2.vehicle_number
+         AND d2.arrival_time = (
+             SELECT MIN(sub.arrival_time) 
+             FROM tram_dwell_events sub
+             WHERE sub.line = d1.line
+               AND sub.vehicle_number = d1.vehicle_number
+               AND sub.cluster_name = ?
+               AND sub.arrival_time > d1.departure_time
+               -- Granica: od 45s do 65 min
+               AND (strftime('%s', sub.arrival_time) - strftime('%s', d1.departure_time)) BETWEEN 45 AND 3900
+         )
+        WHERE d1.cluster_name = ?
+          AND (? IS NULL OR d1.line = ?)
+          -- Odcięcie zjazdów na pętlę przy krótkich korytarzach
+          AND (strftime('%s', d2.arrival_time) - strftime('%s', d1.departure_time)) <= 2400
+    )
+    SELECT 
+        line,
+        COUNT(*) AS samples,
+        ROUND(AVG(duration_min), 1) AS avg_time_min,
+        ROUND(MIN(duration_min), 1) AS min_time_min,
+        ROUND(MAX(duration_min), 1) AS max_time_min
+    FROM trips
+    GROUP BY line;
+    """
+  with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
+    cur.execute(query, (to_stop.strip(), from_stop.strip(), line, line))
+    return [dict(r) for r in cur.fetchall()]
+
 
 @router.get("/travel-time")
 async def get_tram_travel_time(
@@ -345,55 +388,10 @@ async def get_tram_travel_time(
         "lines": [],
     }
 
-  query = """
-    WITH raw_pairs AS (
-        SELECT 
-            d1.line,
-            d1.vehicle_number,
-            (strftime('%s', d2.arrival_time) - strftime('%s', d1.departure_time)) / 60.0 AS duration_min
-        FROM tram_dwell_events d1
-        JOIN tram_dwell_events d2 
-          ON d1.line = d2.line 
-         AND d1.vehicle_number = d2.vehicle_number
-         -- Wybieramy PIERWSZY kolejny przyjazd na przystanek docelowy w oknie od 45s do 70 minut
-         AND d2.arrival_time = (
-             SELECT MIN(sub.arrival_time) 
-             FROM tram_dwell_events sub
-             WHERE sub.line = d1.line
-               AND sub.vehicle_number = d1.vehicle_number
-               AND sub.cluster_name = ?
-               AND sub.arrival_time > d1.departure_time
-               AND (strftime('%s', sub.arrival_time) - strftime('%s', d1.departure_time)) BETWEEN 45 AND 4200
-         )
-        WHERE d1.cluster_name = ?
-          AND (? IS NULL OR d1.line = ?)
-    ),
-    min_per_line AS (
-        SELECT line, MIN(duration_min) AS fastest_trip
-        FROM raw_pairs
-        GROUP BY line
-    ),
-    valid_trips AS (
-        -- Odrzucamy kursy trwające dłużej niż 1.8x czas minimalny + 6 minut buforu
-        -- Skutecznie odcina drugie kółko przez pętlę, zachowując długie trasy korytarzowe
-        SELECT r.line, r.duration_min
-        FROM raw_pairs r
-        JOIN min_per_line m ON r.line = m.line
-        WHERE r.duration_min <= (m.fastest_trip * 1.8 + 6.0)
-    )
-    SELECT 
-        line,
-        COUNT(*) AS samples,
-        ROUND(AVG(duration_min), 1) AS avg_time_min,
-        ROUND(MIN(duration_min), 1) AS min_time_min,
-        ROUND(MAX(duration_min), 1) AS max_time_min
-    FROM valid_trips
-    GROUP BY line;
-    """
-
-  with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
-    cur.execute(query, (to_stop.strip(), from_stop.strip(), line, line))
-    rows = cur.fetchall()
+  # Odciążenie pętli zdarzeń: zapytanie leci do wątku roboczego
+  rows = await asyncio.to_thread(
+      _execute_travel_time_query, from_stop, to_stop, line
+  )
 
   if not rows:
     return {
@@ -414,7 +412,7 @@ async def get_tram_travel_time(
       "overall_avg_min": (
           round(weighted_sum / total_samples, 1) if total_samples else 0.0
       ),
-      "lines": [dict(r) for r in rows],
+      "lines": rows,
   }
 
 @router.get("/corridor/lines")
