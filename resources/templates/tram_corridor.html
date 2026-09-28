@@ -7,7 +7,13 @@
     <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
     <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
     <style>
-        body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; }
+        body { 
+            margin: 0; 
+            padding: 0; 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            background: #0f172a; 
+            color: #f8fafc; 
+        }
         #map { width: 100vw; height: 100vh; }
         
         .floating-card {
@@ -15,81 +21,136 @@
             top: 20px;
             left: 20px;
             z-index: 10;
-            background: rgba(15, 23, 42, 0.90);
+            background: rgba(15, 23, 42, 0.92);
             backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 12px;
             padding: 16px 20px;
             width: 320px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            box-sizing: border-box;
         }
         
-        .nav-back { display: inline-block; font-size: 12px; color: #94a3b8; text-decoration: none; margin-bottom: 8px; }
+        .nav-back { 
+            display: inline-block; 
+            font-size: 12px; 
+            color: #94a3b8; 
+            text-decoration: none; 
+            margin-bottom: 8px; 
+            font-weight: 500;
+        }
         .nav-back:hover { color: #38bdf8; }
-        h3 { margin: 0 0 14px 0; font-size: 16px; font-weight: 600; color: #38bdf8; }
-        .input-group { margin-bottom: 10px; }
-        label { display: block; font-size: 11px; text-transform: uppercase; color: #94a3b8; margin-bottom: 4px; }
+        
+        h3 { 
+            margin: 0 0 14px 0; 
+            font-size: 16px; 
+            font-weight: 700; 
+            color: #38bdf8; 
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .input-group { margin-bottom: 12px; }
+        label { 
+            display: block; 
+            font-size: 11px; 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px;
+            color: #94a3b8; 
+            margin-bottom: 5px; 
+            font-weight: 600;
+        }
+        
         input, select {
             width: 100%;
             box-sizing: border-box;
             background: rgba(255, 255, 255, 0.08);
             border: 1px solid rgba(255, 255, 255, 0.2);
             color: #fff;
-            padding: 8px 10px;
+            padding: 9px 12px;
             border-radius: 6px;
             font-size: 13px;
+            transition: border-color 0.2s;
         }
-        input:focus, select:focus { outline: none; border-color: #38bdf8; }
+        input:focus, select:focus { 
+            outline: none; 
+            border-color: #38bdf8; 
+            background: rgba(255, 255, 255, 0.12);
+        }
         select option { background: #0f172a; color: #fff; }
         
-        button {
+        button#btn-calculate {
             width: 100%;
             background: #0284c7;
             color: #fff;
             border: none;
-            padding: 10px;
+            padding: 11px;
             border-radius: 6px;
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 13px;
             cursor: pointer;
             margin-top: 6px;
-            transition: background 0.2s;
+            transition: all 0.2s;
         }
-        button:hover { background: #0369a1; }
+        button#btn-calculate:hover { background: #0369a1; }
+        button#btn-calculate:disabled { 
+            background: #475569; 
+            cursor: not-allowed; 
+            opacity: 0.8;
+        }
 
         .result-box {
             margin-top: 14px;
             padding-top: 12px;
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 1px solid rgba(255, 255, 255, 0.12);
             font-size: 13px;
         }
-        .time-badge { font-size: 26px; font-weight: 700; color: #4ade80; margin: 4px 0; }
+        .time-badge { 
+            font-size: 28px; 
+            font-weight: 800; 
+            color: #4ade80; 
+            margin: 4px 0; 
+            letter-spacing: -0.5px;
+        }
         .meta-info { font-size: 12px; color: #94a3b8; }
         .line-tag {
             display: inline-block;
-            background: #3b0764;
-            color: #fbcfe8;
-            padding: 2px 6px;
+            background: #581c87;
+            color: #f3e8ff;
+            padding: 2px 7px;
             border-radius: 4px;
-            font-weight: bold;
+            font-weight: 700;
             font-size: 11px;
-            margin-right: 4px;
+            margin-right: 6px;
+        }
+
+        @media (max-width: 640px) {
+            .floating-card {
+                top: 12px;
+                left: 12px;
+                right: 12px;
+                width: calc(100vw - 24px);
+                padding: 14px 16px;
+            }
         }
     </style>
 </head>
 <body>
 
 <div class="floating-card">
-    <a href="/map" class="nav-back">← Wróć do mapy głównej</a>
-    <h3>⏱ Korytarz Tramwajowy</h3>
+    <a href="/map" class="nav-back">&larr; Wróć do mapy głównej</a>
+    <h3>⏱️ Korytarz Tramwajowy</h3>
     
     <div class="input-group">
         <label>Przystanek początkowy (start)</label>
-        <input list="clusters-list" id="from-stop" placeholder="Wpisz lub wybierz..." onchange="updateAvailableLines()">
+        <input list="clusters-list" id="from-stop" placeholder="Wpisz lub wybierz..." autocomplete="off">
     </div>
     
     <div class="input-group">
         <label>Przystanek docelowy (meta)</label>
-        <input list="clusters-list" id="to-stop" placeholder="Wpisz lub wybierz...">
+        <input list="clusters-list" id="to-stop" placeholder="Wpisz lub wybierz..." autocomplete="off">
     </div>
 
     <datalist id="clusters-list"></datalist>
@@ -101,7 +162,7 @@
         </select>
     </div>
 
-    <button onclick="calculateTravelTime()">Wyznacz czas przejazdu</button>
+    <button id="btn-calculate" onclick="calculateTravelTime()">Wyznacz czas przejazdu</button>
 
     <div id="result" class="result-box" style="display: none;">
         <div class="meta-info" id="corridor-title"></div>
@@ -127,84 +188,95 @@
             id: 'tram-tracks',
             type: 'line',
             source: 'tram-network',
-            paint: { 'line-color': '#7030a0', 'line-width': 2.0, 'line-opacity': 0.7 }
+            paint: { 'line-color': '#7030a0', 'line-width': 2.2, 'line-opacity': 0.7 }
         });
         loadClusters();
     });
 
-    // 1. Dynamiczne napełnianie datalist przystankami z SQLite
+    // 1. Ładowanie przystanków
     async function loadClusters() {
         try {
             const res = await fetch('/network/tram/dwells/clusters');
             const data = await res.json();
             const datalist = document.getElementById('clusters-list');
-            datalist.innerHTML = data.clusters.map(c => `<option value="${c}">`).join('');
+            datalist.innerHTML = (data.clusters || []).map(c => `<option value="${c}">`).join('');
             
             // Domyślne wartości
-            document.getElementById('from-stop').value = 'Mangalia';
-            document.getElementById('to-stop').value = 'Dolna';
-            document.getElementById('from-stop').addEventListener('change', updateAvailableLines);
-            document.getElementById('to-stop').addEventListener('change', updateAvailableLines)
+            const fromEl = document.getElementById('from-stop');
+            const toEl = document.getElementById('to-stop');
+            fromEl.value = 'Mangalia';
+            toEl.value = 'Dolna';
+            
+            fromEl.addEventListener('change', updateAvailableLines);
+            toEl.addEventListener('change', updateAvailableLines);
+            
             updateAvailableLines();
         } catch (e) {
             console.error("Błąd ładowania przystanków:", e);
         }
     }
 
-    // 2. Aktualizacja listy linii dla wybranego przystanku
-async function updateAvailableLines() {
-    const fromStop = document.getElementById('from-stop').value.trim();
-    const toStop = document.getElementById('to-stop').value.trim();
-    const select = document.getElementById('line-select');
-    
-    const previousSelection = select.value;
-    select.innerHTML = '<option value="">Wszystkie linie na trasie</option>';
-
-    if (!fromStop) return;
-
-    let url = `/network/tram/corridor/lines?from_stop=${encodeURIComponent(fromStop)}`;
-    if (toStop) {
-        url += `&to_stop=${encodeURIComponent(toStop)}`;
-    }
-
-    try {
-        const res = await fetch(url);
-        const data = await res.json();
+    // 2. Aktualizacja dostępnych linii
+    async function updateAvailableLines() {
+        const fromStop = document.getElementById('from-stop').value.trim();
+        const toStop = document.getElementById('to-stop').value.trim();
+        const select = document.getElementById('line-select');
         
-        data.lines.forEach(l => {
-            const opt = document.createElement('option');
-            opt.value = l;
-            opt.textContent = `Linia ${l}`;
-            if (l === previousSelection) opt.selected = true;
-            select.appendChild(opt);
-        });
-    } catch (e) {
-        console.error("Błąd ładowania linii dla korytarza:", e);
-    }
-}
+        const previousSelection = select.value;
+        select.innerHTML = '<option value="">Wszystkie linie na trasie</option>';
 
-    // 3. Kalkulacja czasu przejazdu
+        if (!fromStop || !toStop) return;
+
+        try {
+            const res = await fetch(`/network/tram/corridor/lines?from_stop=${encodeURIComponent(fromStop)}&to_stop=${encodeURIComponent(toStop)}`);
+            if (!res.ok) return;
+            const data = await res.json();
+            
+            (data.lines || []).forEach(l => {
+                const opt = document.createElement('option');
+                opt.value = l;
+                opt.textContent = `Linia ${l}`;
+                if (l === previousSelection) opt.selected = true;
+                select.appendChild(opt);
+            });
+        } catch (e) {
+            console.error("Błąd linii korytarza:", e);
+        }
+    }
+
+    // 3. Kalkulacja czasu z blokadą przycisku
     async function calculateTravelTime() {
         const fromStop = document.getElementById('from-stop').value.trim();
         const toStop = document.getElementById('to-stop').value.trim();
         const line = document.getElementById('line-select').value;
+        const btn = document.getElementById('btn-calculate');
         const resultBox = document.getElementById('result');
 
-        if (!fromStop || !toStop) return;
+        if (!fromStop || !toStop) {
+            alert("Wpisz oba zespoły przystankowe!");
+            return;
+        }
+
+        // Blokada przycisku i stan ładowania
+        btn.disabled = true;
+        const oldText = btn.innerText;
+        btn.innerText = "Przeliczanie przelotów...";
 
         let url = `/network/tram/travel-time?from_stop=${encodeURIComponent(fromStop)}&to_stop=${encodeURIComponent(toStop)}`;
         if (line) url += `&line=${encodeURIComponent(line)}`;
 
         try {
             const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
+            
             resultBox.style.display = 'block';
 
-            if (data.total_samples === 0) {
+            if (!data.total_samples || data.total_samples === 0) {
                 document.getElementById('corridor-title').innerText = `${fromStop} ➔ ${toStop}`;
                 document.getElementById('avg-time').innerText = "Brak danych";
                 document.getElementById('avg-time').style.color = '#f87171';
-                document.getElementById('samples-info').innerText = "Brak kursów łączących te zespoły w bazie.";
+                document.getElementById('samples-info').innerText = "Brak zarejestrowanych kursów na tej trasie.";
                 document.getElementById('lines-breakdown').innerHTML = '';
                 return;
             }
@@ -215,15 +287,27 @@ async function updateAvailableLines() {
             document.getElementById('samples-info').innerText = `Próba: ${data.total_samples} zarejestrowanych przelotów`;
 
             let linesHtml = '';
-            data.lines.forEach(l => {
-                linesHtml += `<div style="margin-top: 4px;">
-                    <span class="line-tag">${l.line}</span> 
-                    <b>${l.avg_time_min} min</b> (min: ${l.min_time_min}m, max: ${l.max_time_min}m) - <i>${l.samples} kursów</i>
-                </div>`;
+            (data.lines || []).forEach(l => {
+                linesHtml += `
+                    <div style="margin-top: 5px; display: flex; align-items: center; justify-content: space-between;">
+                        <div>
+                            <span class="line-tag">${l.line}</span> 
+                            <b>${l.avg_time_min} min</b>
+                        </div>
+                        <span style="font-size: 11px; color: #94a3b8;">${l.samples} kursów (min: ${l.min_time_min}m, max: ${l.max_time_min}m)</span>
+                    </div>`;
             });
             document.getElementById('lines-breakdown').innerHTML = linesHtml;
         } catch (err) {
-            console.error(err);
+            console.error("Błąd kalkulacji:", err);
+            resultBox.style.display = 'block';
+            document.getElementById('avg-time').innerText = "Błąd sieci";
+            document.getElementById('avg-time').style.color = '#f87171';
+            document.getElementById('samples-info').innerText = "Nie udało się pobrać danych z serwera.";
+            document.getElementById('lines-breakdown').innerHTML = '';
+        } finally {
+            btn.disabled = false;
+            btn.innerText = oldText;
         }
     }
 </script>
