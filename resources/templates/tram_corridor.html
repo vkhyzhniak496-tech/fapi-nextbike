@@ -245,29 +245,43 @@
     }
 
     // 3. Kalkulacja czasu z blokadą przycisku
-    async function calculateTravelTime() {
-        const fromStop = document.getElementById('from-stop').value.trim();
-        const toStop = document.getElementById('to-stop').value.trim();
-        const line = document.getElementById('line-select').value;
+async function calculateTravelTime() {
+        const fromEl = document.getElementById('from-stop');
+        const toEl = document.getElementById('to-stop');
+        const lineEl = document.getElementById('line-select');
         const btn = document.getElementById('btn-calculate');
         const resultBox = document.getElementById('result');
 
+        const fromStop = fromEl ? fromEl.value.trim() : "";
+        const toStop = toEl ? toEl.value.trim() : "";
+        const lineVal = lineEl ? lineEl.value.trim() : "";
+
         if (!fromStop || !toStop) {
-            alert("Wpisz oba zespoły przystankowe!");
+            alert("Wybierz oba zespoły przystankowe z listy!");
             return;
         }
 
-        // Blokada przycisku i stan ładowania
         btn.disabled = true;
         const oldText = btn.innerText;
         btn.innerText = "Przeliczanie przelotów...";
 
-        let url = `/network/tram/travel-time?from_stop=${encodeURIComponent(fromStop)}&to_stop=${encodeURIComponent(toStop)}`;
-        if (line) url += `&line=${encodeURIComponent(line)}`;
+        // Czysty URL bez pustych parametrów
+        const params = new URLSearchParams({
+            from_stop: fromStop,
+            to_stop: toStop
+        });
+        if (lineVal && lineVal !== "ALL" && !lineVal.includes("Wszystkie")) {
+            params.append("line", lineVal);
+        }
+
+        const url = `/network/tram/travel-time?${params.toString()}`;
 
         try {
             const res = await fetch(url);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            if (!res.ok) {
+                const errData = await res.text();
+                throw new Error(`HTTP ${res.status}: ${errData}`);
+            }
             const data = await res.json();
             
             resultBox.style.display = 'block';
@@ -299,11 +313,11 @@
             });
             document.getElementById('lines-breakdown').innerHTML = linesHtml;
         } catch (err) {
-            console.error("Błąd kalkulacji:", err);
+            console.error("Szczegóły błędu:", err);
             resultBox.style.display = 'block';
-            document.getElementById('avg-time').innerText = "Błąd sieci";
+            document.getElementById('avg-time').innerText = "Błąd";
             document.getElementById('avg-time').style.color = '#f87171';
-            document.getElementById('samples-info').innerText = "Nie udało się pobrać danych z serwera.";
+            document.getElementById('samples-info').innerText = err.message || "Błąd zapytania.";
             document.getElementById('lines-breakdown').innerHTML = '';
         } finally {
             btn.disabled = false;
