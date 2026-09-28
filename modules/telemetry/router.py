@@ -332,28 +332,42 @@ async def get_available_clusters():
 
 @router.get("/travel-time")
 async def get_tram_travel_time(
-    from_stop: str = Query(..., description="Nazwa zespołu, np. 'Okopowa'"),
-    to_stop: str = Query(..., description="Nazwa zespołu, np. 'Centrum'"),
-    line: Optional[str] = Query(None, description="Opcjonalna linia, np. '1'"),
+    from_stop: str = Query(..., description="Nazwa zespołu, np. 'Mangalia'"),
+    to_stop: str = Query(..., description="Nazwa zespołu, np. 'Dolna'"),
+    line: Optional[str] = Query(None, description="Opcjonalna linia, np. '16'"),
 ):
+  if from_stop.strip().lower() == to_stop.strip().lower():
+    return {
+        "from_stop": from_stop,
+        "to_stop": to_stop,
+        "total_samples": 0,
+        "overall_avg_min": None,
+        "lines": [],
+    }
+
+  # Błyskawiczne zapytanie oparte o 1 przelot indeksu idx_dwell_corridor_fast
   query = """
     WITH trip_pairs AS (
         SELECT 
             d1.line,
             d1.vehicle_number,
-            d1.departure_time AS dep_time,
-            d2.arrival_time AS arr_time,
             (strftime('%s', d2.arrival_time) - strftime('%s', d1.departure_time)) / 60.0 AS duration_min
         FROM tram_dwell_events d1
         JOIN tram_dwell_events d2 
           ON d1.line = d2.line 
          AND d1.vehicle_number = d2.vehicle_number
-         AND d2.arrival_time > d1.departure_time
+         AND d2.arrival_time = (
+             SELECT MIN(sub.arrival_time) 
+             FROM tram_dwell_events sub
+             WHERE sub.line = d1.line
+               AND sub.vehicle_number = d1.vehicle_number
+               AND sub.cluster_name = ?
+               AND sub.arrival_time > d1.departure_time
+               -- Sztywne okno odcięcia: bezpośredni przelot to 45s do 22 minut (odcina kolejne pętle)
+               AND (strftime('%s', sub.arrival_time) - strftime('%s', d1.departure_time)) BETWEEN 45 AND 1320
+         )
         WHERE d1.cluster_name = ?
-          AND d2.cluster_name = ?
           AND (? IS NULL OR d1.line = ?)
-          -- Odrzucenie błędów (< 2 min) i kolejnych pętli (> 75 min)
-          AND (strftime('%s', d2.arrival_time) - strftime('%s', d1.departure_time)) BETWEEN 120 AND 4500
     )
     SELECT 
         line,
@@ -366,7 +380,7 @@ async def get_tram_travel_time(
     """
 
   with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
-    cur.execute(query, (from_stop.strip(), to_stop.strip(), line, line))
+    cur.execute(query, (to_stop.strip(), from_stop.strip(), line, line))
     rows = cur.fetchall()
 
   if not rows:

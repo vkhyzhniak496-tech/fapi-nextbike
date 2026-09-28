@@ -69,48 +69,43 @@
         </svg>
     </button>
 
+    <!-- Dolny wysuwany arkusz (Bottom Sheet) -->
     <div id="legend" class="glass-panel">
         <div class="legend-header-mobile">
             <div class="legend-title" style="margin: 0;">Filtruj infrastrukturę</div>
             <button class="btn-close-mobile">&times;</button>
         </div>
-        <label class="legend-toggle">
+
+        <label class="legend-row">
             <input type="checkbox" id="filter-ddr" checked>
             <span class="legend-line" style="background: #27ae60;"></span>
-            <span>Wydzielona droga (DDR)</span>
+            <span class="legend-label">Wydzielona droga (DDR)</span>
         </label>
-        <label class="legend-toggle">
+
+        <label class="legend-row">
             <input type="checkbox" id="filter-lane" checked>
             <span class="legend-line" style="background: #f39c12;"></span>
-            <span>Pas rowerowy w jezdni</span>
+            <span class="legend-label">Pas rowerowy w jezdni</span>
         </label>
-        <label class="legend-toggle">
+
+        <label class="legend-row">
             <input type="checkbox" id="filter-woonerf" checked>
             <span class="legend-line" style="background: #2980b9;"></span>
-            <span>Strefa zamieszkania / Woonerf</span>
+            <span class="legend-label">Strefa zamieszkania / Woonerf</span>
         </label>
-        <label class="legend-toggle">
+
+        <label class="legend-row">
             <input type="checkbox" id="filter-tempo30" checked>
             <span class="legend-line" style="background: #3498db;"></span>
-            <span>Ulica Tempo 30 (uspokojona)</span>
+            <span class="legend-label">Ulica Tempo 30 (uspokojona)</span>
         </label>
-        <label class="legend-toggle">
+
+        <label class="legend-row">
             <input type="checkbox" id="filter-trams" checked>
             <span class="legend-line" style="background: #3b0141;"></span>
-            <span>Torowiska tramwajowe</span>
+            <span class="legend-label">Torowiska tramwajowe</span>
         </label>
-        <hr class="legend-divider" />
-        <div class="legend-item">
-            <span class="legend-dot" style="background: #2ecc71;"></span>
-            <span>Stacja (dostępne rowery)</span>
-        </div>
-        <div class="legend-item">
-            <span class="legend-dot" style="background: #e74c3c;"></span>
-            <span>Stacja pusta (0 rowerów)</span>
-        </div>
     </div>
-
-    <div id="map"></div>
 
     <script type="module" src="/static/js/map_view.js"></script>
 </body>
