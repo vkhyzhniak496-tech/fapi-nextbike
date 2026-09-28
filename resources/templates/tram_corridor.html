@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Korytarze Tramwajowe - Czasy Przejazdu</title>
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+    <style>
+        body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #0f172a; color: #f8fafc; }
+        #map { width: 100vw; height: 100vh; }
+        
+        .floating-card {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            background: rgba(15, 23, 42, 0.90);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            padding: 16px 20px;
+            width: 320px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        
+        .nav-back { display: inline-block; font-size: 12px; color: #94a3b8; text-decoration: none; margin-bottom: 8px; }
+        .nav-back:hover { color: #38bdf8; }
+        h3 { margin: 0 0 14px 0; font-size: 16px; font-weight: 600; color: #38bdf8; }
+        .input-group { margin-bottom: 10px; }
+        label { display: block; font-size: 11px; text-transform: uppercase; color: #94a3b8; margin-bottom: 4px; }
+        input, select {
+            width: 100%;
+            box-sizing: border-box;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: #fff;
+            padding: 8px 10px;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        input:focus, select:focus { outline: none; border-color: #38bdf8; }
+        select option { background: #0f172a; color: #fff; }
+        
+        button {
+            width: 100%;
+            background: #0284c7;
+            color: #fff;
+            border: none;
+            padding: 10px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 6px;
+            transition: background 0.2s;
+        }
+        button:hover { background: #0369a1; }
+
+        .result-box {
+            margin-top: 14px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 13px;
+        }
+        .time-badge { font-size: 26px; font-weight: 700; color: #4ade80; margin: 4px 0; }
+        .meta-info { font-size: 12px; color: #94a3b8; }
+        .line-tag {
+            display: inline-block;
+            background: #3b0764;
+            color: #fbcfe8;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 11px;
+            margin-right: 4px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="floating-card">
+    <a href="/map" class="nav-back">← Wróć do mapy głównej</a>
+    <h3>⏱ Korytarz Tramwajowy</h3>
+    
+    <div class="input-group">
+        <label>Przystanek początkowy (start)</label>
+        <input list="clusters-list" id="from-stop" placeholder="Wpisz lub wybierz..." onchange="updateAvailableLines()">
+    </div>
+    
+    <div class="input-group">
+        <label>Przystanek docelowy (meta)</label>
+        <input list="clusters-list" id="to-stop" placeholder="Wpisz lub wybierz...">
+    </div>
+
+    <datalist id="clusters-list"></datalist>
+
+    <div class="input-group">
+        <label>Linia tramwajowa</label>
+        <select id="line-select">
+            <option value="">Wszystkie linie na trasie</option>
+        </select>
+    </div>
+
+    <button onclick="calculateTravelTime()">Wyznacz czas przejazdu</button>
+
+    <div id="result" class="result-box" style="display: none;">
+        <div class="meta-info" id="corridor-title"></div>
+        <div class="time-badge" id="avg-time">-- min</div>
+        <div class="meta-info" id="samples-info"></div>
+        <div id="lines-breakdown" style="margin-top: 8px;"></div>
+    </div>
+</div>
+
+<div id="map"></div>
+
+<script>
+    const map = new maplibregl.Map({
+        container: 'map',
+        style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+        center: [21.0122, 52.2297],
+        zoom: 12
+    });
+
+    map.on('load', () => {
+        map.addSource('tram-network', { type: 'geojson', data: '/network/tram' });
+        map.addLayer({
+            id: 'tram-tracks',
+            type: 'line',
+            source: 'tram-network',
+            paint: { 'line-color': '#7030a0', 'line-width': 2.0, 'line-opacity': 0.7 }
+        });
+        loadClusters();
+    });
+
+    // 1. Dynamiczne napełnianie datalist przystankami z SQLite
+    async function loadClusters() {
+        try {
+            const res = await fetch('/network/tram/dwells/clusters');
+            const data = await res.json();
+            const datalist = document.getElementById('clusters-list');
+            datalist.innerHTML = data.clusters.map(c => `<option value="${c}">`).join('');
+            
+            // Domyślne wartości
+            document.getElementById('from-stop').value = 'Mangalia';
+            document.getElementById('to-stop').value = 'Dolna';
+            document.getElementById('from-stop').addEventListener('change', updateAvailableLines);
+            document.getElementById('to-stop').addEventListener('change', updateAvailableLines)
+            updateAvailableLines();
+        } catch (e) {
+            console.error("Błąd ładowania przystanków:", e);
+        }
+    }
+
+    // 2. Aktualizacja listy linii dla wybranego przystanku
+async function updateAvailableLines() {
+    const fromStop = document.getElementById('from-stop').value.trim();
+    const toStop = document.getElementById('to-stop').value.trim();
+    const select = document.getElementById('line-select');
+    
+    const previousSelection = select.value;
+    select.innerHTML = '<option value="">Wszystkie linie na trasie</option>';
+
+    if (!fromStop) return;
+
+    let url = `/network/tram/corridor/lines?from_stop=${encodeURIComponent(fromStop)}`;
+    if (toStop) {
+        url += `&to_stop=${encodeURIComponent(toStop)}`;
+    }
+
+    try {
+        const res = await fetch(url);
+        const data = await res.json();
+        
+        data.lines.forEach(l => {
+            const opt = document.createElement('option');
+            opt.value = l;
+            opt.textContent = `Linia ${l}`;
+            if (l === previousSelection) opt.selected = true;
+            select.appendChild(opt);
+        });
+    } catch (e) {
+        console.error("Błąd ładowania linii dla korytarza:", e);
+    }
+}
+
+    // 3. Kalkulacja czasu przejazdu
+    async function calculateTravelTime() {
+        const fromStop = document.getElementById('from-stop').value.trim();
+        const toStop = document.getElementById('to-stop').value.trim();
+        const line = document.getElementById('line-select').value;
+        const resultBox = document.getElementById('result');
+
+        if (!fromStop || !toStop) return;
+
+        let url = `/network/tram/travel-time?from_stop=${encodeURIComponent(fromStop)}&to_stop=${encodeURIComponent(toStop)}`;
+        if (line) url += `&line=${encodeURIComponent(line)}`;
+
+        try {
+            const res = await fetch(url);
+            const data = await res.json();
+            resultBox.style.display = 'block';
+
+            if (data.total_samples === 0) {
+                document.getElementById('corridor-title').innerText = `${fromStop} ➔ ${toStop}`;
+                document.getElementById('avg-time').innerText = "Brak danych";
+                document.getElementById('avg-time').style.color = '#f87171';
+                document.getElementById('samples-info').innerText = "Brak kursów łączących te zespoły w bazie.";
+                document.getElementById('lines-breakdown').innerHTML = '';
+                return;
+            }
+
+            document.getElementById('corridor-title').innerText = `${data.from_stop} ➔ ${data.to_stop}`;
+            document.getElementById('avg-time').innerText = `~ ${data.overall_avg_min} min`;
+            document.getElementById('avg-time').style.color = '#4ade80';
+            document.getElementById('samples-info').innerText = `Próba: ${data.total_samples} zarejestrowanych przelotów`;
+
+            let linesHtml = '';
+            data.lines.forEach(l => {
+                linesHtml += `<div style="margin-top: 4px;">
+                    <span class="line-tag">${l.line}</span> 
+                    <b>${l.avg_time_min} min</b> (min: ${l.min_time_min}m, max: ${l.max_time_min}m) - <i>${l.samples} kursów</i>
+                </div>`;
+            });
+            document.getElementById('lines-breakdown').innerHTML = linesHtml;
+        } catch (err) {
+            console.error(err);
+        }
+    }
+</script>
+</body>
+</html>

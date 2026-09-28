@@ -122,7 +122,10 @@ async def tram_analytics_page():
   template_path = RESOURCES_DIR / "templates" / "tram_analytics.html"
   with open(template_path, encoding="utf-8") as f:
     return HTMLResponse(f.read())
-
+@app.get("/analytics/tram-corridor", response_class=HTMLResponse)
+async def tram_corridor_view():
+  html_file = RESOURCES_DIR / "templates" / "tram_corridor.html"
+  return HTMLResponse(html_file.read_text(encoding="utf-8"))
 
 @app.get("/stations")
 def list_stations():

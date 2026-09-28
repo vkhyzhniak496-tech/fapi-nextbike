@@ -3,19 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Warszawa - Veturilo & Safe Cycleways</title>
+    <title>Warszawa - Veturilo & Tram Analytics</title>
     <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
     <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
     <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        /* Styl dla przycisków nawigacyjnych w panelu statusu */
+        .nav-buttons-group {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .btn-nav-primary {
+            display: inline-block;
+            background: #0284c7;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-align: center;
+            transition: background 0.2s;
+        }
+        .btn-nav-primary:hover {
+            background: #0369a1;
+        }
+        .btn-nav-tram-corridor {
+            display: inline-block;
+            background: #7c3aed;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-align: center;
+            transition: background 0.2s;
+            box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
+        }
+        .btn-nav-tram-corridor:hover {
+            background: #6d28d9;
+        }
+    </style>
 </head>
 <body>
-    <div id="info-box" class="glass-panel">
+<div id="info-box" class="glass-panel">
         <div class="status-row">
             <span class="pulse"></span>
             <span>Veturilo 3.0 Live</span>
         </div>
         <div class="update-time">Aktualizacja: <span id="last-update-label">Ładowanie...</span></div>
-        <a href="/analytics/tram" class="btn-nav-leaderboard">Tramy</a>
+        
+        <div class="nav-actions">
+            <a href="/analytics/tram" class="btn-nav-tram">Tramy</a>
+            <a href="/analytics/tram-corridor" class="btn-nav-corridor">Korytarze</a>
+        </div>
     </div>
 
     <button id="btn-toggle-filters" class="fab-filters" aria-label="Filtry warstw">
@@ -69,7 +112,6 @@
 
     <div id="map"></div>
 
-    <!-- Załadowanie jako moduł ES -->
     <script type="module" src="/static/js/map_view.js"></script>
 </body>
 </html>

@@ -361,7 +361,54 @@ body {
 .legend-header-mobile {
     display: none;
 }
+/* Nawigacja w panelu info-box: minimalistyczna, bez emoji, półprzezroczysta */
+.nav-actions {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+}
 
+.btn-nav-tram {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 124, 191, 0.08);
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 11px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(0, 124, 191, 0.18);
+    transition: all 0.15s ease;
+}
+
+.btn-nav-tram:hover {
+    background: rgba(0, 124, 191, 0.15);
+    color: var(--primary-hover);
+    border-color: rgba(0, 124, 191, 0.3);
+}
+
+.btn-nav-corridor {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(59, 1, 65, 0.06);
+    color: #4a154b;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 11px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(59, 1, 65, 0.16);
+    transition: all 0.15s ease;
+}
+
+.btn-nav-corridor:hover {
+    background: rgba(59, 1, 65, 0.12);
+    color: #2b0030;
+    border-color: rgba(59, 1, 65, 0.28);
+}
 /* ================= RWD: EKRANY MOBILNE ================= */
 @media (max-width: 640px) {
     /* 1. Kompaktowy pasek statusu w lewym górnym rogu */
