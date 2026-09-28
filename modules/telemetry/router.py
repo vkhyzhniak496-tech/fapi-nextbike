@@ -171,6 +171,83 @@ def get_vehicle_dwell_events(
     return [TramDwellEvent(**dict(r)) for r in cur.fetchall()]
 
 
+@router.get("/dwells/line/{line}/stats")
+def get_line_dwell_stats(line: str) -> Dict[str, Any]:
+  """Zwraca statystyki postojów dla pojedynczej linii (natychmiastowy odczyt z koordynatami)."""
+  line_clean = line.strip()
+
+  coords_by_stop = {}
+  coords_by_cluster = {}
+
+  with get_db_cursor(TRAM_DB_PATH) as cur:
+    cur.execute(
+        "SELECT name, cluster_name, lat, lon, coordinates_json FROM"
+        " tram_platforms;"
+    )
+    for r in cur.fetchall():
+      lat, lon = r["lat"], r["lon"]
+      if (lat is None or lon is None) and r["coordinates_json"]:
+        try:
+          c = json.loads(r["coordinates_json"])
+          lon, lat = float(c[0]), float(c[1])
+        except Exception:
+          continue
+      if lat is not None and lon is not None:
+        if r["name"]:
+          coords_by_stop[r["name"]] = (lon, lat)
+        if r["cluster_name"] and r["cluster_name"] not in coords_by_cluster:
+          coords_by_cluster[r["cluster_name"]] = (lon, lat)
+
+  with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
+    cur.execute(
+        """
+            SELECT 
+                d.stop_name,
+                COALESCE(d.cluster_name, '') AS cluster_name,
+                d.line,
+                ROUND(AVG(d.duration_sec), 1) AS avg_dwell,
+                COUNT(*) AS samples
+            FROM tram_dwell_events d
+            WHERE d.line = ?
+            GROUP BY d.stop_name, d.line
+            ORDER BY samples DESC;
+        """,
+        (line_clean,),
+    )
+    rows = cur.fetchall()
+
+  features = []
+  for r in rows:
+    name = r["stop_name"]
+    cluster = r["cluster_name"]
+    coords = coords_by_stop.get(name) or coords_by_cluster.get(cluster)
+    if not coords:
+      continue
+
+    features.append({
+        "type": "Feature",
+        "geometry": {"type": "Point", "coordinates": [coords[0], coords[1]]},
+        "properties": {
+            "stop_name": name,
+            "cluster_name": cluster or name,
+            "avg_dwell_sec": r["avg_dwell"],
+            "samples_count": r["samples"],
+            "lines_json": json.dumps([{
+                "line": r["line"],
+                "avg_dwell_sec": r["avg_dwell"],
+                "samples": r["samples"],
+            }]),
+        },
+    })
+
+  return {
+      "type": "FeatureCollection",
+      "line": line_clean,
+      "stops_count": len(features),
+      "features": features,
+  }
+
+
 @router.get("/dwells/all-stops")
 def get_all_stops_dwell_stats() -> Dict[str, Any]:
   """Pobiera zagregowane statystyki postojów dla wszystkich peronów bez blokowania Event Loopa."""
