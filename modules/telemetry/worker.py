@@ -10,7 +10,7 @@ from config import (
     UM_WARSZAWA_VEHICLES_URL,
     settings,
 )
-from core.database import TRAM_LIVE_DB_PATH, get_db_cursor, transaction
+from core.database import TRAM_LIVE_DB_PATH, get_db_cursor, transaction, TRAM_ANALYTICS_DB_PATH
 from core.geo import calculate_speed_kmh
 from core.models import TramRawTelemetry
 from modules.telemetry.processor import analytics_engine
@@ -147,37 +147,67 @@ async def tram_telemetry_poller_task() -> None:
 
 
 async def tram_analytics_worker_task() -> None:
-    """Asynchroniczny worker periodycznie przeliczający postoje tramwajów w tle."""
-    logger.info("[TRAM_ANALYTICS] Uruchomiono periodyczny proces analizy postojów...")
-    await asyncio.sleep(15)
+  """Zadanie konserwacyjne analityki: raz na dobę usuwa postoje >14 dni
 
-    while True:
-        try:
-            inserted_count = await asyncio.to_thread(
-                analytics_engine.analyze_recent_telemetry, lookback_minutes=60
-            )
-            if inserted_count > 0:
-                logger.info(f"[TRAM_ANALYTICS] Zsynchronizowano {inserted_count} nowych postojów.")
-        except asyncio.CancelledError:
-            logger.info("[TRAM_ANALYTICS] Zatrzymano proces analityki.")
-            break
-        except Exception as e:
-            logger.error(f"[TRAM_ANALYTICS] Błąd podczas przeliczania postojów: {e}")
+  i kompaktuje bazę tram_analytics.db.
+  """
+  logger.info("[TRAM_ANALYTICS] Uruchomiono cykliczny cleaner analityki...")
+  # 5 minut zwłoki po starcie serwera, by nie obciążać rozruchu
+  await asyncio.sleep(300)
 
-        await asyncio.sleep(60)
-async def cleanup_old_telemetry_task():
-  """Uruchamia się raz na dobę i usuwa dane starsze niż 48h."""
   while True:
-    await asyncio.sleep(86400)  # 24 godziny
+    try:
+      logger.info(
+          "[TRAM_ANALYTICS] Czyszczenie przestarzałych postojów (>14 dni)..."
+      )
+      with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
+        with transaction(cur):
+          cur.execute("""
+                        DELETE FROM tram_dwell_events 
+                        WHERE arrival_time < datetime('now', '-14 days');
+                    """)
+        # Zwolnienie nieużywanych stron i zrzut WAL
+        cur.execute("PRAGMA wal_checkpoint(PASSIVE);")
+        cur.execute("PRAGMA incremental_vacuum;")
+
+      logger.info(
+          "[TRAM_ANALYTICS] Sprzątanie zakończone. Baza zoptymalizowana."
+      )
+    except asyncio.CancelledError:
+      logger.info("[TRAM_ANALYTICS] Zatrzymano zadanie cleanera analityki.")
+      break
+    except Exception as e:
+      logger.error(
+          f"[TRAM_ANALYTICS] Błąd podczas czyszczenia bazy analityki: {e}"
+      )
+
+    # Odpoczynek na 24 godziny (86400 sekund)
+    await asyncio.sleep(86400)
+async def cleanup_old_telemetry_task():
+  """Uruchamia się co 30 minut, usuwa dane starsze niż 4 godziny
+
+  i natychmiast odzyskuje miejsce na dysku.
+  """
+  await asyncio.sleep(60)  # Krótki start po restarcie serwera
+  while True:
     try:
       with get_db_cursor(TRAM_LIVE_DB_PATH) as cur:
         with transaction(cur):
+          # 1. Trzymamy tylko 4 godziny (wystarczy do trajektorii /track)
           cur.execute("""
                         DELETE FROM tram_telemetry_history 
-                        WHERE gps_time < datetime('now', '-2 days');
+                        WHERE gps_time < datetime('now', '-4 hours');
                     """)
+
+        # 2. Fizyczne kurczenie bazy i zwolnienie bufora WAL
+        cur.execute("PRAGMA wal_checkpoint(PASSIVE);")
+        cur.execute("PRAGMA incremental_vacuum;")
+
       logger.info(
-          "[CLEANUP] Wyczyszczono stara telemetrie z tram_telemetry_history."
+          "[CLEANUP] Wyczyszczono stara telemetrie (bufor 4h) i zwolniono"
+          " strony."
       )
     except Exception as e:
-      logger.error(f"[CLEANUP] Blad podczas usuwania historii: {e}")
+      logger.error(f"[CLEANUP] Błąd podczas czyszczenia historii: {e}")
+
+    await asyncio.sleep(1800)  # Co 30 minut

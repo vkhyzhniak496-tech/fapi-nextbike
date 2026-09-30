@@ -157,10 +157,8 @@ def init_all_databases() -> None:
             CREATE INDEX IF NOT EXISTS idx_tram_hist_line_brigade 
             ON tram_telemetry_history(line, brigade, gps_time);
         """)
-        cur.execute("""
-            CREATE INDEX IF NOT EXISTS idx_tram_hist_vehicle_time 
-            ON tram_telemetry_history(vehicle_number, gps_time);
-        """)
+        # Uruchamiane w workerze (np. co 15 minut)
+
 
     # --- 5. Wyniki analityczne: postoje i czasy wymiany pasażerskiej ---
     with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
