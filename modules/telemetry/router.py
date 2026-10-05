@@ -1,5 +1,6 @@
 import asyncio
 import json
+from datetime import datetime, timedelta
 from collections import deque
 import time
 from typing import Any, Dict, List, Optional, Tuple
@@ -23,13 +24,48 @@ router = APIRouter(prefix="/network/tram", tags=["Tram Telemetry & Analytics"])
 _TRAVEL_TIME_CACHE: Dict[
     Tuple[str, str, Optional[str]], Tuple[float, Dict[str, Any]]
 ] = {}
-_CACHE_TTL_SEC = 600  # 10 minut
+_CACHE_TTL_SEC = 27 # 10 minut
 
 
 # ==============================================================================
 # 1. Pozycje tramwajów na żywo i trajektorie wozów
 # ==============================================================================
+@router.get("/live")
+async def get_live_tram_positions(
+    line: Optional[str] = None,
+) -> Dict[str, Any]:
+  """Zwraca bieżące pozycje składów (tylko aktywne w ciągu ostatnich 10 minut)."""
+  features = []
+  target_line = line.strip() if line else None
+  cutoff = datetime.now() - timedelta(minutes=10)
 
+  for v_num, telemetry in list(LAST_TRAM_POSITIONS.items()):
+    if telemetry.gps_time < cutoff:
+      continue  # Pomijamy wozy, które zjechały do zajezdni
+    if target_line and telemetry.line != target_line:
+      continue
+
+    features.append({
+        "type": "Feature",
+        "id": v_num,
+        "properties": {
+            "vehicle_number": telemetry.vehicle_number,
+            "line": telemetry.line,
+            "brigade": telemetry.brigade,
+            "speed_kmh": telemetry.speed_kmh,
+            "time": telemetry.gps_time.strftime("%Y-%m-%d %H:%M:%S"),
+        },
+        "geometry": {
+            "type": "Point",
+            "coordinates": [telemetry.lon, telemetry.lat],
+        },
+    })
+
+  return {
+      "type": "FeatureCollection",
+      "total_active_trams": len(features),
+      "features": features,
+  }
 
 @router.get("/vehicles/{vehicle_number}/track")
 async def get_vehicle_track(

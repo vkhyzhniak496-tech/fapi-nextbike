@@ -174,7 +174,29 @@ class TelemetryAnalyticsEngine:
                         """,
                             (line, from_c, to_c, dur),
                         )
+    def record_segment_transit(
+            line: str, from_cluster: str, to_cluster: str, duration_sec: float
+        ):
+        """Aktualizuje średnią kroczącą segmentu bezpośredniego w tram_corridors.db."""
+        if not (from_cluster and to_cluster) or from_cluster == to_cluster:
+            return
 
+        if not (20.0 <= duration_sec <= 600.0):
+            return
+
+        with get_db_cursor(TRAM_CORRIDORS_DB_PATH) as cur:
+            cur.execute(
+                """
+                    INSERT INTO tram_direct_segments (line, from_cluster, to_cluster, avg_duration_sec, samples_count, last_seen)
+                    VALUES (?, ?, ?, ?, 1, CURRENT_TIMESTAMP)
+                    ON CONFLICT(line, from_cluster, to_cluster) DO UPDATE SET
+                        avg_duration_sec = ROUND((avg_duration_sec * samples_count + excluded.avg_duration_sec) / (samples_count + 1), 1),
+                        samples_count = samples_count + 1,
+                        last_seen = CURRENT_TIMESTAMP;
+                """,
+                (line, from_cluster, to_cluster, round(duration_sec, 1)),
+            )
+            
     def _finalize_event(
         self,
         tracked: dict,
