@@ -11,6 +11,7 @@ TRAM_DB_PATH = RESOURCES_DIR / "tram_network.db"
 TRAM_LIVE_DB_PATH = RESOURCES_DIR / "tram_live.db"
 CYCLEWAYS_DB_PATH = RESOURCES_DIR / "cycleways_network.db"
 TRAM_ANALYTICS_DB_PATH = RESOURCES_DIR / "tram_analytics.db"
+TRAM_CORRIDORS_DB_PATH = RESOURCES_DIR / "tram_corridors.db"
 
 def apply_wal_pragmas(cursor: sqlite3.Cursor) -> None:
   """Konfiguruje silnik SQLite do pracy z dużą częstotliwością zapisu i odczytu."""
@@ -189,6 +190,27 @@ def init_all_databases() -> None:
             CREATE INDEX IF NOT EXISTS idx_dwell_arrival 
             ON tram_dwell_events(arrival_time);
         """)
+
+        # --- 6. Graf segmentów przelotowych (Korytarze < 200 KB) ---
+    with get_db_cursor(TRAM_CORRIDORS_DB_PATH) as cur:
+        apply_wal_pragmas(cur)
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS tram_direct_segments (
+            line TEXT NOT NULL,
+            from_cluster TEXT NOT NULL,
+            to_cluster TEXT NOT NULL,
+            avg_duration_sec REAL NOT NULL,
+            samples_count INTEGER NOT NULL,
+            last_seen TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (line, from_cluster, to_cluster)
+        );
+    """)
+        cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_segments_from 
+            ON tram_direct_segments(from_cluster, line);
+    """)
+
+
 
 def migrate_tram_platforms() -> None:
   """Rozszerza istniejącą tabelę tram_platforms o jawne współrzędne bez utraty danych."""

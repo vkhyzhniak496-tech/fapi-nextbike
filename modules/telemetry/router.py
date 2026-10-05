@@ -1,5 +1,6 @@
 import asyncio
 import json
+from collections import deque
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -9,6 +10,7 @@ from core.database import (
     TRAM_ANALYTICS_DB_PATH,
     TRAM_DB_PATH,
     TRAM_LIVE_DB_PATH,
+    TRAM_CORRIDORS_DB_PATH,
     get_db_cursor,
 )
 from core.models import TramDwellEvent
@@ -348,55 +350,138 @@ def get_available_clusters():
 # 3. Korytarze Tramwajowe: Odczyt z gotowej tabeli agregatów (< 2 ms)
 # ==============================================================================
 
-
 def _read_corridor_stats(
     from_stop: str, to_stop: str, line: Optional[str]
 ) -> List[Dict[str, Any]]:
-  """Wyznacza czas przejazdu (zarówno dla odcinków bezpośrednich, jak i wieloskokowych)."""
+  """Wyznacza trasę w Pythonie za pomocą BFS z obsługą wielu odgałęzień na przystanek."""
+  from_clean = from_stop.strip().lower()
+  to_clean = to_stop.strip().lower()
 
-  # 1. Sprawdź relację bezpośrednią
-  query_direct = """
-        SELECT line, samples, avg_time_min, min_time_min, max_time_min
-        FROM tram_corridor_stats
-        WHERE from_stop = ? COLLATE NOCASE 
-          AND to_stop = ? COLLATE NOCASE
-          AND (? IS NULL OR line = ?)
-        ORDER BY CAST(line AS INTEGER), line ASC;
-    """
-  with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
-    cur.execute(query_direct, (from_stop, to_stop, line, line))
-    direct_rows = [dict(r) for r in cur.fetchall()]
-    if direct_rows:
-      return direct_rows
+  if from_clean == to_clean:
+    return []
 
-  # 2. Jeśli brak bezpośredniego wpisu: zsumuj kolejne przeloty wzdłuż trasy linii (Graf w SQL)
-  query_route = """
-        WITH RECURSIVE journey(curr_stop, line, total_time, hops, min_samples) AS (
-            SELECT to_stop, line, avg_time_min, 1, samples
-            FROM tram_corridor_stats
-            WHERE from_stop = ? COLLATE NOCASE
-              AND (? IS NULL OR line = ?)
-            
-            UNION ALL
-            
-            SELECT s.to_stop, s.line, j.total_time + s.avg_time_min, j.hops + 1, MIN(j.min_samples, s.samples)
-            FROM tram_corridor_stats s
-            JOIN journey j ON s.from_stop = j.curr_stop AND s.line = j.line
-            WHERE j.hops < 30 AND j.curr_stop != ? COLLATE NOCASE
+  # 1. Fallback na bezpośrednie wpisy w tram_analytics.db
+  try:
+    with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
+      cur.execute(
+          """
+                SELECT line, samples, avg_time_min, min_time_min, max_time_min
+                FROM tram_corridor_stats
+                WHERE from_stop = ? COLLATE NOCASE 
+                  AND to_stop = ? COLLATE NOCASE
+                  AND (? IS NULL OR line = ?)
+                ORDER BY CAST(line AS INTEGER), line ASC;
+            """,
+          (from_clean, to_clean, line, line),
+      )
+      rows = [dict(r) for r in cur.fetchall()]
+      if rows:
+        return rows
+  except Exception:
+    pass
+
+  # 2. Bezpieczne przejście grafu z tram_corridors.db (wielokrotne krawędzie)
+  try:
+    with get_db_cursor(TRAM_CORRIDORS_DB_PATH) as cur:
+      if line:
+        cur.execute(
+            """
+                    SELECT line, from_cluster, to_cluster, avg_duration_sec, samples_count
+                    FROM tram_direct_segments
+                    WHERE line = ?;
+                """,
+            (line.strip(),),
         )
-        SELECT 
-            line,
-            min_samples AS samples,
-            ROUND(total_time, 1) AS avg_time_min,
-            ROUND(total_time * 0.85, 1) AS min_time_min,
-            ROUND(total_time * 1.25, 1) AS max_time_min
-        FROM journey
-        WHERE curr_stop = ? COLLATE NOCASE
-        GROUP BY line;
-    """
-  with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
-    cur.execute(query_route, (from_stop, line, line, to_stop, to_stop))
-    return [dict(r) for r in cur.fetchall()]
+      else:
+        cur.execute("""
+                    SELECT line, from_cluster, to_cluster, avg_duration_sec, samples_count
+                    FROM tram_direct_segments;
+                """)
+      segments = cur.fetchall()
+
+    if not segments:
+      return []
+
+    # Graf z listą sąsiadów: {line: {from_stop: [(to_stop, sec, count), ...]}}
+    lines_graph = {}
+    for s in segments:
+      l = s["line"]
+      f = s["from_cluster"].strip().lower()
+      t = s["to_cluster"].strip().lower()
+      dur = float(s["avg_duration_sec"])
+      cnt = int(s["samples_count"])
+
+      if l not in lines_graph:
+        lines_graph[l] = {}
+      if f not in lines_graph[l]:
+        lines_graph[l][f] = []
+      lines_graph[l][f].append((t, dur, cnt))
+
+    results = []
+
+    # Szukanie trasy algorytmem BFS dla każdej linii
+    for l, edges in lines_graph.items():
+      if from_clean not in edges:
+        continue
+
+      queue = deque([(from_clean, 0.0, float("inf"), [from_clean])])
+      best_time = None
+      best_samples = 0
+
+      while queue:
+        curr, total_sec, min_s, path = queue.popleft()
+
+        if curr == to_clean and len(path) > 1:
+          best_time = total_sec
+          best_samples = int(min_s)
+          break
+
+        if len(path) > 30:
+          continue
+
+        for nxt, dur, cnt in edges.get(curr, []):
+          if nxt not in path:  # ochrona przed cyklami
+            queue.append(
+                (nxt, total_sec + dur, min(min_s, cnt), path + [nxt])
+            )
+
+      if best_time is not None:
+        avg_m = round(best_time / 60.0, 1)
+        results.append({
+            "line": l,
+            "samples": best_samples if best_samples != float("inf") else 1,
+            "avg_time_min": avg_m,
+            "min_time_min": round(avg_m * 0.85, 1),
+            "max_time_min": round(avg_m * 1.25, 1),
+        })
+
+    results.sort(
+        key=lambda x: int(x["line"]) if x["line"].isdigit() else x["line"]
+    )
+    return results
+
+  except Exception:
+    return []
+
+def _execute_corridor_lines_query(
+    from_stop: str, to_stop: Optional[str]
+) -> List[str]:
+  """Pobiera linie dostępne na danym segmencie / trasie."""
+  if to_stop and to_stop.strip():
+    stats = _read_corridor_stats(from_stop, to_stop, None)
+    return [r["line"] for r in stats]
+
+  with get_db_cursor(TRAM_CORRIDORS_DB_PATH) as cur:
+    cur.execute(
+        """
+            SELECT DISTINCT line 
+            FROM tram_direct_segments 
+            WHERE from_cluster = ? COLLATE NOCASE
+            ORDER BY CAST(line AS INTEGER), line ASC;
+        """,
+        (from_stop.strip(),),
+    )
+    return [r["line"] for r in cur.fetchall()]
 
 
 @router.get("/travel-time")
