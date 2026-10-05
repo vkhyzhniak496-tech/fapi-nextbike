@@ -130,222 +130,242 @@ async def get_vehicle_track(
       "features": [track_line] + sample_points,
   }
 
-
 # ==============================================================================
 # 2. Statystyki postojów na peronach (Widok analityczny peronów)
 # ==============================================================================
 
 
 @router.get("/dwells/lines")
-def get_available_lines():
-  """Zwraca unikalną listę linii obecnych w zdarzeniach postojowych."""
-  with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
-    cur.execute("""
-            SELECT DISTINCT line 
-            FROM tram_dwell_events 
-            WHERE line IS NOT NULL AND line != ''
-            ORDER BY CAST(line AS INTEGER), line ASC;
-        """)
-    return {"lines": [r["line"] for r in cur.fetchall()]}
+async def get_available_lines() -> Dict[str, List[str]]:
+  """Zwraca unikalną listę linii bez blokowania pętli asynchronicznej."""
+
+  def _read():
+    with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
+      cur.execute("""
+                SELECT DISTINCT line 
+                FROM tram_dwell_events 
+                WHERE line IS NOT NULL AND line != ''
+                ORDER BY CAST(line AS INTEGER), line ASC;
+            """)
+      return [r["line"] for r in cur.fetchall()]
+
+  lines = await asyncio.to_thread(_read)
+  return {"lines": lines}
+
 
 
 @router.get(
     "/dwells/vehicle/{vehicle_number}", response_model=List[TramDwellEvent]
 )
-def get_vehicle_dwell_events(
+async def get_vehicle_dwell_events(
     vehicle_number: str, limit: int = Query(default=100, ge=1, le=500)
 ):
   """Zwraca postoje konkretnego wozu."""
   v_num = vehicle_number.strip()
-  with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
-    cur.execute(
-        """
-            SELECT vehicle_number, line, brigade, stop_name, cluster_name,
-                   arrival_time, departure_time, duration_sec, min_speed_kmh,
-                   min_dist_m, pings_count
-            FROM tram_dwell_events
-            WHERE vehicle_number = ?
-            ORDER BY arrival_time DESC
-            LIMIT ?;
+
+  def _read():
+    with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
+      cur.execute(
+          """
+                SELECT vehicle_number, line, brigade, stop_name, cluster_name,
+                       arrival_time, departure_time, duration_sec, min_speed_kmh,
+                       min_dist_m, pings_count
+                FROM tram_dwell_events
+                WHERE vehicle_number = ?
+                ORDER BY arrival_time DESC
+                LIMIT ?;
             """,
-        (v_num, limit),
-    )
-    return [TramDwellEvent(**dict(r)) for r in cur.fetchall()]
+          (v_num, limit),
+      )
+      return [TramDwellEvent(**dict(r)) for r in cur.fetchall()]
+
+  return await asyncio.to_thread(_read)
 
 
 @router.get("/dwells/line/{line}/stats")
-def get_line_dwell_stats(line: str) -> Dict[str, Any]:
-  """Zwraca statystyki postojów dla pojedynczej linii (natychmiastowy odczyt z koordynatami)."""
+async def get_line_dwell_stats(line: str) -> Dict[str, Any]:
+  """Zwraca statystyki postojów dla pojedynczej linii (odciążony Event Loop)."""
   line_clean = line.strip()
 
-  coords_by_stop = {}
-  coords_by_cluster = {}
+  def _compute():
+    coords_by_stop = {}
+    coords_by_cluster = {}
 
-  with get_db_cursor(TRAM_DB_PATH) as cur:
-    cur.execute(
-        "SELECT name, cluster_name, lat, lon, coordinates_json FROM"
-        " tram_platforms;"
-    )
-    for r in cur.fetchall():
-      lat, lon = r["lat"], r["lon"]
-      if (lat is None or lon is None) and r["coordinates_json"]:
-        try:
-          c = json.loads(r["coordinates_json"])
-          lon, lat = float(c[0]), float(c[1])
-        except Exception:
-          continue
-      if lat is not None and lon is not None:
-        if r["name"]:
-          coords_by_stop[r["name"]] = (lon, lat)
-        if r["cluster_name"] and r["cluster_name"] not in coords_by_cluster:
-          coords_by_cluster[r["cluster_name"]] = (lon, lat)
+    with get_db_cursor(TRAM_DB_PATH) as cur:
+      cur.execute(
+          "SELECT name, cluster_name, lat, lon, coordinates_json FROM"
+          " tram_platforms;"
+      )
+      for r in cur.fetchall():
+        lat, lon = r["lat"], r["lon"]
+        if (lat is None or lon is None) and r["coordinates_json"]:
+          try:
+            c = json.loads(r["coordinates_json"])
+            lon, lat = float(c[0]), float(c[1])
+          except Exception:
+            continue
+        if lat is not None and lon is not None:
+          if r["name"]:
+            coords_by_stop[r["name"]] = (lon, lat)
+          if r["cluster_name"] and r["cluster_name"] not in coords_by_cluster:
+            coords_by_cluster[r["cluster_name"]] = (lon, lat)
 
-  with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
-    cur.execute(
-        """
-            SELECT 
-                d.stop_name,
-                COALESCE(d.cluster_name, '') AS cluster_name,
-                d.line,
-                ROUND(AVG(d.duration_sec), 1) AS avg_dwell,
-                COUNT(*) AS samples
-            FROM tram_dwell_events d
-            WHERE d.line = ?
-            GROUP BY d.stop_name, d.line
-            ORDER BY samples DESC;
-        """,
-        (line_clean,),
-    )
-    rows = cur.fetchall()
+    with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
+      cur.execute(
+          """
+                SELECT 
+                    d.stop_name,
+                    COALESCE(d.cluster_name, '') AS cluster_name,
+                    d.line,
+                    ROUND(AVG(d.duration_sec), 1) AS avg_dwell,
+                    COUNT(*) AS samples
+                FROM tram_dwell_events d
+                WHERE d.line = ?
+                GROUP BY d.stop_name, d.line
+                ORDER BY samples DESC;
+            """,
+          (line_clean,),
+      )
+      rows = cur.fetchall()
 
-  features = []
-  for r in rows:
-    name = r["stop_name"]
-    cluster = r["cluster_name"]
-    coords = coords_by_stop.get(name) or coords_by_cluster.get(cluster)
-    if not coords:
-      continue
+    features = []
+    for r in rows:
+      name = r["stop_name"]
+      cluster = r["cluster_name"]
+      coords = coords_by_stop.get(name) or coords_by_cluster.get(cluster)
+      if not coords:
+        continue
 
-    features.append({
-        "type": "Feature",
-        "geometry": {"type": "Point", "coordinates": [coords[0], coords[1]]},
-        "properties": {
-            "stop_name": name,
-            "cluster_name": cluster or name,
-            "avg_dwell_sec": r["avg_dwell"],
-            "samples_count": r["samples"],
-            "lines_json": json.dumps([{
-                "line": r["line"],
-                "avg_dwell_sec": r["avg_dwell"],
-                "samples": r["samples"],
-            }]),
-        },
-    })
+      features.append({
+          "type": "Feature",
+          "geometry": {"type": "Point", "coordinates": [coords[0], coords[1]]},
+          "properties": {
+              "stop_name": name,
+              "cluster_name": cluster or name,
+              "avg_dwell_sec": r["avg_dwell"],
+              "samples_count": r["samples"],
+              "lines_json": json.dumps([{
+                  "line": r["line"],
+                  "avg_dwell_sec": r["avg_dwell"],
+                  "samples": r["samples"],
+              }]),
+          },
+      })
 
-  return {
-      "type": "FeatureCollection",
-      "line": line_clean,
-      "stops_count": len(features),
-      "features": features,
-  }
+    return {
+        "type": "FeatureCollection",
+        "line": line_clean,
+        "stops_count": len(features),
+        "features": features,
+    }
+
+  return await asyncio.to_thread(_compute)
 
 
 @router.get("/dwells/all-stops")
-def get_all_stops_dwell_stats() -> Dict[str, Any]:
+async def get_all_stops_dwell_stats() -> Dict[str, Any]:
   """Pobiera zagregowane statystyki postojów dla wszystkich peronów bez blokowania Event Loopa."""
-  coords_by_stop = {}
-  cluster_by_stop = {}
 
-  with get_db_cursor(TRAM_DB_PATH) as cur:
-    cur.execute(
-        "SELECT name, cluster_name, lat, lon, coordinates_json FROM"
-        " tram_platforms;"
-    )
-    for r in cur.fetchall():
-      lat, lon = r["lat"], r["lon"]
-      if (lat is None or lon is None) and r["coordinates_json"]:
-        try:
-          c = json.loads(r["coordinates_json"])
-          lon, lat = float(c[0]), float(c[1])
-        except Exception:
-          continue
-      if lat is not None and lon is not None and r["name"]:
-        coords_by_stop[r["name"]] = (lon, lat)
-        if r["cluster_name"]:
-          cluster_by_stop[r["name"]] = r["cluster_name"]
+  def _compute():
+    coords_by_stop = {}
+    cluster_by_stop = {}
 
-  with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
-    cur.execute("""
-            SELECT 
-                stop_name,
-                COALESCE(cluster_name, '') AS cluster_name,
-                line,
-                ROUND(AVG(duration_sec), 1) AS avg_dwell,
-                COUNT(*) AS samples
-            FROM tram_dwell_events
-            GROUP BY stop_name, line
-            ORDER BY stop_name, samples DESC;
-        """)
-    rows = cur.fetchall()
+    with get_db_cursor(TRAM_DB_PATH) as cur:
+      cur.execute(
+          "SELECT name, cluster_name, lat, lon, coordinates_json FROM"
+          " tram_platforms;"
+      )
+      for r in cur.fetchall():
+        lat, lon = r["lat"], r["lon"]
+        if (lat is None or lon is None) and r["coordinates_json"]:
+          try:
+            c = json.loads(r["coordinates_json"])
+            lon, lat = float(c[0]), float(c[1])
+          except Exception:
+            continue
+        if lat is not None and lon is not None and r["name"]:
+          coords_by_stop[r["name"]] = (lon, lat)
+          if r["cluster_name"]:
+            cluster_by_stop[r["name"]] = r["cluster_name"]
 
-  stops = {}
-  for r in rows:
-    name = r["stop_name"]
-    cluster = cluster_by_stop.get(name) or r["cluster_name"] or name
-    if name not in stops:
-      stops[name] = {
-          "stop_name": name,
-          "cluster_name": cluster,
-          "total_samples": 0,
-          "weighted_sum": 0.0,
-          "lines": [],
-      }
-    stops[name]["lines"].append({
-        "line": r["line"],
-        "avg_dwell_sec": r["avg_dwell"],
-        "samples": r["samples"],
-    })
-    stops[name]["total_samples"] += r["samples"]
-    stops[name]["weighted_sum"] += r["avg_dwell"] * r["samples"]
+    with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
+      cur.execute("""
+                SELECT 
+                    stop_name,
+                    COALESCE(cluster_name, '') AS cluster_name,
+                    line,
+                    ROUND(AVG(duration_sec), 1) AS avg_dwell,
+                    COUNT(*) AS samples
+                FROM tram_dwell_events
+                GROUP BY stop_name, line
+                ORDER BY stop_name, samples DESC;
+            """)
+      rows = cur.fetchall()
 
-  features = []
-  for name, s in stops.items():
-    coords = coords_by_stop.get(name)
-    if not coords:
-      continue
-    overall_avg = (
-        round(s["weighted_sum"] / s["total_samples"], 1)
-        if s["total_samples"]
-        else 0.0
-    )
-    features.append({
-        "type": "Feature",
-        "geometry": {"type": "Point", "coordinates": [coords[0], coords[1]]},
-        "properties": {
-            "stop_name": s["stop_name"],
-            "cluster_name": s["cluster_name"],
-            "avg_dwell_sec": overall_avg,
-            "samples_count": s["total_samples"],
-            "lines_json": json.dumps(s["lines"]),
-        },
-    })
+    stops = {}
+    for r in rows:
+      name = r["stop_name"]
+      cluster = cluster_by_stop.get(name) or r["cluster_name"] or name
+      if name not in stops:
+        stops[name] = {
+            "stop_name": name,
+            "cluster_name": cluster,
+            "total_samples": 0,
+            "weighted_sum": 0.0,
+            "lines": [],
+        }
+      stops[name]["lines"].append({
+          "line": r["line"],
+          "avg_dwell_sec": r["avg_dwell"],
+          "samples": r["samples"],
+      })
+      stops[name]["total_samples"] += r["samples"]
+      stops[name]["weighted_sum"] += r["avg_dwell"] * r["samples"]
 
-  return {"type": "FeatureCollection", "features": features}
+    features = []
+    for name, s in stops.items():
+      coords = coords_by_stop.get(name)
+      if not coords:
+        continue
+      overall_avg = (
+          round(s["weighted_sum"] / s["total_samples"], 1)
+          if s["total_samples"]
+          else 0.0
+      )
+      features.append({
+          "type": "Feature",
+          "geometry": {"type": "Point", "coordinates": [coords[0], coords[1]]},
+          "properties": {
+              "stop_name": s["stop_name"],
+              "cluster_name": s["cluster_name"],
+              "avg_dwell_sec": overall_avg,
+              "samples_count": s["total_samples"],
+              "lines_json": json.dumps(s["lines"]),
+          },
+      })
+
+    return {"type": "FeatureCollection", "features": features}
+
+  return await asyncio.to_thread(_compute)
 
 
 @router.get("/dwells/clusters")
-def get_available_clusters():
-  """Zwraca unikalne zespoły przystankowe pod autouzupełnianie w polach tekstowych."""
-  with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
-    cur.execute("""
-            SELECT DISTINCT cluster_name 
-            FROM tram_dwell_events 
-            WHERE cluster_name IS NOT NULL AND cluster_name != ''
-            ORDER BY cluster_name COLLATE NOCASE ASC;
-        """)
-    return {"clusters": [r["cluster_name"] for r in cur.fetchall()]}
+async def get_available_clusters() -> Dict[str, List[str]]:
+  """Błyskawiczny odczyt zespołów przystankowych z bazy infrastruktury (0 ms narzutu)."""
 
+  def _read():
+    # Czytamy z TRAM_DB_PATH zamiast mielić 1.1 GB analityki
+    with get_db_cursor(TRAM_DB_PATH) as cur:
+      cur.execute("""
+                SELECT DISTINCT cluster_name 
+                FROM tram_platforms 
+                WHERE cluster_name IS NOT NULL AND cluster_name != ''
+                ORDER BY cluster_name COLLATE NOCASE ASC;
+            """)
+      return [r["cluster_name"] for r in cur.fetchall()]
 
+  clusters = await asyncio.to_thread(_read)
+  return {"clusters": clusters}
 
 
 # ==============================================================================
