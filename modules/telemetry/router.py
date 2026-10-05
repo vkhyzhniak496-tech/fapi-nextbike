@@ -385,6 +385,17 @@ def _read_corridor_stats(
 
     try:
         with get_db_cursor(TRAM_CORRIDORS_DB_PATH) as cur:
+            # 1. Pobieramy rzeczywiste czasy postojów na peronach (z fallbackiem, jeśli tabela jeszcze pusta)
+            try:
+                cur.execute("SELECT cluster_name, avg_dwell_sec FROM tram_cluster_dwells;")
+                dwell_times = {
+                    r["cluster_name"].strip().lower(): float(r["avg_dwell_sec"])
+                    for r in cur.fetchall()
+                }
+            except Exception:
+                dwell_times = {}
+
+            # 2. Pobieramy segmenty
             if line:
                 cur.execute(
                     """
@@ -448,9 +459,9 @@ def _read_corridor_stats(
                 for nxt, dur, cnt in edges.get(curr, []):
                     if nxt not in visited:
                         visited.add(nxt)  # Odwiedzamy dany przystanek TYLKO RAZ
-                        dwell_penalty = 20.0 if nxt != to_clean else 0.0
+                        actual_dwell = dwell_times.get(nxt, 22.0) if nxt != to_clean else 0.0
                         queue.append(
-                            (nxt, total_sec + dur + dwell_penalty, min(min_s, cnt), hops + 1)
+                            (nxt, total_sec + dur + actual_dwell, min(min_s, cnt), hops + 1)
                         )
 
             if best_time is not None:
@@ -470,7 +481,6 @@ def _read_corridor_stats(
 
     except Exception:
         return []
-
 
 def _execute_corridor_lines_query(
     from_stop: str, to_stop: Optional[str]
