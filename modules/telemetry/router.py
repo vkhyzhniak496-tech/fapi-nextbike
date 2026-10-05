@@ -31,104 +31,83 @@ _CACHE_TTL_SEC = 600  # 10 minut
 # ==============================================================================
 
 
-@router.get("/live")
-async def get_live_tram_positions(line: Optional[str] = None) -> Dict[str, Any]:
-  """Zwraca bieżące pozycje składów z pamięci RAM w formacie GeoJSON FeatureCollection."""
-  features = []
-  target_line = line.strip() if line else None
-
-  for v_num, telemetry in LAST_TRAM_POSITIONS.items():
-    if target_line and telemetry.line != target_line:
-      continue
-
-    features.append({
-        "type": "Feature",
-        "id": v_num,
-        "properties": {
-            "vehicle_number": telemetry.vehicle_number,
-            "line": telemetry.line,
-            "brigade": telemetry.brigade,
-            "speed_kmh": telemetry.speed_kmh,
-            "time": telemetry.gps_time.strftime("%Y-%m-%d %H:%M:%S"),
-        },
-        "geometry": {
-            "type": "Point",
-            "coordinates": [telemetry.lon, telemetry.lat],
-        },
-    })
-
-  return {
-      "type": "FeatureCollection",
-      "total_active_trams": len(features),
-      "features": features,
-  }
-
-
 @router.get("/vehicles/{vehicle_number}/track")
 async def get_vehicle_track(
     vehicle_number: str, limit: int = Query(default=300, ge=10, le=2000)
 ) -> Dict[str, Any]:
-  """Zwraca zarejestrowany ślad GPS dla wybranego wozu."""
-  v_num = vehicle_number.strip()
+    """Zwraca najnowszy zarejestrowany ślad GPS dla wybranego wozu."""
+    v_num = vehicle_number.strip()
 
-  def _read_track():
-    with get_db_cursor(TRAM_LIVE_DB_PATH) as cur:
-      cur.execute(
-          """
+    def _read_track():
+        with get_db_cursor(TRAM_LIVE_DB_PATH) as cur:
+            cur.execute(
+                """
                 SELECT line, brigade, lat, lon, speed_kmh, gps_time
                 FROM tram_telemetry_history
                 WHERE vehicle_number = ?
-                ORDER BY gps_time ASC
+                ORDER BY gps_time DESC
                 LIMIT ?;
                 """,
-          (v_num, limit),
-      )
-      return cur.fetchall()
+                (v_num, limit),
+            )
+            rows = cur.fetchall()
+            return list(reversed(rows))
 
-  rows = await asyncio.to_thread(_read_track)
-  if not rows:
+    rows = await asyncio.to_thread(_read_track)
+    if not rows:
+        return {
+            "type": "FeatureCollection",
+            "vehicle_number": v_num,
+            "samples_count": 0,
+            "features": [],
+        }
+
+    valid_rows = [r for r in rows if r["lat"] is not None and r["lon"] is not None]
+    if not valid_rows:
+        return {
+            "type": "FeatureCollection",
+            "vehicle_number": v_num,
+            "samples_count": 0,
+            "features": [],
+        }
+
+    coordinates = [[r["lon"], r["lat"]] for r in valid_rows]
+    latest = valid_rows[-1]
+
+    track_line = {
+        "type": "Feature",
+        "properties": {
+            "type": "track_line",
+            "vehicle_number": v_num,
+            "line": latest["line"],
+            "brigade": latest["brigade"],
+        },
+        "geometry": {"type": "LineString", "coordinates": coordinates},
+    }
+
+    sample_points = [
+        {
+            "type": "Feature",
+            "properties": {
+                "type": "sample_point",
+                "speed_kmh": r["speed_kmh"],
+                "time": r["gps_time"],
+                "line": r["line"],
+                "brigade": r["brigade"],
+            },
+            "geometry": {"type": "Point", "coordinates": [r["lon"], r["lat"]]},
+        }
+        for r in valid_rows
+    ]
+
     return {
         "type": "FeatureCollection",
         "vehicle_number": v_num,
-        "samples_count": 0,
-        "features": [],
+        "current_line": latest["line"],
+        "current_brigade": latest["brigade"],
+        "samples_count": len(valid_rows),
+        "features": [track_line] + sample_points,
     }
-
-  coordinates = [[r["lon"], r["lat"]] for r in rows]
-  track_line = {
-      "type": "Feature",
-      "properties": {
-          "type": "track_line",
-          "vehicle_number": v_num,
-          "line": rows[-1]["line"],
-          "brigade": rows[-1]["brigade"],
-      },
-      "geometry": {"type": "LineString", "coordinates": coordinates},
-  }
-
-  sample_points = [
-      {
-          "type": "Feature",
-          "properties": {
-              "type": "sample_point",
-              "speed_kmh": r["speed_kmh"],
-              "time": r["gps_time"],
-              "line": r["line"],
-              "brigade": r["brigade"],
-          },
-          "geometry": {"type": "Point", "coordinates": [r["lon"], r["lat"]]},
-      }
-      for r in rows
-  ]
-
-  return {
-      "type": "FeatureCollection",
-      "vehicle_number": v_num,
-      "current_line": rows[-1]["line"],
-      "current_brigade": rows[-1]["brigade"],
-      "samples_count": len(rows),
-      "features": [track_line] + sample_points,
-  }
 
 # ==============================================================================
 # 2. Statystyki postojów na peronach (Widok analityczny peronów)

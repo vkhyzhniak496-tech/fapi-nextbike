@@ -27,7 +27,7 @@
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 12px;
             padding: 16px 20px;
-            width: 320px;
+            width: 330px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.5);
             box-sizing: border-box;
         }
@@ -115,6 +115,18 @@
             letter-spacing: -0.5px;
         }
         .meta-info { font-size: 12px; color: #94a3b8; }
+        
+        .confidence-tag {
+            display: inline-block;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 999px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+        .conf-low { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+        .conf-high { background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid rgba(34, 197, 94, 0.4); }
+
         .line-tag {
             display: inline-block;
             background: #581c87;
@@ -167,7 +179,8 @@
     <div id="result" class="result-box" style="display: none;">
         <div class="meta-info" id="corridor-title"></div>
         <div class="time-badge" id="avg-time">-- min</div>
-        <div class="meta-info" id="samples-info"></div>
+        <div id="confidence-badge"></div>
+        <div class="meta-info" id="samples-info" style="margin-top: 4px;"></div>
         <div id="lines-breakdown" style="margin-top: 8px;"></div>
     </div>
 </div>
@@ -175,6 +188,8 @@
 <div id="map"></div>
 
 <script>
+    let clusterCoords = {};
+
     const map = new maplibregl.Map({
         container: 'map',
         style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
@@ -183,45 +198,97 @@
     });
 
     map.on('load', () => {
+        // Tło sieci tramwajowej
         map.addSource('tram-network', { type: 'geojson', data: '/network/tram' });
         map.addLayer({
             id: 'tram-tracks',
             type: 'line',
             source: 'tram-network',
-            paint: { 'line-color': '#7030a0', 'line-width': 2.2, 'line-opacity': 0.7 }
+            paint: { 'line-color': '#7030a0', 'line-width': 2.0, 'line-opacity': 0.4 }
         });
+
+        // Dynamiczna linia podświetlenia wyznaczonego korytarza
+        map.addSource('corridor-path', {
+            type: 'geojson',
+            data: { type: 'FeatureCollection', features: [] }
+        });
+        map.addLayer({
+            id: 'corridor-glow',
+            type: 'line',
+            source: 'corridor-path',
+            paint: { 'line-color': '#00f2fe', 'line-width': 6, 'line-opacity': 0.6 }
+        });
+        map.addLayer({
+            id: 'corridor-core',
+            type: 'line',
+            source: 'corridor-path',
+            paint: { 'line-color': '#38bdf8', 'line-width': 3 }
+        });
+
+        // Warstwa punktów: Start i Meta
+        map.addSource('corridor-points', {
+            type: 'geojson',
+            data: { type: 'FeatureCollection', features: [] }
+        });
+        map.addLayer({
+            id: 'corridor-markers',
+            type: 'circle',
+            source: 'corridor-points',
+            paint: {
+                'circle-radius': 7,
+                'circle-color': ['get', 'color'],
+                'circle-stroke-width': 2,
+                'circle-stroke-color': '#ffffff'
+            }
+        });
+
         loadClusters();
     });
 
-    // 1. Ładowanie przystanków
+    // 1. Ładowanie przystanków + zmapowanie ich współrzędnych
     async function loadClusters() {
         try {
             const res = await fetch('/network/tram/dwells/clusters');
             const data = await res.json();
             const datalist = document.getElementById('clusters-list');
             datalist.innerHTML = (data.clusters || []).map(c => `<option value="${c}">`).join('');
-            
-            // Domyślne wartości
+
+            // Pobieramy koordynaty z platform, żeby natychmiast centrować mapę
+            const platformsRes = await fetch('/network/tram');
+            const platformsData = await platformsRes.json();
+            (platformsData.features || []).forEach(f => {
+                const name = f.properties?.cluster_name || f.properties?.name;
+                if (name && f.geometry?.coordinates) {
+                    // Jeśli linia lub punkt
+                    const coords = f.geometry.type === 'Point' 
+                        ? f.geometry.coordinates 
+                        : f.geometry.coordinates[0];
+                    if (!clusterCoords[name.toLowerCase()]) {
+                        clusterCoords[name.toLowerCase()] = coords;
+                    }
+                }
+            });
+
             const fromEl = document.getElementById('from-stop');
             const toEl = document.getElementById('to-stop');
             fromEl.value = 'Mangalia';
             toEl.value = 'Dolna';
-            
+
             fromEl.addEventListener('change', updateAvailableLines);
             toEl.addEventListener('change', updateAvailableLines);
-            
+
             updateAvailableLines();
         } catch (e) {
             console.error("Błąd ładowania przystanków:", e);
         }
     }
 
-    // 2. Aktualizacja dostępnych linii
+    // 2. Aktualizacja dostępnych linii w select
     async function updateAvailableLines() {
         const fromStop = document.getElementById('from-stop').value.trim();
         const toStop = document.getElementById('to-stop').value.trim();
         const select = document.getElementById('line-select');
-        
+
         const previousSelection = select.value;
         select.innerHTML = '<option value="">Wszystkie linie na trasie</option>';
 
@@ -231,7 +298,7 @@
             const res = await fetch(`/network/tram/corridor/lines?from_stop=${encodeURIComponent(fromStop)}&to_stop=${encodeURIComponent(toStop)}`);
             if (!res.ok) return;
             const data = await res.json();
-            
+
             (data.lines || []).forEach(l => {
                 const opt = document.createElement('option');
                 opt.value = l;
@@ -244,17 +311,13 @@
         }
     }
 
-    // 3. Kalkulacja czasu z blokadą przycisku
-async function calculateTravelTime() {
-        const fromEl = document.getElementById('from-stop');
-        const toEl = document.getElementById('to-stop');
-        const lineEl = document.getElementById('line-select');
+    // 3. Kalkulacja i rysowanie na mapie
+    async function calculateTravelTime() {
+        const fromStop = document.getElementById('from-stop').value.trim();
+        const toStop = document.getElementById('to-stop').value.trim();
+        const lineVal = document.getElementById('line-select').value.trim();
         const btn = document.getElementById('btn-calculate');
         const resultBox = document.getElementById('result');
-
-        const fromStop = fromEl ? fromEl.value.trim() : "";
-        const toStop = toEl ? toEl.value.trim() : "";
-        const lineVal = lineEl ? lineEl.value.trim() : "";
 
         if (!fromStop || !toStop) {
             alert("Wybierz oba zespoły przystankowe z listy!");
@@ -265,32 +328,24 @@ async function calculateTravelTime() {
         const oldText = btn.innerText;
         btn.innerText = "Przeliczanie przelotów...";
 
-        // Czysty URL bez pustych parametrów
-        const params = new URLSearchParams({
-            from_stop: fromStop,
-            to_stop: toStop
-        });
+        const params = new URLSearchParams({ from_stop: fromStop, to_stop: toStop });
         if (lineVal && lineVal !== "ALL" && !lineVal.includes("Wszystkie")) {
             params.append("line", lineVal);
         }
 
-        const url = `/network/tram/travel-time?${params.toString()}`;
-
         try {
-            const res = await fetch(url);
-            if (!res.ok) {
-                const errData = await res.text();
-                throw new Error(`HTTP ${res.status}: ${errData}`);
-            }
+            const res = await fetch(`/network/tram/travel-time?${params.toString()}`);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
             const data = await res.json();
-            
+
             resultBox.style.display = 'block';
 
             if (!data.total_samples || data.total_samples === 0) {
                 document.getElementById('corridor-title').innerText = `${fromStop} ➔ ${toStop}`;
                 document.getElementById('avg-time').innerText = "Brak danych";
                 document.getElementById('avg-time').style.color = '#f87171';
-                document.getElementById('samples-info').innerText = "Brak zarejestrowanych kursów na tej trasie.";
+                document.getElementById('confidence-badge').innerHTML = '';
+                document.getElementById('samples-info').innerText = "Brak zarejestrowanych bezpośrednich kursów.";
                 document.getElementById('lines-breakdown').innerHTML = '';
                 return;
             }
@@ -298,7 +353,16 @@ async function calculateTravelTime() {
             document.getElementById('corridor-title').innerText = `${data.from_stop} ➔ ${data.to_stop}`;
             document.getElementById('avg-time').innerText = `~ ${data.overall_avg_min} min`;
             document.getElementById('avg-time').style.color = '#4ade80';
-            document.getElementById('samples-info').innerText = `Próba: ${data.total_samples} zarejestrowanych przelotów`;
+
+            // Confidence Badge
+            const confEl = document.getElementById('confidence-badge');
+            if (data.total_samples < 8) {
+                confEl.innerHTML = `<span class="confidence-tag conf-low">⚠️ Wstępny szacunek (${data.total_samples} przeloty)</span>`;
+            } else {
+                confEl.innerHTML = `<span class="confidence-tag conf-high">✓ Zweryfikowana próba</span>`;
+            }
+
+            document.getElementById('samples-info').innerText = `Łączna próba: ${data.total_samples} zarejestrowanych przelotów`;
 
             let linesHtml = '';
             (data.lines || []).forEach(l => {
@@ -312,16 +376,41 @@ async function calculateTravelTime() {
                     </div>`;
             });
             document.getElementById('lines-breakdown').innerHTML = linesHtml;
+
+            // Rysowanie punktów A i B na mapie oraz centrowanie widoku
+            highlightRouteOnMap(fromStop, toStop);
+
         } catch (err) {
-            console.error("Szczegóły błędu:", err);
+            console.error(err);
             resultBox.style.display = 'block';
             document.getElementById('avg-time').innerText = "Błąd";
             document.getElementById('avg-time').style.color = '#f87171';
-            document.getElementById('samples-info').innerText = err.message || "Błąd zapytania.";
-            document.getElementById('lines-breakdown').innerHTML = '';
+            document.getElementById('samples-info').innerText = "Nie udało się pobrać danych trasy.";
         } finally {
             btn.disabled = false;
             btn.innerText = oldText;
+        }
+    }
+
+    function highlightRouteOnMap(fromStop, toStop) {
+        const c1 = clusterCoords[fromStop.toLowerCase()];
+        const c2 = clusterCoords[toStop.toLowerCase()];
+
+        if (c1 && c2 && map.getSource('corridor-points')) {
+            const pointsGeoJson = {
+                type: 'FeatureCollection',
+                features: [
+                    { type: 'Feature', geometry: { type: 'Point', coordinates: c1 }, properties: { name: fromStop, color: '#22c55e' } },
+                    { type: 'Feature', geometry: { type: 'Point', coordinates: c2 }, properties: { name: toStop, color: '#ef4444' } }
+                ]
+            };
+            map.getSource('corridor-points').setData(pointsGeoJson);
+
+            // Automatyczne zbliżenie kamery do wybranego korytarza
+            const bounds = new maplibregl.LngLatBounds();
+            bounds.extend(c1);
+            bounds.extend(c2);
+            map.fitBounds(bounds, { padding: { top: 80, bottom: 80, left: 360, right: 80 }, maxZoom: 14, duration: 1200 });
         }
     }
 </script>
