@@ -428,27 +428,29 @@ def _read_corridor_stats(
             if from_clean not in edges:
                 continue
 
-            queue = deque([(from_clean, 0.0, float("inf"), [from_clean])])
+            # Kolejka: (aktualny_przystanek, laczny_czas_sec, min_probek, liczba_skokow)
+            queue = deque([(from_clean, 0.0, float("inf"), 0)])
+            visited = {from_clean}
             best_time = None
             best_samples = 0
 
             while queue:
-                curr, total_sec, min_s, path = queue.popleft()
+                curr, total_sec, min_s, hops = queue.popleft()
 
-                if curr == to_clean and len(path) > 1:
+                if curr == to_clean and hops > 0:
                     best_time = total_sec
                     best_samples = int(min_s)
                     break
 
-                if len(path) > 35:
+                if hops > 40:
                     continue
 
                 for nxt, dur, cnt in edges.get(curr, []):
-                    if nxt not in path:  # ochrona przed cyklami
-                        # Średnio 20 sekund wymiany pasażerskiej na stacjach pośrednich
+                    if nxt not in visited:
+                        visited.add(nxt)  # Odwiedzamy dany przystanek TYLKO RAZ
                         dwell_penalty = 20.0 if nxt != to_clean else 0.0
                         queue.append(
-                            (nxt, total_sec + dur + dwell_penalty, min(min_s, cnt), path + [nxt])
+                            (nxt, total_sec + dur + dwell_penalty, min(min_s, cnt), hops + 1)
                         )
 
             if best_time is not None:
