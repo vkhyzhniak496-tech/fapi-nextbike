@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Any, Dict, List
 import numpy as np
 from scipy.spatial import cKDTree
-
+import re
 from core.database import (
     TRAM_ANALYTICS_DB_PATH,
     TRAM_CORRIDORS_DB_PATH,
@@ -41,9 +41,13 @@ class TelemetryAnalyticsEngine:
     if rows:
       self.plat_names = [r["name"] for r in rows]
       # Zabezpieczenie: jeśli cluster_name jest puste, bierzemy nazwę przystanku
-      self.plat_clusters = [
-          (r["cluster_name"] or r["name"] or "").strip() for r in rows
-      ]
+      clusters = []
+      for r in rows:
+        raw = (r["cluster_name"] or r["name"] or "").strip()
+        # Usuwa końcówkę ze spacją i 2 cyframi (np. 'Mangalia 03' -> 'Mangalia')
+        cleaned = re.sub(r"\s+\d{2}$", "", raw)
+        clusters.append(cleaned)
+      self.plat_clusters = clusters
       coords = np.array(
           [[r["x_2180"], r["y_2180"]] for r in rows], dtype=np.float64
       )
