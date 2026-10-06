@@ -20,7 +20,7 @@ class TelemetryAnalyticsEngine:
     self.plat_clusters: List[str] = []
     self.plat_tree: cKDTree = None
     self.initialized: bool = False
-    # vehicle_number -> {"stop_name", "cluster_name", "line", "brigade", "start_time", "last_time", "min_speed", "pings", "min_dist"}
+    # vehicle_number -> dict
     self.active_dwells: Dict[str, Dict[str, Any]] = {}
     # vehicle_number -> {"cluster_name": str, "departure_time": datetime, "line": str}
     self.last_departures: Dict[str, Dict[str, Any]] = {}
@@ -40,7 +40,10 @@ class TelemetryAnalyticsEngine:
 
     if rows:
       self.plat_names = [r["name"] for r in rows]
-      self.plat_clusters = [r["cluster_name"] for r in rows]
+      # Zabezpieczenie: jeśli cluster_name jest puste, bierzemy nazwę przystanku
+      self.plat_clusters = [
+          (r["cluster_name"] or r["name"] or "").strip() for r in rows
+      ]
       coords = np.array(
           [[r["x_2180"], r["y_2180"]] for r in rows], dtype=np.float64
       )
@@ -148,7 +151,6 @@ class TelemetryAnalyticsEngine:
           else:
             # Płynny przeskok bezpośrednio na kolejny zespół peronowy
             self._finalize_event(tracked, curr_time, completed_events)
-            # Rejestrujemy przelot segmentowy dla bezpośredniego przeskoku peronów
             last_dep = self.last_departures.get(v_num)
             if (
                 last_dep
@@ -251,12 +253,14 @@ class TelemetryAnalyticsEngine:
       end_time: datetime,
       events_list: list,
   ):
-    duration = (end_time - tracked["start_time"]).total_seconds()
+    # Czas postoju liczymy do ostatniego pingu wewnątrz strefy peronu
+    last_ping_in_zone = tracked.get("last_time", end_time)
+    duration = (last_ping_in_zone - tracked["start_time"]).total_seconds()
 
-    # Do analityki dwell events kwalifikujemy zatrzymania lub postoje trwające min. 10 s
+    # Kwalifikacja postoju do tram_analytics
     if (
-        tracked["min_speed"] <= 5.0 or duration >= 10.0
-    ) and 6.0 <= duration <= 900.0:
+        tracked["min_speed"] <= 6.0 or duration >= 8.0
+    ) and 4.0 <= duration <= 900.0:
       events_list.append((
           tracked["vehicle_number"],
           tracked["line"],
@@ -264,18 +268,18 @@ class TelemetryAnalyticsEngine:
           tracked["stop_name"],
           tracked["cluster_name"],
           tracked["start_time"].strftime("%Y-%m-%d %H:%M:%S"),
-          end_time.strftime("%Y-%m-%d %H:%M:%S"),
+          last_ping_in_zone.strftime("%Y-%m-%d %H:%M:%S"),
           float(round(duration, 1)),
           float(round(tracked["min_speed"], 1)),
           tracked["min_dist"],
           tracked["pings"],
       ))
 
-    # Do wyznaczania przelotów międzyprzystankowych rejestrujemy każdy odjazd z peronu
-    if duration >= 4.0 or tracked["pings"] >= 1:
+    # Do segmentu rejestrujemy odjazd z momentu ostatniego kontaktu z peronem
+    if tracked["cluster_name"]:
       self.last_departures[tracked["vehicle_number"]] = {
           "cluster_name": tracked["cluster_name"],
-          "departure_time": end_time,
+          "departure_time": last_ping_in_zone,
           "line": tracked["line"],
       }
 
