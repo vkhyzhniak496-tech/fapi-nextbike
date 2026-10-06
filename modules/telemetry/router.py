@@ -1,20 +1,21 @@
 import asyncio
-import json
+from collections import defaultdict
 from datetime import datetime, timedelta
-from collections import deque
+import heapq
+import json
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
-from fastapi import APIRouter, Query
-
+from config import RESOURCES_DIR
 from core.database import (
     TRAM_ANALYTICS_DB_PATH,
+    TRAM_CORRIDORS_DB_PATH,
     TRAM_DB_PATH,
     TRAM_LIVE_DB_PATH,
-    TRAM_CORRIDORS_DB_PATH,
     get_db_cursor,
 )
 from core.models import TramDwellEvent
+from fastapi import APIRouter, Query
 from modules.telemetry.worker import LAST_TRAM_POSITIONS
 
 router = APIRouter(prefix="/network/tram", tags=["Tram Telemetry & Analytics"])
@@ -24,12 +25,14 @@ router = APIRouter(prefix="/network/tram", tags=["Tram Telemetry & Analytics"])
 _TRAVEL_TIME_CACHE: Dict[
     Tuple[str, str, Optional[str]], Tuple[float, Dict[str, Any]]
 ] = {}
-_CACHE_TTL_SEC = 27 # 10 minut
+_CACHE_TTL_SEC = 27  # Sekundy ważności cache w pamięci RAM
 
 
 # ==============================================================================
 # 1. Pozycje tramwajów na żywo i trajektorie wozów
 # ==============================================================================
+
+
 @router.get("/live")
 async def get_live_tram_positions(
     line: Optional[str] = None,
@@ -67,86 +70,90 @@ async def get_live_tram_positions(
       "features": features,
   }
 
+
 @router.get("/vehicles/{vehicle_number}/track")
 async def get_vehicle_track(
     vehicle_number: str, limit: int = Query(default=300, ge=10, le=2000)
 ) -> Dict[str, Any]:
-    """Zwraca najnowszy zarejestrowany ślad GPS dla wybranego wozu."""
-    v_num = vehicle_number.strip()
+  """Zwraca najnowszy zarejestrowany ślad GPS dla wybranego wozu."""
+  v_num = vehicle_number.strip()
 
-    def _read_track():
-        with get_db_cursor(TRAM_LIVE_DB_PATH) as cur:
-            cur.execute(
-                """
+  def _read_track():
+    with get_db_cursor(TRAM_LIVE_DB_PATH) as cur:
+      cur.execute(
+          """
                 SELECT line, brigade, lat, lon, speed_kmh, gps_time
                 FROM tram_telemetry_history
                 WHERE vehicle_number = ?
                 ORDER BY gps_time DESC
                 LIMIT ?;
                 """,
-                (v_num, limit),
-            )
-            rows = cur.fetchall()
-            return list(reversed(rows))
+          (v_num, limit),
+      )
+      rows = cur.fetchall()
+      return list(reversed(rows))
 
-    rows = await asyncio.to_thread(_read_track)
-    if not rows:
-        return {
-            "type": "FeatureCollection",
-            "vehicle_number": v_num,
-            "samples_count": 0,
-            "features": [],
-        }
-
-    valid_rows = [r for r in rows if r["lat"] is not None and r["lon"] is not None]
-    if not valid_rows:
-        return {
-            "type": "FeatureCollection",
-            "vehicle_number": v_num,
-            "samples_count": 0,
-            "features": [],
-        }
-
-    coordinates = [[r["lon"], r["lat"]] for r in valid_rows]
-    latest = valid_rows[-1]
-
-    track_line = {
-        "type": "Feature",
-        "properties": {
-            "type": "track_line",
-            "vehicle_number": v_num,
-            "line": latest["line"],
-            "brigade": latest["brigade"],
-        },
-        "geometry": {"type": "LineString", "coordinates": coordinates},
-    }
-
-    sample_points = [
-        {
-            "type": "Feature",
-            "properties": {
-                "type": "sample_point",
-                "speed_kmh": r["speed_kmh"],
-                "time": r["gps_time"],
-                "line": r["line"],
-                "brigade": r["brigade"],
-            },
-            "geometry": {"type": "Point", "coordinates": [r["lon"], r["lat"]]},
-        }
-        for r in valid_rows
-    ]
-
+  rows = await asyncio.to_thread(_read_track)
+  if not rows:
     return {
         "type": "FeatureCollection",
         "vehicle_number": v_num,
-        "current_line": latest["line"],
-        "current_brigade": latest["brigade"],
-        "samples_count": len(valid_rows),
-        "features": [track_line] + sample_points,
+        "samples_count": 0,
+        "features": [],
     }
 
+  valid_rows = [
+      r for r in rows if r["lat"] is not None and r["lon"] is not None
+  ]
+  if not valid_rows:
+    return {
+        "type": "FeatureCollection",
+        "vehicle_number": v_num,
+        "samples_count": 0,
+        "features": [],
+    }
+
+  coordinates = [[r["lon"], r["lat"]] for r in valid_rows]
+  latest = valid_rows[-1]
+
+  track_line = {
+      "type": "Feature",
+      "properties": {
+          "type": "track_line",
+          "vehicle_number": v_num,
+          "line": latest["line"],
+          "brigade": latest["brigade"],
+      },
+      "geometry": {"type": "LineString", "coordinates": coordinates},
+  }
+
+  sample_points = [
+      {
+          "type": "Feature",
+          "properties": {
+              "type": "sample_point",
+              "speed_kmh": r["speed_kmh"],
+              "time": r["gps_time"],
+              "line": r["line"],
+              "brigade": r["brigade"],
+          },
+          "geometry": {"type": "Point", "coordinates": [r["lon"], r["lat"]]},
+      }
+      for r in valid_rows
+  ]
+
+  return {
+      "type": "FeatureCollection",
+      "vehicle_number": v_num,
+      "current_line": latest["line"],
+      "current_brigade": latest["brigade"],
+      "samples_count": len(valid_rows),
+      "features": [track_line] + sample_points,
+  }
+
+
 # ==============================================================================
-# 2. Statystyki postojów na peronach (Widok analityczny peronów)
+# 2. Statystyki postojów na peronach (Widok analityczny)
 # ==============================================================================
 
 
@@ -166,7 +173,6 @@ async def get_available_lines() -> Dict[str, List[str]]:
 
   lines = await asyncio.to_thread(_read)
   return {"lines": lines}
-
 
 
 @router.get(
@@ -369,7 +375,6 @@ async def get_available_clusters() -> Dict[str, List[str]]:
   """Błyskawiczny odczyt zespołów przystankowych z bazy infrastruktury (0 ms narzutu)."""
 
   def _read():
-    # Czytamy z TRAM_DB_PATH zamiast mielić 1.1 GB analityki
     with get_db_cursor(TRAM_DB_PATH) as cur:
       cur.execute("""
                 SELECT DISTINCT cluster_name 
@@ -384,144 +389,149 @@ async def get_available_clusters() -> Dict[str, List[str]]:
 
 
 # ==============================================================================
-# 3. Korytarze Tramwajowe: Odczyt z mikro-bazy grafowej (< 2 ms)
+# 3. Korytarze Tramwajowe: Wyszukiwanie ścieżek grafowych (Dijkstra)
 # ==============================================================================
 
 
 def _read_corridor_stats(
     from_stop: str, to_stop: str, line: Optional[str]
 ) -> List[Dict[str, Any]]:
-    """Wyznacza trasę w Pythonie za pomocą BFS z obsługą wielu odgałęzień na przystanek."""
-    from_clean = from_stop.strip().lower()
-    to_clean = to_stop.strip().lower()
+  """Wyznacza optymalną trasę algorytmem Dijkstry z uwzględnieniem postojów
 
-    if from_clean == to_clean:
-        return []
+  i odrzuceniem skrótów o niskiej wiarygodności.
+  """
+  from_clean = from_stop.strip().lower()
+  to_clean = to_stop.strip().lower()
 
-    try:
-        with get_db_cursor(TRAM_CORRIDORS_DB_PATH) as cur:
-            # 1. Pobieramy rzeczywiste czasy postojów na peronach (z fallbackiem, jeśli tabela jeszcze pusta)
-            try:
-                cur.execute("SELECT cluster_name, avg_dwell_sec FROM tram_cluster_dwells;")
-                dwell_times = {
-                    r["cluster_name"].strip().lower(): float(r["avg_dwell_sec"])
-                    for r in cur.fetchall()
-                }
-            except Exception:
-                dwell_times = {}
+  if from_clean == to_clean:
+    return []
 
-            # 2. Pobieramy segmenty
-            if line:
-                cur.execute(
-                    """
+  try:
+    with get_db_cursor(TRAM_CORRIDORS_DB_PATH) as cur:
+      # 1. Czasy postojów na zespołach przystankowych
+      try:
+        cur.execute(
+            "SELECT cluster_name, avg_dwell_sec FROM tram_cluster_dwells;"
+        )
+        dwell_times = {
+            r["cluster_name"].strip().lower(): float(r["avg_dwell_sec"])
+            for r in cur.fetchall()
+        }
+      except Exception:
+        dwell_times = {}
+
+      # 2. Pobieramy segmenty przelotów (odrzucamy szum < 3 próbek)
+      if line:
+        cur.execute(
+            """
                     SELECT line, from_cluster, to_cluster, avg_duration_sec, samples_count
                     FROM tram_direct_segments
-                    WHERE line = ?;
-                    """,
-                    (line.strip(),),
-                )
-            else:
-                cur.execute(
-                    """
-                    SELECT line, from_cluster, to_cluster, avg_duration_sec, samples_count
-                    FROM tram_direct_segments;
-                    """
-                )
-            segments = cur.fetchall()
-
-        if not segments:
-            return []
-
-        # Graf z listą sąsiadów: {line: {from_stop: [(to_stop, sec, count), ...]}}
-        lines_graph: Dict[str, Dict[str, List[tuple]]] = {}
-        for s in segments:
-            l = s["line"]
-            f = s["from_cluster"].strip().lower()
-            t = s["to_cluster"].strip().lower()
-            dur = float(s["avg_duration_sec"])
-            cnt = int(s["samples_count"])
-
-            if l not in lines_graph:
-                lines_graph[l] = {}
-            if f not in lines_graph[l]:
-                lines_graph[l][f] = []
-            lines_graph[l][f].append((t, dur, cnt))
-
-        results = []
-
-        # Szukanie trasy algorytmem BFS dla każdej linii
-        for l, edges in lines_graph.items():
-            if from_clean not in edges:
-                continue
-
-            # Kolejka: (aktualny_przystanek, laczny_czas_sec, min_probek, liczba_skokow)
-            queue = deque([(from_clean, 0.0, float("inf"), 0)])
-            visited = {from_clean}
-            best_time = None
-            best_samples = 0
-
-            while queue:
-                curr, total_sec, min_s, hops = queue.popleft()
-
-                if curr == to_clean and hops > 0:
-                    best_time = total_sec
-                    best_samples = int(min_s)
-                    break
-
-                if hops > 40:
-                    continue
-
-                for nxt, dur, cnt in edges.get(curr, []):
-                    if nxt not in visited:
-                        visited.add(nxt)  # Odwiedzamy dany przystanek TYLKO RAZ
-                        actual_dwell = dwell_times.get(nxt, 22.0) if nxt != to_clean else 0.0
-                        queue.append(
-                            (nxt, total_sec + dur + actual_dwell, min(min_s, cnt), hops + 1)
-                        )
-
-            if best_time is not None:
-                avg_m = round(best_time / 60.0, 1)
-                results.append({
-                    "line": l,
-                    "samples": best_samples if best_samples != float("inf") else 1,
-                    "avg_time_min": avg_m,
-                    "min_time_min": round(avg_m * 0.85, 1),
-                    "max_time_min": round(avg_m * 1.25, 1),
-                })
-
-        results.sort(
-            key=lambda x: int(x["line"]) if x["line"].isdigit() else x["line"]
+                    WHERE line = ? AND samples_count >= 3;
+                """,
+            (line.strip(),),
         )
-        return results
+      else:
+        cur.execute("""
+                    SELECT line, from_cluster, to_cluster, avg_duration_sec, samples_count
+                    FROM tram_direct_segments
+                    WHERE samples_count >= 3;
+                """)
+      segments = cur.fetchall()
 
-    except Exception:
-        return []
+    if not segments:
+      return []
+
+    # Struktura grafu per linia: {line: {from: [(to, duration, count)]}}
+    lines_graph: Dict[str, Dict[str, List[tuple]]] = defaultdict(
+        lambda: defaultdict(list)
+    )
+    for s in segments:
+      l = s["line"]
+      f = s["from_cluster"].strip().lower()
+      t = s["to_cluster"].strip().lower()
+      dur = float(s["avg_duration_sec"])
+      cnt = int(s["samples_count"])
+      lines_graph[l][f].append((t, dur, cnt))
+
+    results = []
+
+    # Dijkstra dla każdej linii obsługującej przystanek początkowy
+    for l, edges in lines_graph.items():
+      if from_clean not in edges:
+        continue
+
+      # Kolejka priorytetowa: (łączny_czas_sec, aktualny_przystanek, min_próbek_na_trasie)
+      pq = [(0.0, from_clean, float("inf"))]
+      best_durations = {from_clean: 0.0}
+      found_time = None
+      found_samples = 0
+
+      while pq:
+        curr_time, curr_stop, min_s = heapq.heappop(pq)
+
+        if curr_stop == to_clean and curr_time > 0.0:
+          found_time = curr_time
+          found_samples = int(min_s)
+          break
+
+        if curr_time > best_durations.get(curr_stop, float("inf")):
+          continue
+
+        for nxt, dur, cnt in edges.get(curr_stop, []):
+          actual_dwell = (
+              dwell_times.get(nxt, 22.0) if nxt != to_clean else 0.0
+          )
+          new_time = curr_time + dur + actual_dwell
+
+          if new_time < best_durations.get(nxt, float("inf")):
+            best_durations[nxt] = new_time
+            heapq.heappush(pq, (new_time, nxt, min(min_s, cnt)))
+
+      if found_time is not None:
+        avg_m = round(found_time / 60.0, 1)
+        results.append({
+            "line": l,
+            "samples": found_samples if found_samples != float("inf") else 1,
+            "avg_time_min": avg_m,
+            "min_time_min": round(avg_m * 0.85, 1),
+            "max_time_min": round(avg_m * 1.25, 1),
+        })
+
+    results.sort(
+        key=lambda x: int(x["line"]) if x["line"].isdigit() else x["line"]
+    )
+    return results
+
+  except Exception as e:
+    print(f"[CORRIDOR ROUTE ERROR] {e}", flush=True)
+    return []
+
 
 def _execute_corridor_lines_query(
     from_stop: str, to_stop: Optional[str]
 ) -> List[str]:
-    """Pobiera dostępne linie wyłącznie z mikro-bazy tram_corridors.db."""
-    from_clean = from_stop.strip()
-    to_clean = to_stop.strip() if to_stop else None
+  """Pobiera dostępne linie z mikro-bazy tram_corridors.db."""
+  from_clean = from_stop.strip()
+  to_clean = to_stop.strip() if to_stop else None
 
-    if to_clean:
-        stats = _read_corridor_stats(from_clean, to_clean, None)
-        return [r["line"] for r in stats]
+  if to_clean:
+    stats = _read_corridor_stats(from_clean, to_clean, None)
+    return [r["line"] for r in stats]
 
-    try:
-        with get_db_cursor(TRAM_CORRIDORS_DB_PATH) as cur:
-            cur.execute(
-                """
+  try:
+    with get_db_cursor(TRAM_CORRIDORS_DB_PATH) as cur:
+      cur.execute(
+          """
                 SELECT DISTINCT line 
                 FROM tram_direct_segments 
                 WHERE from_cluster = ? COLLATE NOCASE
                 ORDER BY CAST(line AS INTEGER), line ASC;
-                """,
-                (from_clean,),
-            )
-            return [r["line"] for r in cur.fetchall()]
-    except Exception:
-        return []
+            """,
+          (from_clean,),
+      )
+      return [r["line"] for r in cur.fetchall()]
+  except Exception:
+    return []
 
 
 @router.get("/travel-time")
@@ -530,60 +540,60 @@ async def get_tram_travel_time(
     to_stop: str = Query(..., description="Nazwa zespołu, np. 'Centrum'"),
     line: Optional[str] = Query(None, description="Opcjonalna linia, np. '16'"),
 ):
-    """Zwraca średni czas przelotu i rozbicie na linie w czasie < 2 ms."""
-    from_clean = from_stop.strip()
-    to_clean = to_stop.strip()
-    line_clean = line.strip() if line and line.strip() else None
+  """Zwraca średni czas przelotu i rozbicie na linie w czasie < 2 ms."""
+  from_clean = from_stop.strip()
+  to_clean = to_stop.strip()
+  line_clean = line.strip() if line and line.strip() else None
 
-    if from_clean.lower() == to_clean.lower():
-        return {
-            "from_stop": from_clean,
-            "to_stop": to_clean,
-            "total_samples": 0,
-            "overall_avg_min": None,
-            "lines": [],
-        }
-
-    cache_key = (from_clean.lower(), to_clean.lower(), line_clean)
-    now = time.time()
-
-    # 1. Odczyt z pamięci podręcznej RAM (0 ms)
-    if cache_key in _TRAVEL_TIME_CACHE:
-        expire_at, cached_payload = _TRAVEL_TIME_CACHE[cache_key]
-        if now < expire_at:
-            return cached_payload
-
-    # 2. Główny odczyt z grafu w pamięci RAM (< 2 ms)
-    rows = await asyncio.to_thread(
-        _read_corridor_stats, from_clean, to_clean, line_clean
-    )
-
-    if not rows:
-        payload = {
-            "from_stop": from_clean,
-            "to_stop": to_clean,
-            "total_samples": 0,
-            "overall_avg_min": None,
-            "lines": [],
-        }
-        _TRAVEL_TIME_CACHE[cache_key] = (now + 60, payload)
-        return payload
-
-    total_samples = sum(r["samples"] for r in rows)
-    weighted_sum = sum(r["avg_time_min"] * r["samples"] for r in rows)
-
-    response_data = {
+  if from_clean.lower() == to_clean.lower():
+    return {
         "from_stop": from_clean,
         "to_stop": to_clean,
-        "total_samples": total_samples,
-        "overall_avg_min": (
-            round(weighted_sum / total_samples, 1) if total_samples else 0.0
-        ),
-        "lines": rows,
+        "total_samples": 0,
+        "overall_avg_min": None,
+        "lines": [],
     }
 
-    _TRAVEL_TIME_CACHE[cache_key] = (now + _CACHE_TTL_SEC, response_data)
-    return response_data
+  cache_key = (from_clean.lower(), to_clean.lower(), line_clean)
+  now = time.time()
+
+  # 1. Odczyt z pamięci podręcznej RAM (0 ms)
+  if cache_key in _TRAVEL_TIME_CACHE:
+    expire_at, cached_payload = _TRAVEL_TIME_CACHE[cache_key]
+    if now < expire_at:
+      return cached_payload
+
+  # 2. Główny odczyt z grafu w pamięci RAM (< 2 ms)
+  rows = await asyncio.to_thread(
+      _read_corridor_stats, from_clean, to_clean, line_clean
+  )
+
+  if not rows:
+    payload = {
+        "from_stop": from_clean,
+        "to_stop": to_clean,
+        "total_samples": 0,
+        "overall_avg_min": None,
+        "lines": [],
+    }
+    _TRAVEL_TIME_CACHE[cache_key] = (now + 60, payload)
+    return payload
+
+  total_samples = sum(r["samples"] for r in rows)
+  weighted_sum = sum(r["avg_time_min"] * r["samples"] for r in rows)
+
+  response_data = {
+      "from_stop": from_clean,
+      "to_stop": to_clean,
+      "total_samples": total_samples,
+      "overall_avg_min": (
+          round(weighted_sum / total_samples, 1) if total_samples else 0.0
+      ),
+      "lines": rows,
+  }
+
+  _TRAVEL_TIME_CACHE[cache_key] = (now + _CACHE_TTL_SEC, response_data)
+  return response_data
 
 
 @router.get("/corridor/lines")
@@ -593,8 +603,8 @@ async def get_corridor_lines(
         None, description="Opcjonalna nazwa zespołu docelowego"
     ),
 ):
-    """Błyskawiczne serwowanie linii dla korytarza bez obciążania procesora."""
-    lines = await asyncio.to_thread(
-        _execute_corridor_lines_query, from_stop, to_stop
-    )
-    return {"lines": lines}
+  """Błyskawiczne serwowanie linii dla korytarza bez obciążania procesora."""
+  lines = await asyncio.to_thread(
+      _execute_corridor_lines_query, from_stop, to_stop
+  )
+  return {"lines": lines}
