@@ -48,10 +48,11 @@ class TelemetryAnalyticsEngine:
       self.initialized = True
       print(
           f"[PROCESSOR] Załadowano {len(rows)} peronów do indeksu"
-          " przestrzennego."
+          " przestrzennego.",
+          flush=True,
       )
 
-  def process_live_batch(self, telemetry_rows: List[Dict[str, Any]]):
+  def process_live_batch(self, telemetry_rows: List[Any]):
     self.ensure_initialized()
     if not self.plat_tree or not telemetry_rows:
       return
@@ -59,33 +60,75 @@ class TelemetryAnalyticsEngine:
     completed_events = []
     completed_segments = []
 
+    # 1. Elastyczne wyciąganie współrzędnych (zarówno dla dict jak i obiektów / modeli)
+    coords_2180 = []
+    for r in telemetry_rows:
+      try:
+        if isinstance(r, dict):
+          lon = float(r.get("Lon") if "Lon" in r else r.get("lon", 0.0))
+          lat = float(r.get("Lat") if "Lat" in r else r.get("lat", 0.0))
+        else:
+          lon = float(getattr(r, "lon", getattr(r, "Lon", 0.0)))
+          lat = float(getattr(r, "lat", getattr(r, "Lat", 0.0)))
+        coords_2180.append(wgs84_to_epsg2180(lon, lat))
+      except Exception:
+        coords_2180.append((0.0, 0.0))
+
     try:
-      coords_2180 = [
-          wgs84_to_epsg2180(float(r["Lon"]), float(r["Lat"]))
-          for r in telemetry_rows
-      ]
       dists, indices = self.plat_tree.query(
           coords_2180, distance_upper_bound=50.0
       )
     except Exception as e:
-      print(f"[PROCESSOR ERROR] Konwersja współrzędnych / cKDTree: {e}")
+      print(
+          f"[PROCESSOR ERROR] Konwersja współrzędnych / cKDTree: {e}", flush=True
+      )
       return
 
+    # 2. Główna pętla analizy
     for i, r in enumerate(telemetry_rows):
-      v_num = str(r.get("VehicleNumber", "")).strip()
-      line = str(r.get("Lines", "")).strip()
-      brigade = str(r.get("Brigade", "")).strip()
-      speed = float(r.get("Speed", 0.0) or 0.0)
-      time_str = r.get("Time")
+      if isinstance(r, dict):
+        v_num = str(
+            r.get("VehicleNumber") or r.get("vehicle_number") or ""
+        ).strip()
+        line = str(r.get("Lines") or r.get("line") or "").strip()
+        brigade = str(r.get("Brigade") or r.get("brigade") or "").strip()
+        speed = float(
+            r.get("Speed") or r.get("speed_kmh") or r.get("speed") or 0.0
+        )
+        time_val = (
+            r.get("Time")
+            or r.get("time")
+            or r.get("gps_time")
+            or r.get("timestamp")
+        )
+      else:
+        v_num = str(
+            getattr(r, "vehicle_number", getattr(r, "VehicleNumber", ""))
+        ).strip()
+        line = str(getattr(r, "line", getattr(r, "Lines", ""))).strip()
+        brigade = str(getattr(r, "brigade", getattr(r, "Brigade", ""))).strip()
+        speed = float(
+            getattr(
+                r, "speed_kmh", getattr(r, "speed", getattr(r, "Speed", 0.0))
+            )
+        )
+        time_val = getattr(
+            r, "gps_time", getattr(r, "time", getattr(r, "Time", None))
+        )
 
       if not v_num or not line:
         continue
 
-      try:
-        curr_time = datetime.strptime(
-            str(time_str)[:19], "%Y-%m-%d %H:%M:%S"
-        )
-      except Exception:
+      if isinstance(time_val, datetime):
+        curr_time = time_val
+      elif isinstance(time_val, str):
+        try:
+          curr_time = datetime.strptime(
+              str(time_val)[:19], "%Y-%m-%d %H:%M:%S"
+          )
+        except Exception:
+          curr_time = datetime.now()
+      else:
         curr_time = datetime.now()
 
       idx = indices[i]
@@ -103,10 +146,10 @@ class TelemetryAnalyticsEngine:
             tracked["pings"] += 1
             continue
           else:
-            # Płynny przeskok bezpośrednio ze słupka na inny słupek
+            # Płynny przeskok bezpośrednio na kolejny zespół peronowy
             self._finalize_event(tracked, curr_time, completed_events)
         else:
-          # Nowy wjazd na przystanek: sprawdzamy przelot z poprzedniego zespołu
+          # Nowy wjazd na przystanek: rejestrujemy przelot segmentowy z poprzedniego peronu
           last_dep = self.last_departures.get(v_num)
           if (
               last_dep
@@ -157,9 +200,9 @@ class TelemetryAnalyticsEngine:
                 completed_events,
             )
       except Exception as e:
-        print(f"[PROCESSOR ERROR] Błąd zapisu postojów: {e}")
+        print(f"[PROCESSOR ERROR] Błąd zapisu postojów: {e}", flush=True)
 
-    # 2. Zapis segmentów przelotu do tram_corridors.db (Średnia krocząca na żywo)
+    # 2. Zapis segmentów przelotu do tram_corridors.db (Ważona średnia krocząca na żywo)
     if completed_segments:
       try:
         with get_db_cursor(TRAM_CORRIDORS_DB_PATH) as cur:
@@ -180,10 +223,13 @@ class TelemetryAnalyticsEngine:
         print(
             f"[PROCESSOR] Zarejestrowano {len(completed_segments)} przelotów"
             f" segmentowych! (np. {completed_segments[0][0]}:"
-            f" {completed_segments[0][1]} -> {completed_segments[0][2]})"
+            f" {completed_segments[0][1]} -> {completed_segments[0][2]})",
+            flush=True,
         )
       except Exception as e:
-        print(f"[PROCESSOR ERROR] Błąd zapisu segmentów korytarza: {e}")
+        print(
+            f"[PROCESSOR ERROR] Błąd zapisu segmentów korytarza: {e}", flush=True
+        )
 
   def _finalize_event(
       self,
@@ -193,7 +239,7 @@ class TelemetryAnalyticsEngine:
   ):
     duration = (end_time - tracked["start_time"]).total_seconds()
 
-    # Rejestrujemy postój i odjazd TYLKO, gdy tramwaj rzeczywiście obsłużył przystanek
+    # Postój i odjazd rejestrujemy tylko wtedy, gdy tramwaj zwolnił / stał na peronie
     if (
         tracked["min_speed"] <= 3.5 or duration >= 12.0
     ) and 8.0 <= duration <= 900.0:
@@ -211,7 +257,7 @@ class TelemetryAnalyticsEngine:
           tracked["pings"],
       ))
 
-      # Punkt początkowy do segmentu zostaje ustawiony TYLKO przy zaliczonym postoju
+      # Ostatni odjazd do kolejnego segmentu aktualizujemy wyłącznie przy poprawnym postoju
       self.last_departures[tracked["vehicle_number"]] = {
           "cluster_name": tracked["cluster_name"],
           "departure_time": end_time,
