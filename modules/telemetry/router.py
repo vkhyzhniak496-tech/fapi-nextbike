@@ -426,7 +426,7 @@ def _read_corridor_stats(
             """
                     SELECT line, from_cluster, to_cluster, avg_duration_sec, samples_count
                     FROM tram_direct_segments
-                    WHERE line = ? AND samples_count >= 3;
+                    WHERE line = ? AND samples_count >= 20;
                 """,
             (line.strip(),),
         )
@@ -434,7 +434,7 @@ def _read_corridor_stats(
         cur.execute("""
                     SELECT line, from_cluster, to_cluster, avg_duration_sec, samples_count
                     FROM tram_direct_segments
-                    WHERE samples_count >= 3;
+                    WHERE samples_count >= 20;
                 """)
       segments = cur.fetchall()
 
