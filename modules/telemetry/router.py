@@ -398,7 +398,8 @@ def _read_corridor_stats(
 ) -> List[Dict[str, Any]]:
   """Wyznacza optymalną trasę algorytmem Dijkstry z uwzględnieniem postojów
 
-  i odrzuceniem skrótów o niskiej wiarygodności.
+  z modułu analitycznego (dwells/all-stops) i pominięciem postoju na przystanku
+  końcowym.
   """
   from_clean = from_stop.strip().lower()
   to_clean = to_stop.strip().lower()
@@ -407,20 +408,43 @@ def _read_corridor_stats(
     return []
 
   try:
-    with get_db_cursor(TRAM_CORRIDORS_DB_PATH) as cur:
-      # 1. Czasy postojów na zespołach przystankowych
-      try:
-        cur.execute(
-            "SELECT cluster_name, avg_dwell_sec FROM tram_cluster_dwells;"
-        )
-        dwell_times = {
-            r["cluster_name"].strip().lower(): float(r["avg_dwell_sec"])
-            for r in cur.fetchall()
-        }
-      except Exception:
-        dwell_times = {}
+    # 1. Pobieramy statystyki postojów bezpośrednio z modułu analitycznego (tak jak dwells/all-stops)
+    dwell_times: Dict[str, float] = {}
+    try:
+      with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as a_cur:
+        # Agregacja per zespół (usunięcie dwucyfrowego numeru słupka z końca)
+        a_cur.execute("""
+                    SELECT 
+                        LOWER(TRIM(
+                            CASE 
+                                WHEN stop_name GLOB '* [0-9][0-9]' THEN SUBSTR(stop_name, 1, LENGTH(stop_name) - 3)
+                                ELSE stop_name 
+                            END
+                        )) AS cluster,
+                        ROUND(AVG(duration_sec), 1) AS avg_dwell
+                    FROM tram_dwell_events
+                    WHERE duration_sec BETWEEN 8.0 AND 300.0
+                    GROUP BY cluster;
+                """)
+        for r in a_cur.fetchall():
+          dwell_times[r["cluster"].strip().lower()] = float(r["avg_dwell"])
 
-      # 2. Pobieramy segmenty przelotów (odrzucamy szum < 3 próbek)
+        # Fallback per dokładny słupek (jeśli w korytarzach został stary format ze słupkiem)
+        a_cur.execute("""
+                    SELECT LOWER(TRIM(stop_name)) AS stop_full, ROUND(AVG(duration_sec), 1) AS avg_dwell
+                    FROM tram_dwell_events
+                    WHERE duration_sec BETWEEN 8.0 AND 300.0
+                    GROUP BY stop_full;
+                """)
+        for r in a_cur.fetchall():
+          k = r["stop_full"].strip().lower()
+          if k not in dwell_times:
+            dwell_times[k] = float(r["avg_dwell"])
+    except Exception as e:
+      print(f"[DWELL STATS ERROR] Nie udało się pobrać z analityki: {e}", flush=True)
+
+    # 2. Pobieramy segmenty przelotów z mikro-bazy korytarzowej
+    with get_db_cursor(TRAM_CORRIDORS_DB_PATH) as cur:
       if line:
         cur.execute(
             """
@@ -455,12 +479,12 @@ def _read_corridor_stats(
 
     results = []
 
-# Dijkstra dla każdej linii obsługującej przystanek początkowy
+    # Dijkstra dla każdej linii obsługującej przystanek początkowy
     for l, edges in lines_graph.items():
       if from_clean not in edges:
         continue
 
-      # 1. Postój początkowy: tramwaj stoi na przystanku startowym na wymianie pasażerskiej
+      # Postój początkowy (na przystanku startowym)
       start_dwell = dwell_times.get(from_clean, 25.0)
 
       # Kolejka priorytetowa: (łączny_czas_sec, aktualny_przystanek, min_próbek_na_trasie, liczba_skoków)
@@ -472,7 +496,7 @@ def _read_corridor_stats(
       while pq:
         curr_time, curr_stop, min_s, hops = heapq.heappop(pq)
 
-        # Warunek stopu: osiągnięto cel po przynajmniej jednym przeskoku
+        # Osiągnięto przystanek docelowy
         if curr_stop == to_clean and hops > 0:
           found_time = curr_time
           found_samples = int(min_s)
@@ -482,11 +506,11 @@ def _read_corridor_stats(
           continue
 
         for nxt, dur, cnt in edges.get(curr_stop, []):
-          # Postój doliczamy tylko na przystankach pośrednich (gdy nxt nie jest końcowym)
-          actual_dwell = (
-              dwell_times.get(nxt, 25.0) if nxt != to_clean else 0.0
-          )
-          new_time = curr_time + dur + actual_dwell
+          # Gdy dotrze na przystanek: doliczamy postój TYLKO jeśli nie jest to przystanek końcowy
+          nxt_dwell = dwell_times.get(nxt, 25.0) if nxt != to_clean else 0.0
+
+          # Czas dotarcia i obsłużenia kolejnego przystanku
+          new_time = curr_time + dur + nxt_dwell
 
           if new_time < best_durations.get(nxt, float("inf")):
             best_durations[nxt] = new_time
