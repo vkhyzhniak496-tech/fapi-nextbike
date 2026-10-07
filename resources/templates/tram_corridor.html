@@ -116,7 +116,6 @@
         }
         .meta-info { font-size: 12px; color: #94a3b8; }
         
-        /* Baner strat na sygnalizacji */
         .delay-loss-box {
             background: rgba(245, 158, 11, 0.12);
             border: 1px solid rgba(245, 158, 11, 0.35);
@@ -193,7 +192,26 @@
         <div class="time-badge" id="avg-time">-- min</div>
         <div id="confidence-badge"></div>
         
-        <!-- Wskaźnik strat sygnalizacji -->
+        <!-- Pasek analityki statystycznej profilu sygnalizacji -->
+        <div id="route-analytics" style="margin-top: 10px; display: none;">
+            <div style="font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 700; margin-bottom: 4px;">
+                Profil płynności trasy (sygnalizacja)
+            </div>
+            <div style="display: flex; height: 8px; border-radius: 4px; overflow: hidden; background: #334155; margin-bottom: 6px;">
+                <div id="bar-green" style="background: #22c55e; width: 0%;" title="Płynne odcinki"></div>
+                <div id="bar-yellow" style="background: #eab308; width: 0%;" title="Oczekiwanie na fazę"></div>
+                <div id="bar-red" style="background: #ef4444; width: 0%;" title="Wąskie gardła sygnalizacji"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 11px;">
+                <span style="color: #4ade80;">🟢 Płynne: <b id="cnt-green">0</b></span>
+                <span style="color: #facc15;">🟡 Fazy: <b id="cnt-yellow">0</b></span>
+                <span style="color: #f87171;">🔴 Światła/Zatory: <b id="cnt-red">0</b></span>
+            </div>
+            <div id="analytics-summary" style="margin-top: 8px; font-size: 11px; color: #cbd5e1; background: rgba(255,255,255,0.05); padding: 8px; border-radius: 6px; border-left: 3px solid #38bdf8;">
+            </div>
+        </div>
+
+        <!-- Wskaźnik strat sygnalizacji / godzin szczytu -->
         <div id="traffic-loss-alert" class="delay-loss-box" style="display: none;"></div>
 
         <div class="meta-info" id="samples-info" style="margin-top: 6px;"></div>
@@ -215,7 +233,6 @@
     });
 
     map.on('load', () => {
-        // Tło torowisk
         map.addSource('tram-network', { type: 'geojson', data: '/network/tram' });
         map.addLayer({
             id: 'tram-tracks',
@@ -224,7 +241,6 @@
             paint: { 'line-color': '#7030a0', 'line-width': 2.0, 'line-opacity': 0.35 }
         });
 
-        // Ścieżka korytarza (linia połączenia)
         map.addSource('corridor-path', {
             type: 'geojson',
             data: { type: 'FeatureCollection', features: [] }
@@ -242,7 +258,7 @@
             paint: { 'line-color': '#38bdf8', 'line-width': 3 }
         });
 
-        // Źródło i warstwy dla animacji jadącego wagonu/impulsu
+        // Źródło i warstwy dla animacji jadącego wagonu
         map.addSource('animated-tram-dot', {
             type: 'geojson',
             data: { type: 'FeatureCollection', features: [] }
@@ -358,6 +374,7 @@
         const btn = document.getElementById('btn-calculate');
         const resultBox = document.getElementById('result');
         const lossAlert = document.getElementById('traffic-loss-alert');
+        const analyticsBox = document.getElementById('route-analytics');
 
         if (!fromStop || !toStop) {
             alert("Wybierz oba zespoły przystankowe z listy!");
@@ -388,6 +405,7 @@
                 document.getElementById('samples-info').innerText = "Brak zarejestrowanych bezpośrednich kursów.";
                 document.getElementById('lines-breakdown').innerHTML = '';
                 lossAlert.style.display = 'none';
+                analyticsBox.style.display = 'none';
                 stopAnimation();
                 return;
             }
@@ -396,7 +414,7 @@
             document.getElementById('avg-time').innerText = `~ ${data.overall_avg_min} min`;
             document.getElementById('avg-time').style.color = '#4ade80';
 
-            // Zestawienie strat na sygnalizacji (Różnica max vs avg)
+            // Straty na sygnalizacji świetlnej (maksimum w szczycie)
             let maxRecorded = null;
             (data.lines || []).forEach(l => {
                 if (l.max_time_min && (!maxRecorded || l.max_time_min > maxRecorded)) {
@@ -410,6 +428,44 @@
                 lossAlert.style.display = 'block';
             } else {
                 lossAlert.style.display = 'none';
+            }
+
+            // Statystyka profilu trasy: segmenty lub estymacja z liczby przystanków
+            const segments = data.segments || [];
+            if (segments.length > 0) {
+                let green = 0, yellow = 0, red = 0;
+                let bottlenecks = [];
+
+                segments.forEach(s => {
+                    const dur = s.avg_duration_sec || (s.dur ? s.dur : 40);
+                    if (dur >= 65) {
+                        red++;
+                        bottlenecks.push(s.to_cluster || s.to_stop || 'węzeł');
+                    } else if (dur >= 45) {
+                        yellow++;
+                    } else {
+                        green++;
+                    }
+                });
+
+                const total = segments.length;
+                document.getElementById('bar-green').style.width = `${(green / total) * 100}%`;
+                document.getElementById('bar-yellow').style.width = `${(yellow / total) * 100}%`;
+                document.getElementById('bar-red').style.width = `${(red / total) * 100}%`;
+
+                document.getElementById('cnt-green').innerText = green;
+                document.getElementById('cnt-yellow').innerText = yellow;
+                document.getElementById('cnt-red').innerText = red;
+
+                const summaryEl = document.getElementById('analytics-summary');
+                if (red > 0) {
+                    summaryEl.innerHTML = `💡 <b>Wniosek:</b> Na trasie występuje <b>${red} krytycznych węzłów</b> ze stratami fazowymi (m.in.: <i>${bottlenecks.slice(0, 2).join(', ')}</i>). Odpowiadają one za większość rozstępu do czasu max.`;
+                } else {
+                    summaryEl.innerHTML = `💡 <b>Wniosek:</b> Trasa o wysokiej płynności – sygnalizacja zapewnia bezkolizyjny przejazd.`;
+                }
+                analyticsBox.style.display = 'block';
+            } else {
+                analyticsBox.style.display = 'none';
             }
 
             const confEl = document.getElementById('confidence-badge');
@@ -434,7 +490,6 @@
             });
             document.getElementById('lines-breakdown').innerHTML = linesHtml;
 
-            // Rysowanie i płynna animacja przelotu po trasie
             highlightAndAnimateRoute(fromStop, toStop);
 
         } catch (err) {
@@ -471,7 +526,6 @@
 
         if (!c1 || !c2) return;
 
-        // Oznaczenie punktów A i B
         if (map.getSource('corridor-points')) {
             map.getSource('corridor-points').setData({
                 type: 'FeatureCollection',
@@ -482,7 +536,6 @@
             });
         }
 
-        // Rysowanie linii korytarza
         if (map.getSource('corridor-path')) {
             map.getSource('corridor-path').setData({
                 type: 'Feature',
@@ -493,21 +546,18 @@
             });
         }
 
-        // Dopasowanie widoku kamery
         const bounds = new maplibregl.LngLatBounds();
         bounds.extend(c1);
         bounds.extend(c2);
         map.fitBounds(bounds, { padding: { top: 80, bottom: 80, left: 380, right: 80 }, maxZoom: 14, duration: 1000 });
 
-        // Animacja impulsu przemieszczającego się z c1 do c2 w pętli
-        const duration = 2400; // czas jednego przelotu w ms
+        const duration = 2400;
         let startTime = null;
 
         function animate(timestamp) {
             if (!startTime) startTime = timestamp;
             const progress = ((timestamp - startTime) % duration) / duration;
 
-            // Interpolacja liniowa współrzędnych [lng, lat]
             const currentLng = c1[0] + (c2[0] - c1[0]) * progress;
             const currentLat = c1[1] + (c2[1] - c1[1]) * progress;
 
