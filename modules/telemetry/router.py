@@ -396,11 +396,6 @@ async def get_available_clusters() -> Dict[str, List[str]]:
 def _read_corridor_stats(
     from_stop: str, to_stop: str, line: Optional[str]
 ) -> List[Dict[str, Any]]:
-  """Wyznacza optymalną trasę algorytmem Dijkstry z uwzględnieniem postojów
-
-  z modułu analitycznego (dwells/all-stops) i pominięciem postoju na przystanku
-  końcowym.
-  """
   from_clean = from_stop.strip().lower()
   to_clean = to_stop.strip().lower()
 
@@ -408,43 +403,21 @@ def _read_corridor_stats(
     return []
 
   try:
-    # 1. Pobieramy statystyki postojów bezpośrednio z modułu analitycznego (tak jak dwells/all-stops)
-    dwell_times: Dict[str, float] = {}
-    try:
-      with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as a_cur:
-        # Agregacja per zespół (usunięcie dwucyfrowego numeru słupka z końca)
-        a_cur.execute("""
-                    SELECT 
-                        LOWER(TRIM(
-                            CASE 
-                                WHEN stop_name GLOB '* [0-9][0-9]' THEN SUBSTR(stop_name, 1, LENGTH(stop_name) - 3)
-                                ELSE stop_name 
-                            END
-                        )) AS cluster,
-                        ROUND(AVG(duration_sec), 1) AS avg_dwell
-                    FROM tram_dwell_events
-                    WHERE duration_sec BETWEEN 8.0 AND 300.0
-                    GROUP BY cluster;
-                """)
-        for r in a_cur.fetchall():
-          dwell_times[r["cluster"].strip().lower()] = float(r["avg_dwell"])
-
-        # Fallback per dokładny słupek (jeśli w korytarzach został stary format ze słupkiem)
-        a_cur.execute("""
-                    SELECT LOWER(TRIM(stop_name)) AS stop_full, ROUND(AVG(duration_sec), 1) AS avg_dwell
-                    FROM tram_dwell_events
-                    WHERE duration_sec BETWEEN 8.0 AND 300.0
-                    GROUP BY stop_full;
-                """)
-        for r in a_cur.fetchall():
-          k = r["stop_full"].strip().lower()
-          if k not in dwell_times:
-            dwell_times[k] = float(r["avg_dwell"])
-    except Exception as e:
-      print(f"[DWELL STATS ERROR] Nie udało się pobrać z analityki: {e}", flush=True)
-
-    # 2. Pobieramy segmenty przelotów z mikro-bazy korytarzowej
     with get_db_cursor(TRAM_CORRIDORS_DB_PATH) as cur:
+      # 1. Błyskawiczny odczyt gotowych statystyk (1170 wierszy = <1ms)
+      dwell_times: Dict[str, float] = {}
+      try:
+        cur.execute(
+            "SELECT cluster_name, avg_dwell_sec FROM tram_cluster_dwells;"
+        )
+        for r in cur.fetchall():
+          dwell_times[r["cluster_name"].strip().lower()] = float(
+              r["avg_dwell_sec"]
+          )
+      except Exception as e:
+        print(f"[DWELL CACHE ERROR] {e}", flush=True)
+
+      # 2. Pobieramy segmenty przelotów
       if line:
         cur.execute(
             """
@@ -465,7 +438,6 @@ def _read_corridor_stats(
     if not segments:
       return []
 
-    # Struktura grafu per linia: {line: {from: [(to, duration, count)]}}
     lines_graph: Dict[str, Dict[str, List[tuple]]] = defaultdict(
         lambda: defaultdict(list)
     )
@@ -479,15 +451,12 @@ def _read_corridor_stats(
 
     results = []
 
-    # Dijkstra dla każdej linii obsługującej przystanek początkowy
+    # Dijkstra per linia
     for l, edges in lines_graph.items():
       if from_clean not in edges:
         continue
 
-      # Postój początkowy (na przystanku startowym)
       start_dwell = dwell_times.get(from_clean, 25.0)
-
-      # Kolejka priorytetowa: (łączny_czas_sec, aktualny_przystanek, min_próbek_na_trasie, liczba_skoków)
       pq = [(start_dwell, from_clean, float("inf"), 0)]
       best_durations = {from_clean: start_dwell}
       found_time = None
@@ -496,7 +465,6 @@ def _read_corridor_stats(
       while pq:
         curr_time, curr_stop, min_s, hops = heapq.heappop(pq)
 
-        # Osiągnięto przystanek docelowy
         if curr_stop == to_clean and hops > 0:
           found_time = curr_time
           found_samples = int(min_s)
@@ -506,10 +474,8 @@ def _read_corridor_stats(
           continue
 
         for nxt, dur, cnt in edges.get(curr_stop, []):
-          # Gdy dotrze na przystanek: doliczamy postój TYLKO jeśli nie jest to przystanek końcowy
+          # Postój doliczamy tylko gdy przystanek nie jest końcowym
           nxt_dwell = dwell_times.get(nxt, 25.0) if nxt != to_clean else 0.0
-
-          # Czas dotarcia i obsłużenia kolejnego przystanku
           new_time = curr_time + dur + nxt_dwell
 
           if new_time < best_durations.get(nxt, float("inf")):
@@ -534,7 +500,6 @@ def _read_corridor_stats(
   except Exception as e:
     print(f"[CORRIDOR ROUTE ERROR] {e}", flush=True)
     return []
-
 
 def _execute_corridor_lines_query(
     from_stop: str, to_stop: Optional[str]
