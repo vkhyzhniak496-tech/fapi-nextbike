@@ -21,13 +21,13 @@
             top: 20px;
             left: 20px;
             z-index: 10;
-            background: rgba(15, 23, 42, 0.92);
+            background: rgba(15, 23, 42, 0.94);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 12px;
             padding: 16px 20px;
-            width: 330px;
+            width: 350px;
             box-shadow: 0 8px 32px rgba(0,0,0,0.5);
             box-sizing: border-box;
         }
@@ -111,11 +111,23 @@
             font-size: 28px; 
             font-weight: 800; 
             color: #4ade80; 
-            margin: 4px 0; 
+            margin: 4px 0 2px 0; 
             letter-spacing: -0.5px;
         }
         .meta-info { font-size: 12px; color: #94a3b8; }
         
+        /* Baner strat na sygnalizacji */
+        .delay-loss-box {
+            background: rgba(245, 158, 11, 0.12);
+            border: 1px solid rgba(245, 158, 11, 0.35);
+            border-radius: 6px;
+            padding: 7px 10px;
+            margin-top: 8px;
+            font-size: 11px;
+            color: #fde68a;
+            line-height: 1.4;
+        }
+
         .confidence-tag {
             display: inline-block;
             font-size: 11px;
@@ -180,7 +192,11 @@
         <div class="meta-info" id="corridor-title"></div>
         <div class="time-badge" id="avg-time">-- min</div>
         <div id="confidence-badge"></div>
-        <div class="meta-info" id="samples-info" style="margin-top: 4px;"></div>
+        
+        <!-- Wskaźnik strat sygnalizacji -->
+        <div id="traffic-loss-alert" class="delay-loss-box" style="display: none;"></div>
+
+        <div class="meta-info" id="samples-info" style="margin-top: 6px;"></div>
         <div id="lines-breakdown" style="margin-top: 8px;"></div>
     </div>
 </div>
@@ -189,6 +205,7 @@
 
 <script>
     let clusterCoords = {};
+    let animationFrameId = null;
 
     const map = new maplibregl.Map({
         container: 'map',
@@ -198,16 +215,16 @@
     });
 
     map.on('load', () => {
-        // Tło sieci tramwajowej
+        // Tło torowisk
         map.addSource('tram-network', { type: 'geojson', data: '/network/tram' });
         map.addLayer({
             id: 'tram-tracks',
             type: 'line',
             source: 'tram-network',
-            paint: { 'line-color': '#7030a0', 'line-width': 2.0, 'line-opacity': 0.4 }
+            paint: { 'line-color': '#7030a0', 'line-width': 2.0, 'line-opacity': 0.35 }
         });
 
-        // Dynamiczna linia podświetlenia wyznaczonego korytarza
+        // Ścieżka korytarza (linia połączenia)
         map.addSource('corridor-path', {
             type: 'geojson',
             data: { type: 'FeatureCollection', features: [] }
@@ -216,7 +233,7 @@
             id: 'corridor-glow',
             type: 'line',
             source: 'corridor-path',
-            paint: { 'line-color': '#00f2fe', 'line-width': 6, 'line-opacity': 0.6 }
+            paint: { 'line-color': '#00f2fe', 'line-width': 6, 'line-opacity': 0.5 }
         });
         map.addLayer({
             id: 'corridor-core',
@@ -225,7 +242,34 @@
             paint: { 'line-color': '#38bdf8', 'line-width': 3 }
         });
 
-        // Warstwa punktów: Start i Meta
+        // Źródło i warstwy dla animacji jadącego wagonu/impulsu
+        map.addSource('animated-tram-dot', {
+            type: 'geojson',
+            data: { type: 'FeatureCollection', features: [] }
+        });
+        map.addLayer({
+            id: 'animated-tram-glow',
+            type: 'circle',
+            source: 'animated-tram-dot',
+            paint: {
+                'circle-radius': 14,
+                'circle-color': '#38bdf8',
+                'circle-opacity': 0.4
+            }
+        });
+        map.addLayer({
+            id: 'animated-tram-center',
+            type: 'circle',
+            source: 'animated-tram-dot',
+            paint: {
+                'circle-radius': 6,
+                'circle-color': '#ffffff',
+                'circle-stroke-width': 2,
+                'circle-stroke-color': '#0284c7'
+            }
+        });
+
+        // Punkty Start i Meta
         map.addSource('corridor-points', {
             type: 'geojson',
             data: { type: 'FeatureCollection', features: [] }
@@ -245,7 +289,6 @@
         loadClusters();
     });
 
-    // 1. Ładowanie przystanków + zmapowanie ich współrzędnych
     async function loadClusters() {
         try {
             const res = await fetch('/network/tram/dwells/clusters');
@@ -253,13 +296,11 @@
             const datalist = document.getElementById('clusters-list');
             datalist.innerHTML = (data.clusters || []).map(c => `<option value="${c}">`).join('');
 
-            // Pobieramy koordynaty z platform, żeby natychmiast centrować mapę
             const platformsRes = await fetch('/network/tram');
             const platformsData = await platformsRes.json();
             (platformsData.features || []).forEach(f => {
                 const name = f.properties?.cluster_name || f.properties?.name;
                 if (name && f.geometry?.coordinates) {
-                    // Jeśli linia lub punkt
                     const coords = f.geometry.type === 'Point' 
                         ? f.geometry.coordinates 
                         : f.geometry.coordinates[0];
@@ -283,7 +324,6 @@
         }
     }
 
-    // 2. Aktualizacja dostępnych linii w select
     async function updateAvailableLines() {
         const fromStop = document.getElementById('from-stop').value.trim();
         const toStop = document.getElementById('to-stop').value.trim();
@@ -311,13 +351,13 @@
         }
     }
 
-    // 3. Kalkulacja i rysowanie na mapie
     async function calculateTravelTime() {
         const fromStop = document.getElementById('from-stop').value.trim();
         const toStop = document.getElementById('to-stop').value.trim();
         const lineVal = document.getElementById('line-select').value.trim();
         const btn = document.getElementById('btn-calculate');
         const resultBox = document.getElementById('result');
+        const lossAlert = document.getElementById('traffic-loss-alert');
 
         if (!fromStop || !toStop) {
             alert("Wybierz oba zespoły przystankowe z listy!");
@@ -347,6 +387,8 @@
                 document.getElementById('confidence-badge').innerHTML = '';
                 document.getElementById('samples-info').innerText = "Brak zarejestrowanych bezpośrednich kursów.";
                 document.getElementById('lines-breakdown').innerHTML = '';
+                lossAlert.style.display = 'none';
+                stopAnimation();
                 return;
             }
 
@@ -354,7 +396,22 @@
             document.getElementById('avg-time').innerText = `~ ${data.overall_avg_min} min`;
             document.getElementById('avg-time').style.color = '#4ade80';
 
-            // Confidence Badge
+            // Zestawienie strat na sygnalizacji (Różnica max vs avg)
+            let maxRecorded = null;
+            (data.lines || []).forEach(l => {
+                if (l.max_time_min && (!maxRecorded || l.max_time_min > maxRecorded)) {
+                    maxRecorded = l.max_time_min;
+                }
+            });
+
+            if (maxRecorded && maxRecorded > data.overall_avg_min) {
+                const diffMin = (maxRecorded - data.overall_avg_min).toFixed(1);
+                lossAlert.innerHTML = `🚦 <b>Wpływ sygnalizacji i szczytu:</b><br>W trudnych warunkach czas wzrasta do <b>${maxRecorded}m</b> (+${diffMin} min straty na światłach i skrzyżowaniach).`;
+                lossAlert.style.display = 'block';
+            } else {
+                lossAlert.style.display = 'none';
+            }
+
             const confEl = document.getElementById('confidence-badge');
             if (data.total_samples < 8) {
                 confEl.innerHTML = `<span class="confidence-tag conf-low">⚠️ Wstępny szacunek (${data.total_samples} przeloty)</span>`;
@@ -377,8 +434,8 @@
             });
             document.getElementById('lines-breakdown').innerHTML = linesHtml;
 
-            // Rysowanie punktów A i B na mapie oraz centrowanie widoku
-            highlightRouteOnMap(fromStop, toStop);
+            // Rysowanie i płynna animacja przelotu po trasie
+            highlightAndAnimateRoute(fromStop, toStop);
 
         } catch (err) {
             console.error(err);
@@ -386,32 +443,88 @@
             document.getElementById('avg-time').innerText = "Błąd";
             document.getElementById('avg-time').style.color = '#f87171';
             document.getElementById('samples-info').innerText = "Nie udało się pobrać danych trasy.";
+            stopAnimation();
         } finally {
             btn.disabled = false;
             btn.innerText = oldText;
         }
     }
 
-    function highlightRouteOnMap(fromStop, toStop) {
+    function stopAnimation() {
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+        }
+        if (map.getSource('animated-tram-dot')) {
+            map.getSource('animated-tram-dot').setData({ type: 'FeatureCollection', features: [] });
+        }
+        if (map.getSource('corridor-path')) {
+            map.getSource('corridor-path').setData({ type: 'FeatureCollection', features: [] });
+        }
+    }
+
+    function highlightAndAnimateRoute(fromStop, toStop) {
+        stopAnimation();
+
         const c1 = clusterCoords[fromStop.toLowerCase()];
         const c2 = clusterCoords[toStop.toLowerCase()];
 
-        if (c1 && c2 && map.getSource('corridor-points')) {
-            const pointsGeoJson = {
+        if (!c1 || !c2) return;
+
+        // Oznaczenie punktów A i B
+        if (map.getSource('corridor-points')) {
+            map.getSource('corridor-points').setData({
                 type: 'FeatureCollection',
                 features: [
                     { type: 'Feature', geometry: { type: 'Point', coordinates: c1 }, properties: { name: fromStop, color: '#22c55e' } },
                     { type: 'Feature', geometry: { type: 'Point', coordinates: c2 }, properties: { name: toStop, color: '#ef4444' } }
                 ]
-            };
-            map.getSource('corridor-points').setData(pointsGeoJson);
-
-            // Automatyczne zbliżenie kamery do wybranego korytarza
-            const bounds = new maplibregl.LngLatBounds();
-            bounds.extend(c1);
-            bounds.extend(c2);
-            map.fitBounds(bounds, { padding: { top: 80, bottom: 80, left: 360, right: 80 }, maxZoom: 14, duration: 1200 });
+            });
         }
+
+        // Rysowanie linii korytarza
+        if (map.getSource('corridor-path')) {
+            map.getSource('corridor-path').setData({
+                type: 'Feature',
+                geometry: {
+                    type: 'LineString',
+                    coordinates: [c1, c2]
+                }
+            });
+        }
+
+        // Dopasowanie widoku kamery
+        const bounds = new maplibregl.LngLatBounds();
+        bounds.extend(c1);
+        bounds.extend(c2);
+        map.fitBounds(bounds, { padding: { top: 80, bottom: 80, left: 380, right: 80 }, maxZoom: 14, duration: 1000 });
+
+        // Animacja impulsu przemieszczającego się z c1 do c2 w pętli
+        const duration = 2400; // czas jednego przelotu w ms
+        let startTime = null;
+
+        function animate(timestamp) {
+            if (!startTime) startTime = timestamp;
+            const progress = ((timestamp - startTime) % duration) / duration;
+
+            // Interpolacja liniowa współrzędnych [lng, lat]
+            const currentLng = c1[0] + (c2[0] - c1[0]) * progress;
+            const currentLat = c1[1] + (c2[1] - c1[1]) * progress;
+
+            if (map.getSource('animated-tram-dot')) {
+                map.getSource('animated-tram-dot').setData({
+                    type: 'Feature',
+                    geometry: {
+                        type: 'Point',
+                        coordinates: [currentLng, currentLat]
+                    }
+                });
+            }
+
+            animationFrameId = requestAnimationFrame(animate);
+        }
+
+        animationFrameId = requestAnimationFrame(animate);
     }
 </script>
 </body>
