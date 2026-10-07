@@ -461,7 +461,9 @@ def _read_corridor_stats(
         continue
 
       # Kolejka priorytetowa: (łączny_czas_sec, aktualny_przystanek, min_próbek_na_trasie)
-      pq = [(0.0, from_clean, float("inf"))]
+      start_dwell = dwell_times.get(from_clean, 22.0)
+      pq = [(start_dwell, from_clean, float("inf"))]
+      best_durations = {from_clean: start_dwell}
       best_durations = {from_clean: 0.0}
       found_time = None
       found_samples = 0
