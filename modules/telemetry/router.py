@@ -455,15 +455,17 @@ def _read_corridor_stats(
 
     results = []
 
-    # Dijkstra dla każdej linii obsługującej przystanek początkowy
 # Dijkstra dla każdej linii obsługującej przystanek początkowy
     for l, edges in lines_graph.items():
       if from_clean not in edges:
         continue
 
+      # 1. Postój początkowy: tramwaj stoi na przystanku startowym na wymianie pasażerskiej
+      start_dwell = dwell_times.get(from_clean, 25.0)
+
       # Kolejka priorytetowa: (łączny_czas_sec, aktualny_przystanek, min_próbek_na_trasie, liczba_skoków)
-      pq = [(0.0, from_clean, float("inf"), 0)]
-      best_durations = {from_clean: 0.0}
+      pq = [(start_dwell, from_clean, float("inf"), 0)]
+      best_durations = {from_clean: start_dwell}
       found_time = None
       found_samples = 0
 
@@ -480,9 +482,9 @@ def _read_corridor_stats(
           continue
 
         for nxt, dur, cnt in edges.get(curr_stop, []):
-          # Postój doliczamy tylko na przystankach pośrednich (gdy nxt nie jest przystankiem końcowym)
+          # Postój doliczamy tylko na przystankach pośrednich (gdy nxt nie jest końcowym)
           actual_dwell = (
-              dwell_times.get(nxt, 22.0) if nxt != to_clean else 0.0
+              dwell_times.get(nxt, 25.0) if nxt != to_clean else 0.0
           )
           new_time = curr_time + dur + actual_dwell
 
@@ -491,9 +493,7 @@ def _read_corridor_stats(
             heapq.heappush(pq, (new_time, nxt, min(min_s, cnt), hops + 1))
 
       if found_time is not None:
-        # Opcjonalnie: stały bufor 15s na wymianę i ruszenie ze startu
-        total_trip_sec = found_time + 15.0
-        avg_m = round(total_trip_sec / 60.0, 1)
+        avg_m = round(found_time / 60.0, 1)
         results.append({
             "line": l,
             "samples": found_samples if found_samples != float("inf") else 1,
