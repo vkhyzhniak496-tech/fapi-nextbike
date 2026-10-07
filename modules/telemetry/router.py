@@ -456,22 +456,22 @@ def _read_corridor_stats(
     results = []
 
     # Dijkstra dla każdej linii obsługującej przystanek początkowy
+# Dijkstra dla każdej linii obsługującej przystanek początkowy
     for l, edges in lines_graph.items():
       if from_clean not in edges:
         continue
 
-      # Kolejka priorytetowa: (łączny_czas_sec, aktualny_przystanek, min_próbek_na_trasie)
-      start_dwell = dwell_times.get(from_clean, 22.0)
-      pq = [(start_dwell, from_clean, float("inf"))]
-      best_durations = {from_clean: start_dwell}
+      # Kolejka priorytetowa: (łączny_czas_sec, aktualny_przystanek, min_próbek_na_trasie, liczba_skoków)
+      pq = [(0.0, from_clean, float("inf"), 0)]
       best_durations = {from_clean: 0.0}
       found_time = None
       found_samples = 0
 
       while pq:
-        curr_time, curr_stop, min_s = heapq.heappop(pq)
+        curr_time, curr_stop, min_s, hops = heapq.heappop(pq)
 
-        if curr_stop == to_clean and curr_time > 0.0:
+        # Warunek stopu: osiągnięto cel po przynajmniej jednym przeskoku
+        if curr_stop == to_clean and hops > 0:
           found_time = curr_time
           found_samples = int(min_s)
           break
@@ -480,6 +480,7 @@ def _read_corridor_stats(
           continue
 
         for nxt, dur, cnt in edges.get(curr_stop, []):
+          # Postój doliczamy tylko na przystankach pośrednich (gdy nxt nie jest przystankiem końcowym)
           actual_dwell = (
               dwell_times.get(nxt, 22.0) if nxt != to_clean else 0.0
           )
@@ -487,10 +488,12 @@ def _read_corridor_stats(
 
           if new_time < best_durations.get(nxt, float("inf")):
             best_durations[nxt] = new_time
-            heapq.heappush(pq, (new_time, nxt, min(min_s, cnt)))
+            heapq.heappush(pq, (new_time, nxt, min(min_s, cnt), hops + 1))
 
       if found_time is not None:
-        avg_m = round(found_time / 60.0, 1)
+        # Opcjonalnie: stały bufor 15s na wymianę i ruszenie ze startu
+        total_trip_sec = found_time + 15.0
+        avg_m = round(total_trip_sec / 60.0, 1)
         results.append({
             "line": l,
             "samples": found_samples if found_samples != float("inf") else 1,
