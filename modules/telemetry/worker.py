@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 from typing import Any, Dict, List, Optional
 import httpx
@@ -10,19 +10,22 @@ from config import (
     UM_WARSZAWA_VEHICLES_URL,
     settings,
 )
-from core.database import TRAM_LIVE_DB_PATH, get_db_cursor, transaction, TRAM_ANALYTICS_DB_PATH
+from core.database import get_pool
 from core.geo import calculate_speed_kmh
 from core.models import TramRawTelemetry
 from modules.telemetry.processor import analytics_engine
 
 logger = logging.getLogger(__name__)
 
-# Cache w RAM do natychmiastowego serwowania /live i różnicowego liczenia prędkości
-# {vehicle_number: TramRawTelemetry}
+# Podręczny cache w RAM na bieżący stan wozów (do natychmiastowego serwowania /live i różnicowej prędkości)
 LAST_TRAM_POSITIONS: Dict[str, TramRawTelemetry] = {}
 
 
-def process_and_append_batch(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+async def process_and_append_batch(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Waliduje telemetrię, wylicza prędkość różnicową, aktualizuje stan w RAM
+    oraz zapisuje bufor wierszy asynchronicznie do bazy PostgreSQL.
+    """
     records_to_insert = []
     enriched_live_items = []
 
@@ -44,12 +47,12 @@ def process_and_append_batch(items: List[Dict[str, Any]]) -> List[Dict[str, Any]
         except (ValueError, TypeError):
             continue
 
-        # Weryfikacja chronologii
+        # Weryfikacja chronologii i odrzucanie duplikatów pingu
         prev_telemetry = LAST_TRAM_POSITIONS.get(v_num)
         if prev_telemetry and gps_dt <= prev_telemetry.gps_time:
             continue
 
-        # Obliczenie prędkości różnicowej
+        # Obliczenie prędkości różnicowej na bazie odległości i czasu
         speed = 0.0
         if prev_telemetry:
             speed = calculate_speed_kmh(
@@ -75,6 +78,8 @@ def process_and_append_batch(items: List[Dict[str, Any]]) -> List[Dict[str, Any]
             continue
 
         LAST_TRAM_POSITIONS[v_num] = telemetry
+
+        # Rekord pod asynchroniczny INSERT do tabeli tram_telemetry_history
         records_to_insert.append((
             telemetry.vehicle_number,
             telemetry.line,
@@ -82,10 +87,10 @@ def process_and_append_batch(items: List[Dict[str, Any]]) -> List[Dict[str, Any]
             telemetry.lat,
             telemetry.lon,
             telemetry.speed_kmh,
-            telemetry.gps_time.strftime("%Y-%m-%d %H:%M:%S"),
+            telemetry.gps_time,
         ))
 
-        # Przygotowanie zserializowanego słownika ze zliczoną prędkością dla analityki w locie
+        # Przygotowanie zserializowanego słownika dla silnika cKDTree / postojów
         enriched_live_items.append({
             "VehicleNumber": telemetry.vehicle_number,
             "Lines": telemetry.line,
@@ -93,26 +98,30 @@ def process_and_append_batch(items: List[Dict[str, Any]]) -> List[Dict[str, Any]
             "Lat": telemetry.lat,
             "Lon": telemetry.lon,
             "Speed": telemetry.speed_kmh,
-            "Time": telemetry.gps_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "Time": telemetry.gps_time,
         })
 
+    # Hurtowy, nieblokujący zapis bufora telemetrii do PostgreSQL
     if records_to_insert:
-        with get_db_cursor(TRAM_LIVE_DB_PATH) as cur:
-            with transaction(cur):
-                cur.executemany(
+        pool = get_pool()
+        try:
+            async with pool.acquire() as conn:
+                await conn.executemany(
                     """
                     INSERT INTO tram_telemetry_history (
                         vehicle_number, line, brigade, lat, lon, speed_kmh, gps_time
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?);
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7);
                     """,
                     records_to_insert,
                 )
+        except Exception as e:
+            logger.error(f"[TRAM_TELEMETRY] Błąd zapisu telemetrii do PostgreSQL: {e}")
 
     return enriched_live_items
 
 
 async def tram_telemetry_poller_task() -> None:
-    """Cykliczny worker zbierający telemetrię składów w trybie Append-Only."""
+    """Cykliczny worker zbierający telemetrię składów tramwajowych z miejskiego API."""
     if not settings.WAW_API_KEY:
         logger.warning("[TRAM_TELEMETRY] Brak WAW_API_KEY w konfiguracji. Worker zatrzymany.")
         return
@@ -123,8 +132,8 @@ async def tram_telemetry_poller_task() -> None:
         "resource_id": UM_WARSZAWA_RESOURCE_ID,
     }
 
-    async with httpx.AsyncClient(timeout=15.0) as client:
-        logger.info("[TRAM_TELEMETRY] Uruchomiono pętlę pobierania telemetrii...")
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        logger.info("[TRAM_TELEMETRY] Uruchomiono pętlę pobierania telemetrii (PostgreSQL)...")
         while True:
             try:
                 res = await client.get(UM_WARSZAWA_VEHICLES_URL, params=params)
@@ -132,82 +141,54 @@ async def tram_telemetry_poller_task() -> None:
                     data = res.json()
                     raw_items = data.get("result", [])
                     if isinstance(raw_items, list) and raw_items:
-                        # 1. Zapis do historii i obliczenie prędkości
-                        enriched = process_and_append_batch(raw_items)
-                        # 2. Błyskawiczna analiza postojów w pamięci RAM
+                        # 1. Zapis do tram_telemetry_history i aktualizacja RAM
+                        enriched = await process_and_append_batch(raw_items)
+                        # 2. Wyznaczenie postojów na peronach i segmentów przelotowych
                         if enriched:
-                            analytics_engine.process_live_batch(enriched)
+                            await analytics_engine.process_live_batch(enriched)
+                elif res.status_code == 429:
+                    logger.warning("[TRAM_TELEMETRY] Rate limit API UM Warszawa. Pauza 30s...")
+                    await asyncio.sleep(30)
+                else:
+                    logger.warning(f"[TRAM_TELEMETRY] API ZTM zwróciło status: {res.status_code}")
             except asyncio.CancelledError:
-                logger.info("[TRAM_TELEMETRY] Zatrzymano zadanie workera.")
+                logger.info("[TRAM_TELEMETRY] Zatrzymano zadanie workera telemetrii.")
                 break
             except Exception as e:
-                logger.warning(f"[TRAM_TELEMETRY] Błąd odpytywania API: {e}")
+                logger.warning(f"[TRAM_TELEMETRY] Błąd w pętli telemetrii: {e}")
 
             await asyncio.sleep(10)
 
 
-async def tram_analytics_worker_task() -> None:
-  """Zadanie konserwacyjne analityki: raz na dobę usuwa postoje >14 dni
+async def tram_analytics_cleaner_task() -> None:
+    """
+    Cykliczne sprzątanie retencyjne w PostgreSQL:
+    - Usuwa telemetrię surową starszą niż 4 godziny (bufor trajektorii /track).
+    - Usuwa zarejestrowane postoje starsze niż 14 dni.
+    """
+    logger.info("[TRAM_CLEANER] Inicjalizacja harmonogramu czyszczenia bazy PostgreSQL...")
+    await asyncio.sleep(60)
 
-  i kompaktuje bazę tram_analytics.db.
-  """
-  logger.info("[TRAM_ANALYTICS] Uruchomiono cykliczny cleaner analityki...")
-  # 5 minut zwłoki po starcie serwera, by nie obciążać rozruchu
-  await asyncio.sleep(300)
+    while True:
+        try:
+            pool = get_pool()
+            async with pool.acquire() as conn:
+                # 1. Czyszczenie bufora telemetrii
+                res_hist = await conn.execute(
+                    "DELETE FROM tram_telemetry_history WHERE gps_time < NOW() - INTERVAL '4 hours';"
+                )
+                # 2. Czyszczenie starych postojów
+                res_dwell = await conn.execute(
+                    "DELETE FROM tram_dwell_events WHERE arrival_time < NOW() - INTERVAL '14 days';"
+                )
+                logger.info(
+                    f"[TRAM_CLEANER] Usunięto przeterminowane dane: telemetria ({res_hist}), postoje ({res_dwell})."
+                )
+        except asyncio.CancelledError:
+            logger.info("[TRAM_CLEANER] Zatrzymano zadanie sprzątające.")
+            break
+        except Exception as e:
+            logger.error(f"[TRAM_CLEANER] Błąd procedury czyszczenia: {e}")
 
-  while True:
-    try:
-      logger.info(
-          "[TRAM_ANALYTICS] Czyszczenie przestarzałych postojów (>14 dni)..."
-      )
-      with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
-        with transaction(cur):
-          cur.execute("""
-                        DELETE FROM tram_dwell_events 
-                        WHERE arrival_time < datetime('now', '-14 days');
-                    """)
-        # Zwolnienie nieużywanych stron i zrzut WAL
-        cur.execute("PRAGMA wal_checkpoint(PASSIVE);")
-        cur.execute("PRAGMA incremental_vacuum;")
-
-      logger.info(
-          "[TRAM_ANALYTICS] Sprzątanie zakończone. Baza zoptymalizowana."
-      )
-    except asyncio.CancelledError:
-      logger.info("[TRAM_ANALYTICS] Zatrzymano zadanie cleanera analityki.")
-      break
-    except Exception as e:
-      logger.error(
-          f"[TRAM_ANALYTICS] Błąd podczas czyszczenia bazy analityki: {e}"
-      )
-
-    # Odpoczynek na 24 godziny (86400 sekund)
-    await asyncio.sleep(86400)
-async def cleanup_old_telemetry_task():
-  """Uruchamia się co 30 minut, usuwa dane starsze niż 4 godziny
-
-  i natychmiast odzyskuje miejsce na dysku.
-  """
-  await asyncio.sleep(60)  # Krótki start po restarcie serwera
-  while True:
-    try:
-      with get_db_cursor(TRAM_LIVE_DB_PATH) as cur:
-        with transaction(cur):
-          # 1. Trzymamy tylko 4 godziny (wystarczy do trajektorii /track)
-          cur.execute("""
-                        DELETE FROM tram_telemetry_history 
-                        WHERE gps_time < datetime('now', '-4 hours');
-                    """)
-
-        # 2. Fizyczne kurczenie bazy i zwolnienie bufora WAL
-        cur.execute("PRAGMA wal_checkpoint(PASSIVE);")
-        cur.execute("PRAGMA incremental_vacuum;")
-
-      logger.info(
-          "[CLEANUP] Wyczyszczono stara telemetrie (bufor 4h) i zwolniono"
-          " strony."
-      )
-    except Exception as e:
-      logger.error(f"[CLEANUP] Błąd podczas czyszczenia historii: {e}")
-
-    await asyncio.sleep(1800)  # Co 30 minut
+        # Powtórzenie co 30 minut
+        await asyncio.sleep(1800)

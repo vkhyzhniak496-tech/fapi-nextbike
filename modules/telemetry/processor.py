@@ -1,298 +1,185 @@
 from datetime import datetime
+import logging
 from typing import Any, Dict, List
-import numpy as np
-from scipy.spatial import cKDTree
-import re
-from core.database import (
-    TRAM_ANALYTICS_DB_PATH,
-    TRAM_CORRIDORS_DB_PATH,
-    TRAM_DB_PATH,
-    get_db_cursor,
-    transaction,
+from core.database import get_pool
+
+logger = logging.getLogger(__name__)
+
+SQL_ANALYTICS_PIPELINE = """
+-- KROK 1: Przestrzenne dopasowanie najbliższego peronu w buforze 40m (k-NN na indeksie GiST)
+CREATE TEMP TABLE matched_pings ON COMMIT DROP AS
+SELECT 
+    p.v_num,
+    p.line,
+    p.brigade,
+    p.speed,
+    p.gps_dt,
+    plat.name AS stop_name,
+    plat.cluster_name,
+    ROUND(ST_Distance(p.geom_2180, plat.geom_2180)::numeric, 1) AS dist_m
+FROM current_pings p
+LEFT JOIN LATERAL (
+    SELECT name, cluster_name, geom_2180
+    FROM tram_platforms
+    WHERE ST_DWithin(p.geom_2180, geom_2180, 40.0)
+    ORDER BY p.geom_2180 <-> geom_2180
+    LIMIT 1
+) plat ON TRUE;
+
+-- KROK 2: Wykrycie zdarzeń do sfinalizowania (tramwaj opuścił słupek lub zmienił zespół)
+CREATE TEMP TABLE events_to_finalize ON COMMIT DROP AS
+SELECT 
+    a.vehicle_number,
+    a.line,
+    a.brigade,
+    a.stop_name,
+    a.cluster_name,
+    a.start_time,
+    a.last_time,
+    ROUND((EXTRACT(EPOCH FROM (a.last_time - a.start_time)))::numeric, 1) AS duration_sec,
+    a.min_speed_kmh,
+    a.min_dist_m,
+    a.pings_count
+FROM tram_active_dwells a
+LEFT JOIN matched_pings m ON a.vehicle_number = m.v_num
+WHERE m.v_num IS NULL 
+   OR m.cluster_name IS NULL 
+   OR m.cluster_name != a.cluster_name;
+
+-- KROK 3: Wykrycie zakończonych przelotów międzyzespołowych (A -> B)
+CREATE TEMP TABLE completed_segments ON COMMIT DROP AS
+SELECT 
+    m.line,
+    d.cluster_name AS from_cluster,
+    m.cluster_name AS to_cluster,
+    ROUND((EXTRACT(EPOCH FROM (m.gps_dt - d.departure_time)))::numeric, 1) AS flight_sec
+FROM matched_pings m
+JOIN tram_last_departures d ON m.v_num = d.vehicle_number
+WHERE m.cluster_name IS NOT NULL
+  AND d.cluster_name != m.cluster_name
+  AND d.line = m.line
+  AND EXTRACT(EPOCH FROM (m.gps_dt - d.departure_time)) BETWEEN 8.0 AND 900.0
+  AND NOT EXISTS (
+      SELECT 1 FROM tram_active_dwells a 
+      WHERE a.vehicle_number = m.v_num AND a.cluster_name = m.cluster_name
+  );
+
+-- KROK 4: Zapis zakwalifikowanych postojów do tram_dwell_events
+INSERT INTO tram_dwell_events (
+    vehicle_number, line, brigade, stop_name, cluster_name,
+    arrival_time, departure_time, duration_sec, min_speed_kmh,
+    min_dist_m, pings_count
 )
-from core.geo import wgs84_to_epsg2180
+SELECT 
+    vehicle_number, line, brigade, stop_name, cluster_name,
+    start_time, last_time, duration_sec, min_speed_kmh,
+    min_dist_m, pings_count
+FROM events_to_finalize
+WHERE (min_speed_kmh <= 6.0 OR duration_sec >= 8.0) 
+  AND duration_sec BETWEEN 4.0 AND 900.0
+ON CONFLICT (vehicle_number, stop_name, arrival_time) DO NOTHING;
+
+-- KROK 5: Aktualizacja ostatnich odjazdów
+INSERT INTO tram_last_departures (vehicle_number, cluster_name, departure_time, line)
+SELECT vehicle_number, cluster_name, last_time, line
+FROM events_to_finalize
+WHERE cluster_name IS NOT NULL
+ON CONFLICT (vehicle_number) DO UPDATE SET
+    cluster_name = EXCLUDED.cluster_name,
+    departure_time = EXCLUDED.departure_time,
+    line = EXCLUDED.line;
+
+-- KROK 6: Usunięcie zakończonych postojów ze stanu aktywnego
+DELETE FROM tram_active_dwells
+WHERE vehicle_number IN (SELECT vehicle_number FROM events_to_finalize);
+
+-- KROK 7: Upsert aktywnych postojów wozów
+INSERT INTO tram_active_dwells (
+    vehicle_number, line, brigade, stop_name, cluster_name,
+    start_time, last_time, min_speed_kmh, min_dist_m, pings_count
+)
+SELECT 
+    v_num, line, brigade, stop_name, cluster_name,
+    gps_dt, gps_dt, speed, dist_m, 1
+FROM matched_pings
+WHERE stop_name IS NOT NULL AND cluster_name IS NOT NULL
+ON CONFLICT (vehicle_number) DO UPDATE SET
+    stop_name = EXCLUDED.stop_name,
+    cluster_name = EXCLUDED.cluster_name,
+    last_time = EXCLUDED.last_time,
+    min_speed_kmh = LEAST(tram_active_dwells.min_speed_kmh, EXCLUDED.min_speed_kmh),
+    min_dist_m = LEAST(tram_active_dwells.min_dist_m, EXCLUDED.min_dist_m),
+    pings_count = tram_active_dwells.pings_count + 1;
+
+-- KROK 8: Aktualizacja korytarzy w tram_direct_segments
+INSERT INTO tram_direct_segments (
+    line, from_cluster, to_cluster, avg_duration_sec, samples_count, last_seen
+)
+SELECT 
+    line, from_cluster, to_cluster, flight_sec, 1, CURRENT_TIMESTAMP
+FROM completed_segments
+ON CONFLICT (line, from_cluster, to_cluster) DO UPDATE SET
+    avg_duration_sec = ROUND(
+        ((tram_direct_segments.avg_duration_sec * tram_direct_segments.samples_count + EXCLUDED.avg_duration_sec) 
+        / (tram_direct_segments.samples_count + 1))::numeric, 
+        1
+    ),
+    samples_count = tram_direct_segments.samples_count + 1,
+    last_seen = CURRENT_TIMESTAMP;
+"""
 
 
-class TelemetryAnalyticsEngine:
+class PostgresTelemetryAnalyticsEngine:
 
-  def __init__(self):
-    self.plat_names: List[str] = []
-    self.plat_clusters: List[str] = []
-    self.plat_tree: cKDTree = None
-    self.initialized: bool = False
-    # vehicle_number -> dict
-    self.active_dwells: Dict[str, Dict[str, Any]] = {}
-    # vehicle_number -> {"cluster_name": str, "departure_time": datetime, "line": str}
-    self.last_departures: Dict[str, Dict[str, Any]] = {}
+    async def process_live_batch(
+        self, telemetry_rows: List[Dict[str, Any]]
+    ) -> None:
+        if not telemetry_rows:
+            return
 
-  def ensure_initialized(self):
-    """Ładuje perony do cKDTree (tylko raz, zajmuje ~1 MB RAM)."""
-    if self.initialized:
-      return
-
-    with get_db_cursor(TRAM_DB_PATH) as cur:
-      cur.execute("""
-                SELECT name, cluster_name, x_2180, y_2180 
-                FROM tram_platforms 
-                WHERE x_2180 IS NOT NULL AND y_2180 IS NOT NULL;
-            """)
-      rows = cur.fetchall()
-
-    if rows:
-      self.plat_names = [r["name"] for r in rows]
-      # Zabezpieczenie: jeśli cluster_name jest puste, bierzemy nazwę przystanku
-      clusters = []
-      for r in rows:
-        raw = (r["cluster_name"] or r["name"] or "").strip()
-        # Usuwa końcówkę ze spacją i 2 cyframi (np. 'Mangalia 03' -> 'Mangalia')
-        cleaned = re.sub(r"\s+\d{2}$", "", raw)
-        clusters.append(cleaned)
-      self.plat_clusters = clusters
-      coords = np.array(
-          [[r["x_2180"], r["y_2180"]] for r in rows], dtype=np.float64
-      )
-      self.plat_tree = cKDTree(coords)
-      self.initialized = True
-      print(
-          f"[PROCESSOR] Załadowano {len(rows)} peronów do indeksu"
-          " przestrzennego.",
-          flush=True,
-      )
-
-  def process_live_batch(self, telemetry_rows: List[Any]):
-    self.ensure_initialized()
-    if not self.plat_tree or not telemetry_rows:
-      return
-
-    completed_events = []
-    completed_segments = []
-
-    # 1. Elastyczne wyciąganie współrzędnych
-    coords_2180 = []
-    for r in telemetry_rows:
-      try:
-        if isinstance(r, dict):
-          lon = float(r.get("Lon") if "Lon" in r else r.get("lon", 0.0))
-          lat = float(r.get("Lat") if "Lat" in r else r.get("lat", 0.0))
-        else:
-          lon = float(getattr(r, "lon", getattr(r, "Lon", 0.0)))
-          lat = float(getattr(r, "lat", getattr(r, "Lat", 0.0)))
-        coords_2180.append(wgs84_to_epsg2180(lon, lat))
-      except Exception:
-        coords_2180.append((0.0, 0.0))
-
-    try:
-      dists, indices = self.plat_tree.query(
-          coords_2180, distance_upper_bound=50.0
-      )
-    except Exception as e:
-      print(
-          f"[PROCESSOR ERROR] Konwersja współrzędnych / cKDTree: {e}", flush=True
-      )
-      return
-
-    # 2. Główna pętla analizy
-    for i, r in enumerate(telemetry_rows):
-      if isinstance(r, dict):
-        v_num = str(
-            r.get("VehicleNumber") or r.get("vehicle_number") or ""
-        ).strip()
-        line = str(r.get("Lines") or r.get("line") or "").strip()
-        brigade = str(r.get("Brigade") or r.get("brigade") or "").strip()
-        speed = float(
-            r.get("Speed") or r.get("speed_kmh") or r.get("speed") or 0.0
-        )
-        time_val = (
-            r.get("Time")
-            or r.get("time")
-            or r.get("gps_time")
-            or r.get("timestamp")
-        )
-      else:
-        v_num = str(
-            getattr(r, "vehicle_number", getattr(r, "VehicleNumber", ""))
-        ).strip()
-        line = str(getattr(r, "line", getattr(r, "Lines", ""))).strip()
-        brigade = str(getattr(r, "brigade", getattr(r, "Brigade", ""))).strip()
-        speed = float(
-            getattr(
-                r, "speed_kmh", getattr(r, "speed", getattr(r, "Speed", 0.0))
+        batch = [
+            (
+                str(r.get("VehicleNumber") or r.get("vehicle_number") or "").strip(),
+                str(r.get("Lines") or r.get("line") or "").strip(),
+                str(r.get("Brigade") or r.get("brigade") or "").strip(),
+                float(r.get("Speed") or r.get("speed_kmh") or r.get("speed") or 0.0),
+                float(r.get("Lon") if "Lon" in r else r.get("lon", 0.0)),
+                float(r.get("Lat") if "Lat" in r else r.get("lat", 0.0)),
+                r.get("Time") if isinstance(r.get("Time"), datetime) else datetime.now(),
             )
-        )
-        time_val = getattr(
-            r, "gps_time", getattr(r, "time", getattr(r, "Time", None))
-        )
+            for r in telemetry_rows
+            if (r.get("VehicleNumber") or r.get("vehicle_number"))
+            and (r.get("Lines") or r.get("line"))
+            and (r.get("Lat") or r.get("lat"))
+            and (r.get("Lon") or r.get("lon"))
+        ]
 
-      if not v_num or not line:
-        continue
+        if not batch:
+            return
 
-      if isinstance(time_val, datetime):
-        curr_time = time_val
-      elif isinstance(time_val, str):
-        try:
-          curr_time = datetime.strptime(
-              str(time_val)[:19], "%Y-%m-%d %H:%M:%S"
-          )
-        except Exception:
-          curr_time = datetime.now()
-      else:
-        curr_time = datetime.now()
+        pool = get_pool()
+        async with pool.acquire() as conn:
+            async with conn.transaction():
+                await conn.execute("""
+                    CREATE TEMP TABLE current_pings (
+                        v_num TEXT,
+                        line TEXT,
+                        brigade TEXT,
+                        speed NUMERIC(4, 1),
+                        geom_2180 GEOMETRY(Point, 2180),
+                        gps_dt TIMESTAMPTZ
+                    ) ON COMMIT DROP;
+                """)
 
-      idx = indices[i]
-      in_zone = idx < len(self.plat_names)
-      stop_name = self.plat_names[idx] if in_zone else None
-      cluster_name = self.plat_clusters[idx] if in_zone else None
-
-      tracked = self.active_dwells.get(v_num)
-
-      if in_zone:
-        if tracked:
-          if tracked["cluster_name"] == cluster_name:
-            tracked["min_speed"] = min(tracked["min_speed"], speed)
-            tracked["last_time"] = curr_time
-            tracked["pings"] += 1
-            continue
-          else:
-            # Płynny przeskok bezpośrednio na kolejny zespół peronowy
-            self._finalize_event(tracked, curr_time, completed_events)
-            last_dep = self.last_departures.get(v_num)
-            if (
-                last_dep
-                and last_dep["line"] == line
-                and last_dep["cluster_name"] != cluster_name
-            ):
-              flight_sec = (
-                  curr_time - last_dep["departure_time"]
-              ).total_seconds()
-              if 8.0 <= flight_sec <= 900.0:
-                completed_segments.append(
-                    (line, last_dep["cluster_name"], cluster_name, flight_sec)
+                await conn.executemany(
+                    """
+                    INSERT INTO current_pings (v_num, line, brigade, speed, geom_2180, gps_dt)
+                    VALUES ($1, $2, $3, $4, ST_Transform(ST_SetSRID(ST_MakePoint($5, $6), 4326), 2180), $7);
+                    """,
+                    batch,
                 )
-        else:
-          # Nowy wjazd na przystanek: rejestrujemy przelot segmentowy z poprzedniego peronu
-          last_dep = self.last_departures.get(v_num)
-          if (
-              last_dep
-              and last_dep["line"] == line
-              and last_dep["cluster_name"] != cluster_name
-          ):
-            flight_sec = (
-                curr_time - last_dep["departure_time"]
-            ).total_seconds()
-            if 8.0 <= flight_sec <= 900.0:
-              completed_segments.append(
-                  (line, last_dep["cluster_name"], cluster_name, flight_sec)
-              )
 
-        # Inicjalizacja śledzenia postoju na peronie
-        self.active_dwells[v_num] = {
-            "vehicle_number": v_num,
-            "line": line,
-            "brigade": brigade,
-            "stop_name": stop_name,
-            "cluster_name": cluster_name,
-            "start_time": curr_time,
-            "last_time": curr_time,
-            "min_speed": speed,
-            "min_dist": float(round(dists[i], 1)),
-            "pings": 1,
-        }
-      else:
-        # Wyjazd poza strefę przystanku
-        if tracked:
-          self._finalize_event(tracked, curr_time, completed_events)
-          del self.active_dwells[v_num]
-
-    # 1. Zapis postojów do tram_analytics.db
-    if completed_events:
-      try:
-        with get_db_cursor(TRAM_ANALYTICS_DB_PATH) as cur:
-          with transaction(cur):
-            cur.executemany(
-                """
-                            INSERT INTO tram_dwell_events (
-                                vehicle_number, line, brigade, stop_name, cluster_name,
-                                arrival_time, departure_time, duration_sec, min_speed_kmh,
-                                min_dist_m, pings_count
-                            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                            ON CONFLICT(vehicle_number, stop_name, arrival_time) DO NOTHING;
-                        """,
-                completed_events,
-            )
-      except Exception as e:
-        print(f"[PROCESSOR ERROR] Błąd zapisu postojów: {e}", flush=True)
-
-    # 2. Zapis segmentów przelotu do tram_corridors.db (Ważona średnia krocząca na żywo)
-    if completed_segments:
-      try:
-        with get_db_cursor(TRAM_CORRIDORS_DB_PATH) as cur:
-          with transaction(cur):
-            for line_val, from_c, to_c, dur in completed_segments:
-              cur.execute(
-                  """
-                                INSERT INTO tram_direct_segments (
-                                    line, from_cluster, to_cluster, avg_duration_sec, samples_count, last_seen
-                                ) VALUES (?, ?, ?, ?, 1, CURRENT_TIMESTAMP)
-                                ON CONFLICT(line, from_cluster, to_cluster) DO UPDATE SET
-                                    avg_duration_sec = ROUND((avg_duration_sec * samples_count + excluded.avg_duration_sec) / (samples_count + 1), 1),
-                                    samples_count = samples_count + 1,
-                                    last_seen = CURRENT_TIMESTAMP;
-                            """,
-                  (line_val, from_c, to_c, round(dur, 1)),
-              )
-        print(
-            f"[PROCESSOR] Zarejestrowano {len(completed_segments)} przelotów"
-            f" segmentowych! (np. {completed_segments[0][0]}:"
-            f" {completed_segments[0][1]} -> {completed_segments[0][2]})",
-            flush=True,
-        )
-      except Exception as e:
-        print(
-            f"[PROCESSOR ERROR] Błąd zapisu segmentów korytarza: {e}", flush=True
-        )
-
-  def _finalize_event(
-      self,
-      tracked: dict,
-      end_time: datetime,
-      events_list: list,
-  ):
-    # Czas postoju liczymy do ostatniego pingu wewnątrz strefy peronu
-    last_ping_in_zone = tracked.get("last_time", end_time)
-    duration = (last_ping_in_zone - tracked["start_time"]).total_seconds()
-
-    # Kwalifikacja postoju do tram_analytics
-    if (
-        tracked["min_speed"] <= 6.0 or duration >= 8.0
-    ) and 4.0 <= duration <= 900.0:
-      events_list.append((
-          tracked["vehicle_number"],
-          tracked["line"],
-          tracked["brigade"],
-          tracked["stop_name"],
-          tracked["cluster_name"],
-          tracked["start_time"].strftime("%Y-%m-%d %H:%M:%S"),
-          last_ping_in_zone.strftime("%Y-%m-%d %H:%M:%S"),
-          float(round(duration, 1)),
-          float(round(tracked["min_speed"], 1)),
-          tracked["min_dist"],
-          tracked["pings"],
-      ))
-
-    # Do segmentu rejestrujemy odjazd z momentu ostatniego kontaktu z peronem
-    if tracked["cluster_name"]:
-      self.last_departures[tracked["vehicle_number"]] = {
-          "cluster_name": tracked["cluster_name"],
-          "departure_time": last_ping_in_zone,
-          "line": tracked["line"],
-      }
-
-  def analyze_recent_telemetry(self) -> int:
-    return 0
-
-  def backfill_all_history(self) -> int:
-    self.ensure_initialized()
-    return 0
+                await conn.execute(SQL_ANALYTICS_PIPELINE)
 
 
-analytics_engine = TelemetryAnalyticsEngine()
+analytics_engine = PostgresTelemetryAnalyticsEngine()

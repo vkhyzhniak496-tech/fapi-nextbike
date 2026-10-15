@@ -4,53 +4,61 @@ import logging
 from typing import Any, Dict, List, Optional
 import httpx
 
-from config import OVERPASS_HEADERS, OVERPASS_SERVERS
-from core.database import (
-    CYCLEWAYS_DB_PATH,
-    TRAM_DB_PATH,
-    get_db_cursor,
-    transaction,
-)
+from core.database import get_pool
 
 logger = logging.getLogger(__name__)
 
-CYCLEWAY_TILES = [
-    {
-        "name": "SW (Mokotów, Ochota, Ursynów)",
-        "bbox": "52.09,20.85,52.23,21.05",
-    },
-    {
-        "name": "SE (Praga Płd, Wilanów, Wawer)",
-        "bbox": "52.09,21.05,52.23,21.27",
-    },
-    {
-        "name": "NW (Wola, Bemowo, Bielany)",
-        "bbox": "52.23,20.85,52.37,21.05",
-    },
-    {
-        "name": "NE (Śródmieście, Praga Płn, Białołęka)",
-        "bbox": "52.23,21.05,52.37,21.27",
-    },
+# Tylko zweryfikowane serwery akceptujące publiczne kwerendy GIS
+OVERPASS_SERVERS = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.openstreetmap.fr/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
 ]
 
-# --- 1. ZAPYTANIA OVERPASS QL ---
+# Polityka OSM wymaga formatu: NazwaAplikacji/Wersja (kontakt@domena.com)
+OVERPASS_HEADERS = {
+    "User-Agent": "WarsawTransitGIS/2.0 (urban.gis.research.warsaw@gmail.com)",
+    "Accept": "application/json",
+}
+
+CYCLEWAY_TILES = [
+    {"name": "SW (Mokotów, Ochota, Ursynów)", "bbox": "52.09,20.85,52.23,21.05"},
+    {"name": "SE (Praga Płd, Wilanów, Wawer)", "bbox": "52.09,21.05,52.23,21.27"},
+    {"name": "NW (Wola, Bemowo, Bielany)",    "bbox": "52.23,20.85,52.37,21.05"},
+    {"name": "NE (Śródmieście, Praga Płn)",   "bbox": "52.23,21.05,52.37,21.27"},
+]
+
+DEFAULT_WARSAW_BBOX = "52.09,20.85,52.37,21.27"
+
+
+def _coords_to_linestring_wkt(coords: List[Dict[str, Any]]) -> str:
+    points = [f"{pt['lon']} {pt['lat']}" for pt in coords]
+    return f"LINESTRING({', '.join(points)})"
+
+
+def _sanitize_bbox(bbox: Optional[str]) -> str:
+    if not bbox or not isinstance(bbox, str):
+        return DEFAULT_WARSAW_BBOX
+    val = bbox.strip()
+    if val in ("", "string") or len(val.split(",")) != 4:
+        return DEFAULT_WARSAW_BBOX
+    return val
 
 
 def build_cycleways_query(bbox: str) -> str:
-  return f"""
-    [out:json][timeout:120];
+    return f"""
+    [out:json][timeout:90][maxsize:536870912];
     (
       way["highway"="cycleway"]({bbox});
       way["highway"~"^(path|footway|pedestrian)$"]["bicycle"~"^(designated|yes)$"]({bbox});
-      way["cycleway"~"^(lane|opposite_lane|track|share_busway|opposite)$"]({bbox});
-      way["cycleway:both"~"^(lane|opposite_lane|track|share_busway|opposite)$"]({bbox});
-      way["cycleway:left"~"^(lane|opposite_lane|track|share_busway|opposite)$"]({bbox});
-      way["cycleway:right"~"^(lane|opposite_lane|track|share_busway|opposite)$"]({bbox});
-      way["busway:right"="share_busway"]({bbox});
-      way["busway:left"="share_busway"]({bbox});
+      way["cycleway"]({bbox});
+      way["cycleway:left"]({bbox});
+      way["cycleway:right"]({bbox});
+      way["cycleway:both"]({bbox});
       way["oneway:bicycle"="no"]({bbox});
       way["highway"="living_street"]({bbox});
-      way["highway"="residential"]["maxspeed"="30"]({bbox});
+      // Nowo otwierane trasy i przejezdne budowy (np. al. Jana Pawła II):
+      way["highway"="construction"]["construction"="cycleway"]({bbox});
     );
     out body geom;
     """
@@ -58,19 +66,17 @@ def build_cycleways_query(bbox: str) -> str:
 
 def build_tram_tracks_query(bbox: str) -> str:
     return f"""
-    [out:json][timeout:120];
+    [out:json][timeout:90][maxsize:536870912];
     (
       way["railway"="tram"]({bbox});
-      way["railway"="construction"]["construction"="tram"]({bbox});
-      way["railway"="disused"]({bbox});
     );
     out body geom;
     """
 
 
 def build_tram_platforms_query(bbox: str) -> str:
-  return f"""
-    [out:json][timeout:60];
+    return f"""
+    [out:json][timeout:60][maxsize:268435456];
     (
       node["railway"="tram_stop"]({bbox});
     );
@@ -78,185 +84,215 @@ def build_tram_platforms_query(bbox: str) -> str:
     """
 
 
-# --- 2. SILNIK POBIERANIA ---
-
-
 async def execute_overpass_query(
-    query: str, client: httpx.AsyncClient, max_retries: int = 3
+    query: str, client: httpx.AsyncClient, max_retries: int = 2
 ) -> List[Dict[str, Any]]:
     for server in OVERPASS_SERVERS:
         for attempt in range(1, max_retries + 1):
             try:
-                res = await client.post(server, data={"data": query})
+                res = await client.post(
+                    server,
+                    data={"data": query},
+                    headers=OVERPASS_HEADERS,
+                    timeout=120.0
+                )
+
                 if res.status_code == 200:
-                    payload = res.json()
-                    if "remark" in payload:
-                        logger.error(f"[INFRA_GIS] Błąd składni Overpass na {server}: {payload['remark']}")
-                    return payload.get("elements", [])
-                if res.status_code == 429:
-                    await asyncio.sleep(attempt * 5)
-                else:
-                    await asyncio.sleep(2)
+                    try:
+                        payload = res.json()
+                    except Exception:
+                        break
+
+                    if "remark" in payload and "error" in payload["remark"].lower():
+                        logger.warning(f"[OVERPASS] Błąd składni na {server}: {payload['remark']}")
+                        break
+
+                    elements = payload.get("elements", [])
+                    if elements:
+                        logger.info(f"[OVERPASS] Sukces z {server}. Pobrano elementów: {len(elements)}")
+                        return elements
+                    break
+
+                elif res.status_code == 429:
+                    wait_time = attempt * 20
+                    logger.warning(f"[OVERPASS] Rate Limit (429) na {server}. Pauza na {wait_time}s...")
+                    await asyncio.sleep(wait_time)
+
+                elif res.status_code in (403, 500, 502, 504):
+                    logger.warning(f"[OVERPASS] Status {res.status_code} na {server}. Zmiana mirrora...")
+                    break
+
             except Exception as e:
-                logger.warning(f"[INFRA_GIS] Błąd połączenia z {server}: {e}")
-                await asyncio.sleep(2)
+                logger.warning(f"[OVERPASS] Błąd sieciowy z {server}: {e}")
+                await asyncio.sleep(3)
+
     return []
 
 
-# --- 3. ZAPIS DO BAZ SQLITE ---
-
-
-def save_cycleways_to_db(elements: List[Dict[str, Any]]) -> int:
-  rows = []
-  for el in elements:
-    if el.get("type") == "way" and "geometry" in el:
-      tags = el.get("tags", {})
-      maxspeed_val = tags.get("maxspeed", "")
-      maxspeed_int = int(maxspeed_val) if maxspeed_val.isdigit() else None
-      coords = [[pt["lon"], pt["lat"]] for pt in el["geometry"]]
-
-      rows.append((
-          f"way/{el['id']}",
-          tags.get("highway"),
-          tags.get("cycleway"),
-          tags.get("name"),
-          maxspeed_int,
-          json.dumps(tags, ensure_ascii=False),
-          json.dumps(coords),
-      ))
-
-  if not rows:
-    return 0
-
-  with get_db_cursor(CYCLEWAYS_DB_PATH) as cur:
-    with transaction(cur):
-      cur.executemany(
-          """
-                INSERT INTO cycleway_edges (
-                    way_id, highway, cycleway, name, maxspeed, properties_json, coordinates_json
-                ) VALUES (?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(way_id) DO UPDATE SET
-                    highway=excluded.highway,
-                    cycleway=excluded.cycleway,
-                    name=excluded.name,
-                    maxspeed=excluded.maxspeed,
-                    properties_json=excluded.properties_json,
-                    coordinates_json=excluded.coordinates_json,
-                    updated_at=CURRENT_TIMESTAMP;
-            """,
-          rows,
-      )
-  return len(rows)
-
-
-def save_tram_tracks_to_db(elements: List[Dict[str, Any]]) -> int:
+async def save_cycleways_to_postgis(elements: List[Dict[str, Any]]) -> int:
     records = []
-    seen_ways = set()
-
     for el in elements:
         if el.get("type") == "way" and "geometry" in el:
-            way_key = f"way/{el['id']}"
-            # Zabezpieczenie przed dublami w ramach jednej odpowiedzi Overpassa
-            if way_key in seen_ways:
+            coords = el["geometry"]
+            if len(coords) < 2:
                 continue
-            seen_ways.add(way_key)
 
-            coords = [[pt["lon"], pt["lat"]] for pt in el["geometry"]]
+            way_id = f"way/{el['id']}"
+            tags = el.get("tags", {})
+            maxspeed_val = tags.get("maxspeed", "")
+            maxspeed_int = int(maxspeed_val) if maxspeed_val.isdigit() else None
+            linestring_wkt = _coords_to_linestring_wkt(coords)
+
             records.append((
-                way_key,
-                json.dumps(el.get("tags", {}), ensure_ascii=False),
-                json.dumps(coords),
+                way_id,
+                tags.get("highway"),
+                tags.get("cycleway"),
+                tags.get("name"),
+                maxspeed_int,
+                json.dumps(tags, ensure_ascii=False),
+                linestring_wkt,
             ))
 
     if not records:
         return 0
 
-    with get_db_cursor(TRAM_DB_PATH) as cur:
-        with transaction(cur):
-            # 1. Czyścimy tabelę przed zasileniem świeżymi danymi
-            cur.execute("DELETE FROM tram_edges;")
-
-            # 2. Wstawiamy czyste, aktualne odcinki
-            cur.executemany(
-                """
-                INSERT INTO tram_edges (way_id, properties_json, coordinates_json)
-                VALUES (?, ?, ?)
-                ON CONFLICT(way_id) DO UPDATE SET
-                    properties_json=excluded.properties_json,
-                    coordinates_json=excluded.coordinates_json,
-                    updated_at=CURRENT_TIMESTAMP;
-                """,
-                records,
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        await conn.executemany("""
+            INSERT INTO cycleway_edges (
+                way_id, highway, cycleway, name, maxspeed, properties_json, geom
+            ) VALUES (
+                $1, $2, $3, $4, $5, $6::jsonb, ST_SetSRID(ST_GeomFromText($7), 4326)
             )
+            ON CONFLICT (way_id) DO UPDATE SET
+                highway = EXCLUDED.highway,
+                cycleway = EXCLUDED.cycleway,
+                name = EXCLUDED.name,
+                maxspeed = EXCLUDED.maxspeed,
+                properties_json = EXCLUDED.properties_json,
+                geom = EXCLUDED.geom,
+                updated_at = CURRENT_TIMESTAMP;
+        """, records)
+
     return len(records)
 
 
-def save_tram_platforms_to_db(elements: List[Dict[str, Any]]) -> int:
-  records = []
-  for el in elements:
-    if el.get("type") == "node" and "lon" in el and "lat" in el:
-      name = el.get("tags", {}).get("name") or "Przystanek"
-      records.append(
-          (f"node/{el['id']}", name, json.dumps([el["lon"], el["lat"]]))
-      )
+async def save_tram_tracks_to_postgis(elements: List[Dict[str, Any]]) -> int:
+    records = []
+    seen_ways = set()
 
-  if not records:
-    return 0
+    for el in elements:
+        if el.get("type") == "way" and "geometry" in el:
+            way_id = f"way/{el['id']}"
+            if way_id in seen_ways:
+                continue
+            seen_ways.add(way_id)
 
-  with get_db_cursor(TRAM_DB_PATH) as cur:
-    with transaction(cur):
-      cur.execute("DELETE FROM tram_platforms;")
-      cur.executemany(
-          """
-                INSERT INTO tram_platforms (osm_id, name, coordinates_json)
-                VALUES (?, ?, ?)
-                ON CONFLICT(osm_id) DO UPDATE SET
-                    name=excluded.name,
-                    coordinates_json=excluded.coordinates_json,
-                    updated_at=CURRENT_TIMESTAMP;
-            """,
-          records,      
-      )
-  return len(records)
+            tags = el.get("tags", {})
+            if tags.get("railway") != "tram" or tags.get("service") or tags.get("construction"):
+                continue
+
+            coords = el["geometry"]
+            if len(coords) < 2:
+                continue
+
+            linestring_wkt = _coords_to_linestring_wkt(coords)
+            records.append((
+                way_id,
+                json.dumps(tags, ensure_ascii=False),
+                linestring_wkt,
+            ))
+
+    if not records:
+        return 0
+
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        async with conn.transaction():
+            await conn.execute("DELETE FROM tram_edges;")
+            await conn.executemany("""
+                INSERT INTO tram_edges (way_id, properties_json, geom, length_m)
+                VALUES (
+                    $1, 
+                    $2::jsonb, 
+                    ST_SetSRID(ST_GeomFromText($3), 4326),
+                    ROUND(ST_Length(ST_Transform(ST_SetSRID(ST_GeomFromText($3), 4326), 2180))::numeric, 1)
+                );
+            """, records)
+
+    return len(records)
 
 
-# --- 4. ZADANIA TŁOWE DLA FASTAPI ---
+async def save_tram_platforms_to_postgis(elements: List[Dict[str, Any]]) -> int:
+    records = []
+    for el in elements:
+        if el.get("type") == "node" and "lon" in el and "lat" in el:
+            osm_id = f"node/{el['id']}"
+            name = el.get("tags", {}).get("name") or "Przystanek"
+            lon = float(el["lon"])
+            lat = float(el["lat"])
+            point_wkt = f"POINT({lon} {lat})"
+            cluster = name.rsplit(" ", 1)[0] if name else name
+
+            records.append((osm_id, name, cluster, point_wkt))
+
+    if not records:
+        return 0
+
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        async with conn.transaction():
+            await conn.execute("DELETE FROM tram_platforms;")
+            await conn.executemany("""
+                INSERT INTO tram_platforms (osm_id, name, cluster_name, geom, geom_2180)
+                VALUES (
+                    $1, 
+                    $2, 
+                    $3, 
+                    ST_SetSRID(ST_GeomFromText($4), 4326),
+                    ST_Transform(ST_SetSRID(ST_GeomFromText($4), 4326), 2180)
+                )
+                ON CONFLICT (osm_id) DO UPDATE SET
+                    name = EXCLUDED.name,
+                    cluster_name = EXCLUDED.cluster_name,
+                    geom = EXCLUDED.geom,
+                    geom_2180 = EXCLUDED.geom_2180,
+                    updated_at = CURRENT_TIMESTAMP;
+            """, records)
+
+    return len(records)
 
 
 async def sync_cycleways_task(custom_bbox: Optional[str] = None):
-  logger.info("[INFRA_GIS] Synchronizacja dróg rowerowych z OSM...")
-  total = 0
-  async with httpx.AsyncClient(
-      timeout=120.0, headers=OVERPASS_HEADERS
-  ) as client:
-    targets = (
-        [custom_bbox] if custom_bbox else [t["bbox"] for t in CYCLEWAY_TILES]
-    )
-    for bbox in targets:
-      elements = await execute_overpass_query(
-          build_cycleways_query(bbox), client
-      )
-      added = save_cycleways_to_db(elements)
-      total += added
-      await asyncio.sleep(2)
-  logger.info(f"[INFRA_GIS] Zakończono trasy rowerowe. Zapisano: {total}")
+    logger.info("[INFRA_GIS] Synchronizacja dróg rowerowych z OSM do PostGIS...")
+    sanitized = _sanitize_bbox(custom_bbox) if custom_bbox else None
+    targets = [sanitized] if sanitized else [t["bbox"] for t in CYCLEWAY_TILES]
+
+    total = 0
+    async with httpx.AsyncClient(timeout=120.0) as client:
+        for bbox in targets:
+            elements = await execute_overpass_query(build_cycleways_query(bbox), client)
+            added = await save_cycleways_to_postgis(elements)
+            total += added
+            # Kluczowy odstęp zapobiegający blokadzie 502/429 na kolejnym kafelku
+            await asyncio.sleep(6)
+
+    logger.info(f"[INFRA_GIS] Zakończono trasy rowerowe. Zapisano/zaktualizowano łącznie: {total} segmentów.")
 
 
-async def sync_tram_tracks_task(bbox: str):
-  logger.info(f"[INFRA_GIS] Synchronizacja torowisk dla BBOX: {bbox}...")
-  async with httpx.AsyncClient(
-      timeout=150.0, headers=OVERPASS_HEADERS
-  ) as client:
-    elements = await execute_overpass_query(build_tram_tracks_query(bbox), client)
-    added = save_tram_tracks_to_db(elements)
-  logger.info(f"[INFRA_GIS] Zapisano torowisk: {added}")
+async def sync_tram_tracks_task(bbox: Optional[str] = None):
+    clean_bbox = _sanitize_bbox(bbox)
+    logger.info(f"[INFRA_GIS] Synchronizacja torowisk dla BBOX: {clean_bbox} do PostGIS...")
+    async with httpx.AsyncClient(timeout=120.0) as client:
+        elements = await execute_overpass_query(build_tram_tracks_query(clean_bbox), client)
+        added = await save_tram_tracks_to_postgis(elements)
+    logger.info(f"[INFRA_GIS] Zapisano torowisk do PostGIS: {added}")
 
 
-async def sync_tram_platforms_task(bbox: str):
-  logger.info(f"[INFRA_GIS] Synchronizacja peronów tramwajowych...")
-  async with httpx.AsyncClient(timeout=90.0, headers=OVERPASS_HEADERS) as client:
-    elements = await execute_overpass_query(
-        build_tram_platforms_query(bbox), client
-    )
-    added = save_tram_platforms_to_db(elements)
-  logger.info(f"[INFRA_GIS] Zapisano peronów: {added}")
+async def sync_tram_platforms_task(bbox: Optional[str] = None):
+    clean_bbox = _sanitize_bbox(bbox)
+    logger.info("[INFRA_GIS] Synchronizacja peronów tramwajowych do PostGIS...")
+    async with httpx.AsyncClient(timeout=90.0) as client:
+        elements = await execute_overpass_query(build_tram_platforms_query(clean_bbox), client)
+        added = await save_tram_platforms_to_postgis(elements)
+    logger.info(f"[INFRA_GIS] Zapisano peronów do PostGIS: {added}")

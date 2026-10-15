@@ -6,33 +6,53 @@
     <title>Analityka Tramwajowa - Czasy Wymiany</title>
     <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
     <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
-    <link rel="stylesheet" href="/static/css/styles.css">
     <style>
+        body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        #map { width: 100vw; height: 100vh; }
+
         .analytics-control {
             position: absolute;
             top: 16px;
             left: 16px;
             z-index: 10;
             display: flex;
-            gap: 12px;
             align-items: center;
+            gap: 12px;
             background: rgba(255, 255, 255, 0.95);
             padding: 8px 14px;
             border-radius: 12px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-sizing: border-box;
+        }
+
+        .analytics-control label {
+            font-size: 13px;
+            color: #334155;
+            white-space: nowrap;
         }
 
         select.line-select {
-            padding: 6px 10px;
+            padding: 6px 12px;
             border-radius: 8px;
             border: 1px solid #cbd5e1;
             font-weight: 700;
-            font-size: 14px;
+            font-size: 13px;
             cursor: pointer;
             outline: none;
-            background: #fff;
+            background: #ffffff;
+            color: #0f172a;
+            min-width: 130px;
+        }
+        select.line-select:focus { border-color: #0284c7; }
+
+        #stats-summary {
+            font-size: 12px;
+            font-weight: 500;
+            color: #64748b;
+            white-space: nowrap;
         }
 
         .btn-nav-leaderboard {
@@ -42,76 +62,71 @@
             font-weight: 600;
             padding: 6px 12px;
             border-radius: 8px;
-            font-size: 13px;
+            font-size: 12px;
             white-space: nowrap;
+            transition: background 0.2s;
+        }
+        .btn-nav-leaderboard:hover { background: #0369a1; }
+
+        /* Stylizacja okna popup */
+        .maplibregl-popup-content {
+            border-radius: 10px;
+            padding: 14px 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            min-width: 200px;
+            max-width: 280px;
         }
 
         @media (max-width: 640px) {
             .analytics-control {
                 top: 10px;
                 left: 10px;
-                right: 56px;
-                padding: 6px 10px;
+                right: 56px; /* Miejsce na przycisk lokalizacji GPS */
                 gap: 8px;
-                border-radius: 10px;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                height: 40px;
-                box-sizing: border-box;
+                padding: 6px 10px;
+                height: 42px;
             }
-
-            .analytics-control label {
-                display: none;
-            }
-
+            .analytics-control label { display: none; }
             select.line-select {
+                min-width: 105px;
+                max-width: 120px;
+                font-size: 12px;
                 padding: 4px 6px;
-                font-size: 13px;
-                max-width: 130px;
-                flex-shrink: 0;
             }
-
             #stats-summary {
-                font-size: 11px !important;
-                color: #475569;
-                white-space: nowrap;
+                font-size: 10px !important;
                 overflow: hidden;
                 text-overflow: ellipsis;
-                padding: 0 4px;
-                flex-grow: 1;
                 text-align: center;
+                flex-grow: 1;
             }
-
             .btn-nav-leaderboard {
                 padding: 5px 8px;
                 font-size: 11px;
-                flex-shrink: 0;
             }
         }
     </style>
 </head>
 <body>
-    <div class="analytics-control glass-panel">
+
+    <div class="analytics-control">
         <label for="line-picker"><b>Widok:</b></label>
         <select id="line-picker" class="line-select">
-            <option value="16" selected>Linia 16</option>
             <option value="ALL">Wszystkie perony</option>
         </select>
-        <span id="stats-summary" style="font-size: 13px; color: #475569;">Pobieranie peronów...</span>
+        <span id="stats-summary">Pobieranie peronów...</span>
         <a href="/" class="btn-nav-leaderboard">Powrót do mapy</a>
     </div>
 
-    <div id="map" style="width: 100vw; height: 100vh;"></div>
+    <div id="map"></div>
 
     <script type="module">
         let globalAllStopsData = null;
-        let mapLoaded = false;
 
         const map = new maplibregl.Map({
             container: 'map',
             style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
-            center: [21.035, 52.205], // Wycentrowane na korytarz mokotowsko-wilanowski
+            center: [21.035, 52.205],
             zoom: 12.5
         });
 
@@ -129,7 +144,7 @@
             const el = document.getElementById('stats-summary');
             if (!el) return;
             el.innerText = text;
-            el.style.color = isError ? '#e11d48' : '#475569';
+            el.style.color = isError ? '#e11d48' : '#64748b';
         }
 
         function setGeoJsonData(geojson) {
@@ -139,99 +154,79 @@
             }
         }
 
-        // 1. Bezpieczne ładowanie danych
-        async function loadView(selectedValue) {
-            if (!mapLoaded) return;
+        // Filtrowanie danych po wybranej linii
+        function filterView(selectedLine) {
+            if (!globalAllStopsData) return;
 
-            if (selectedValue === 'ALL') {
-                if (globalAllStopsData) {
-                    setGeoJsonData(globalAllStopsData);
-                    setStatus(`Obsłużone perony: ${globalAllStopsData.features.length}`);
-                    return;
-                }
-
-                setStatus('Pobieranie sieci...');
-                try {
-                    const res = await fetch('/network/tram/dwells/all-stops');
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                    globalAllStopsData = await res.json();
-                    setGeoJsonData(globalAllStopsData);
-                    setStatus(`Obsłużone perony: ${globalAllStopsData.features.length}`);
-                } catch (err) {
-                    console.error("Błąd pobierania całości:", err);
-                    setStatus('Zbyt duże obciążenie sieci', true);
-                }
-            } else {
-                // Pobieranie dedykowane dla pojedynczej linii (natychmiastowe)
-                setStatus(`Ładowanie linii ${selectedValue}...`);
-                try {
-                    let endpoint = `/network/tram/dwells/line/${selectedValue}/stats`;
-                    let res = await fetch(endpoint);
-                    
-                    // Fallback jeśli all-stops jest w cache
-                    if (res.status === 404 && globalAllStopsData) {
-                        const filtered = globalAllStopsData.features.filter(f => {
-                            let lines = [];
-                            try {
-                                lines = typeof f.properties.lines_json === 'string' 
-                                    ? JSON.parse(f.properties.lines_json) 
-                                    : (f.properties.lines_json || []);
-                            } catch(e) { lines = []; }
-                            return lines.some(l => String(l.line) === String(selectedValue));
-                        });
-                        setGeoJsonData({ type: 'FeatureCollection', features: filtered });
-                        setStatus(`Perony linii ${selectedValue}: ${filtered.length}`);
-                        return;
-                    }
-
-                    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-                    const data = await res.json();
-                    setGeoJsonData(data);
-                    setStatus(`Perony linii ${selectedValue}: ${data.features?.length || data.stops_count || 0}`);
-                } catch (err) {
-                    console.error("Błąd pobierania linii:", err);
-                    setStatus(`Błąd linii ${selectedValue}`, true);
-                }
+            if (selectedLine === 'ALL') {
+                setGeoJsonData(globalAllStopsData);
+                setStatus(`Obsłużone perony: ${globalAllStopsData.features.length}`);
+                return;
             }
+
+            const filtered = globalAllStopsData.features.filter(f => {
+                let lines = [];
+                try {
+                    lines = typeof f.properties.lines_json === 'string'
+                        ? JSON.parse(f.properties.lines_json)
+                        : (f.properties.lines_json || []);
+                } catch (e) { lines = []; }
+                return lines.some(l => String(l.line) === String(selectedLine));
+            });
+
+            setGeoJsonData({ type: 'FeatureCollection', features: filtered });
+            setStatus(`Perony linii ${selectedLine}: ${filtered.length}`);
         }
 
-        // 2. Niezależna inicjalizacja selektora linii
-        async function initPicker() {
-            const picker = document.getElementById('line-picker');
+        // Pobranie danych i inicjalizacja listy linii
+        async function loadInitialData() {
             try {
-                const res = await fetch('/network/tram/dwells/lines');
-                if (res.ok) {
-                    const data = await res.json();
-                    if (data.lines && data.lines.length > 0) {
-                        picker.innerHTML = '';
-                        
-                        // Zawsze najpierw linia 16 jeśli istnieje, potem reszta
-                        const sortedLines = data.lines.sort((a, b) => parseInt(a) - parseInt(b));
-                        sortedLines.forEach(line => {
-                            const opt = document.createElement('option');
-                            opt.value = line;
-                            opt.innerText = `Linia ${line}`;
-                            if (String(line) === '16') opt.selected = true;
-                            picker.appendChild(opt);
-                        });
+                const res = await fetch('/network/tram/dwells/all-stops');
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                globalAllStopsData = await res.json();
 
-                        const allOpt = document.createElement('option');
-                        allOpt.value = 'ALL';
-                        allOpt.innerText = 'Wszystkie perony';
-                        picker.appendChild(allOpt);
-                    }
+                // Wyciągamy unikalne linie ze zbioru peronów
+                const uniqueLines = new Set();
+                globalAllStopsData.features.forEach(f => {
+                    let lines = [];
+                    try {
+                        lines = typeof f.properties.lines_json === 'string'
+                            ? JSON.parse(f.properties.lines_json)
+                            : (f.properties.lines_json || []);
+                    } catch (e) { lines = []; }
+                    lines.forEach(l => {
+                        if (l.line) uniqueLines.add(String(l.line));
+                    });
+                });
+
+                const picker = document.getElementById('line-picker');
+                picker.innerHTML = '<option value="ALL">Wszystkie perony</option>';
+
+                const sortedLines = Array.from(uniqueLines).sort((a, b) => parseInt(a) - parseInt(b));
+                sortedLines.forEach(l => {
+                    const opt = document.createElement('option');
+                    opt.value = l;
+                    opt.innerText = `Linia ${l}`;
+                    if (l === '16') opt.selected = true; // Linia 16 domyślnie
+                    picker.appendChild(opt);
+                });
+
+                picker.addEventListener('change', () => filterView(picker.value));
+
+                // Jeśli styl mapy jest już załadowany, renderujemy
+                if (map.getSource('dwell-stats')) {
+                    filterView(picker.value);
                 }
             } catch (err) {
-                console.warn("Nie udało się pobrać listy linii, używam domyślnej:", err);
+                console.error("Błąd pobierania danych postojów:", err);
+                setStatus('Błąd wczytywania danych', true);
             }
-
-            picker.addEventListener('change', () => loadView(picker.value));
         }
 
-        map.on('load', () => {
-            mapLoaded = true;
+        loadInitialData();
 
-            // Torowiska
+        map.on('load', () => {
+            // Torowiska tramwajowe
             map.addSource('tram-network', { type: 'geojson', data: '/network/tram' });
             map.addLayer({
                 id: 'tram-tracks',
@@ -241,7 +236,7 @@
                 paint: {
                     'line-color': '#64748b',
                     'line-width': 2.0,
-                    'line-opacity': 0.6
+                    'line-opacity': 0.5
                 }
             });
 
@@ -251,18 +246,28 @@
                 data: { type: 'FeatureCollection', features: [] }
             });
 
-            // Kółka postojów
+            // Warstwa kółek ze skalowaniem zależnym od przybliżenia (zoom)
             map.addLayer({
                 id: 'dwell-circles',
                 type: 'circle',
                 source: 'dwell-stats',
                 paint: {
                     'circle-radius': [
-                        'interpolate', ['linear'], ['coalesce', ['get', 'avg_dwell_sec'], 15],
-                        15, 6,
-                        35, 10,
-                        60, 15,
-                        120, 22
+                        'interpolate', ['linear'], ['zoom'],
+                        11, [
+                            'interpolate', ['linear'], ['coalesce', ['get', 'avg_dwell_sec'], 15],
+                            15, 3,
+                            35, 5,
+                            60, 8,
+                            120, 12
+                        ],
+                        15, [
+                            'interpolate', ['linear'], ['coalesce', ['get', 'avg_dwell_sec'], 15],
+                            15, 7,
+                            35, 12,
+                            60, 18,
+                            120, 26
+                        ]
                     ],
                     'circle-color': [
                         'interpolate', ['linear'], ['coalesce', ['get', 'avg_dwell_sec'], 20],
@@ -272,23 +277,23 @@
                         80, '#e74c3c'
                     ],
                     'circle-opacity': 0.85,
-                    'circle-stroke-width': 2,
+                    'circle-stroke-width': 1.5,
                     'circle-stroke-color': '#ffffff'
                 }
             });
 
-            // Etykiety peronów
+            // Nazwy peronów
             map.addLayer({
                 id: 'dwell-stop-names',
                 type: 'symbol',
                 source: 'dwell-stats',
-                minzoom: 10.5,
+                minzoom: 12.0,
                 layout: {
                     'text-field': ['get', 'stop_name'],
                     'text-size': [
                         'interpolate', ['linear'], ['zoom'],
-                        11, 9,
-                        14, 12
+                        12, 9,
+                        15, 12
                     ],
                     'text-offset': [0, 1.4],
                     'text-anchor': 'top',
@@ -298,16 +303,16 @@
                 paint: {
                     'text-color': '#0f172a',
                     'text-halo-color': '#ffffff',
-                    'text-halo-width': 2.5
+                    'text-halo-width': 2.0
                 }
             });
 
-            // Sekundy postoju
+            // Wartość sekundowa
             map.addLayer({
                 id: 'dwell-seconds-label',
                 type: 'symbol',
                 source: 'dwell-stats',
-                minzoom: 12.5,
+                minzoom: 13.0,
                 layout: {
                     'text-field': ['concat', ['to-string', ['get', 'avg_dwell_sec']], 's'],
                     'text-size': 10,
@@ -322,13 +327,22 @@
                 }
             });
 
-            // Popup
+            // Dymek z rozbiciem na linie
             map.on('click', 'dwell-circles', (e) => {
                 const p = e.features[0].properties;
-                let lines = [];
+                let rawLines = [];
                 try {
-                    lines = typeof p.lines_json === 'string' ? JSON.parse(p.lines_json) : (p.lines_json || []);
-                } catch (err) { lines = []; }
+                    rawLines = typeof p.lines_json === 'string' ? JSON.parse(p.lines_json) : (p.lines_json || []);
+                } catch (err) { rawLines = []; }
+
+                // Zabezpieczenie przed duplikatami po stronie klienta (unikalne per linia)
+                const lineMap = new Map();
+                rawLines.forEach(l => {
+                    if (l && l.line && !lineMap.has(String(l.line))) {
+                        lineMap.set(String(l.line), l);
+                    }
+                });
+                const lines = Array.from(lineMap.values());
 
                 const linesHtml = lines.length > 0 
                     ? lines.map(l => `
@@ -342,10 +356,10 @@
                 new maplibregl.Popup({ offset: 8 })
                     .setLngLat(e.features[0].geometry.coordinates)
                     .setHTML(`
-                        <div style="font-weight: 700; font-size: 14px;">${p.stop_name}</div>
+                        <div style="font-weight: 700; font-size: 14px; color: #0f172a;">${p.stop_name}</div>
                         <div style="font-size: 12px; color: #64748b; margin-bottom: 6px;">Zespół: ${p.cluster_name || '–'}</div>
                         <div style="margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #e2e8f0; font-size: 13px;">
-                            Średni czas postoju: <b>${p.avg_dwell_sec} s</b><br>
+                            Średni postój: <b>${p.avg_dwell_sec} s</b><br>
                             Łącznie kursów: <b>${p.samples_count}</b>
                         </div>
                         <div style="font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 2px;">Linie na peronie:</div>
@@ -357,13 +371,12 @@
             map.on('mouseenter', 'dwell-circles', () => { map.getCanvas().style.cursor = 'pointer'; });
             map.on('mouseleave', 'dwell-circles', () => { map.getCanvas().style.cursor = ''; });
 
-            // Start: ładujemy domyślnie wybraną linię z selektora (Linia 16)
-            const picker = document.getElementById('line-picker');
-            loadView(picker.value || '16');
+            // Jeśli dane załadowały się przed startem stylu mapy
+            if (globalAllStopsData) {
+                const picker = document.getElementById('line-picker');
+                filterView(picker.value || 'ALL');
+            }
         });
-
-        // Wypełniamy listę linii równolegle do ładowania mapy
-        initPicker();
     </script>
 </body>
 </html>
