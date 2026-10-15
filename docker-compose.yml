@@ -1,0 +1,32 @@
+services:
+  postgis:
+    image: postgis/postgis:16-3.4
+    container_name: warsaw_gis_db
+    restart: always
+    environment:
+      POSTGRES_DB: warsaw_transit_gis
+      POSTGRES_USER: gis_user
+      POSTGRES_PASSWORD: gis_secure_password_123
+    ports:
+      # Wystawiamy port na zewnątrz kontenera:
+      - "5432:5432"
+    volumes:
+      # Trwałe dane bazy zapisywane na dysku hosta:
+      - ./pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gis_user -d warsaw_transit_gis"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgweb:
+    image: sosedoff/pgweb:latest
+    container_name: warsaw_gis_pgweb
+    restart: always
+    ports:
+      - "8081:8081"
+    environment:
+      DATABASE_URL: postgres://gis_user:gis_secure_password_123@postgis:5432/warsaw_transit_gis?sslmode=disable
+    depends_on:
+      postgis:
+        condition: service_healthy

@@ -161,7 +161,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
-
+pgdata/
 # Spyder project settings
 .spyderproject
 .spyproject
