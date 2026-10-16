@@ -1,11 +1,13 @@
 from typing import Any, Dict
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response
 import httpx
 
 from config import HTTP_HEADERS
 from core.models import Station
 from modules.bikes.storage import get_cached_stations
 from modules.bikes.worker import CITYBIKES_WARSAW_URL
+# Import dedykowanej funkcji rysującej z Twojego modułu wykresów:
+from modules.bikes.charts import generate_station_chart
 
 router = APIRouter(tags=["Veturilo Bikeshare & Analytics"])
 
@@ -59,4 +61,22 @@ async def get_stations_leaderboard(top_n: int = 50):
         "top_overflow": [
             s.model_dump() for s in sorted(stations, key=lambda x: (x.occupancy_pct, x.free_bikes), reverse=True)[:top_n]
         ]
-    }   
+    }
+
+
+# --- 3. WYKRES DLA POPUPU STACJI ---
+
+@router.get("/analytics/station/{station_id}/chart.png")
+async def get_station_chart_endpoint(station_id: str, name: str = "Stacja"):
+    """
+    Pobiera wyrenderowany w oddzielnym module wykres PNG i zwraca go do popupu MapLibre.
+    """
+    img_bytes = await generate_station_chart(station_id=station_id, station_name=name)
+    if not img_bytes:
+        raise HTTPException(status_code=404, detail="Brak danych do wygenerowania wykresu dla podanej stacji")
+
+    return Response(
+        content=img_bytes,
+        media_type="image/png",
+        headers={"Cache-Control": "public, max-age=30"}
+    )
