@@ -1,6 +1,7 @@
 from typing import Any, Dict
 from fastapi import APIRouter, HTTPException, Response
 import httpx
+import json
 
 from config import HTTP_HEADERS
 from core.models import Station
@@ -8,7 +9,7 @@ from modules.bikes.storage import get_cached_stations
 from modules.bikes.worker import CITYBIKES_WARSAW_URL
 # Import dedykowanej funkcji rysującej z Twojego modułu wykresów:
 from modules.bikes.charts import generate_station_chart
-
+from core.database import get_pool
 router = APIRouter(tags=["Veturilo Bikeshare & Analytics"])
 
 
@@ -31,52 +32,128 @@ async def get_warsaw_bikes_live():
 
 # --- 2. RANKING HUBÓW ---
 
+
+
 @router.get("/bikes/leaderboard")
-@router.get("/analytics/leaderboard", include_in_schema=False)
-async def get_stations_leaderboard(top_n: int = 50):
-    """Pobiera bieżące dane z CityBikes i zwraca ranking najbardziej obciążonych stacji."""
-    async with httpx.AsyncClient(timeout=20.0, follow_redirects=True, headers=HTTP_HEADERS) as client:
+async def get_stations_leaderboard(top_n: int = 36):
+    """
+    Aktualizuje stan stacji w PostGIS i wylicza ranking najlepszych
+    węzłów przesiadkowych (Veturilo + bliskość peronu + natężenie postojów tramwajów).
+    """
+    async with httpx.AsyncClient(timeout=15.0, follow_redirects=True, headers=HTTP_HEADERS) as client:
         res = await client.get(CITYBIKES_WARSAW_URL)
         if res.status_code != 200:
             raise HTTPException(status_code=502, detail="Błąd komunikacji z CityBikes")
         stations_raw = res.json().get("network", {}).get("stations", [])
 
-    stations = [
-        Station(
-            id=str(st.get("id")),
-            name=str(st.get("name", "Stacja")),
-            lat=float(st.get("latitude") or 0.0),
-            lng=float(st.get("longitude") or 0.0),
-            free_bikes=int(st.get("free_bikes") or 0),
-            empty_slots=int(st.get("empty_slots") or 0)
-        )
-        for st in stations_raw
-    ]
+    prepared = []
+    for st in stations_raw:
+        lat = st.get("latitude")
+        lng = st.get("longitude")
+        if not (lat and lng):
+            continue
+        prepared.append({
+            "station_id": str(st.get("id")),
+            "name": str(st.get("name", "Stacja")).strip(),
+            "lat": float(lat),
+            "lng": float(lng),
+            "free_bikes": int(st.get("free_bikes") or 0),
+            "empty_slots": int(st.get("empty_slots") or 0),
+        })
+
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        # 1. Hurtowy Upsert stacji do PostGIS z transformacją do EPSG:2180
+        if prepared:
+            await conn.execute("""
+                INSERT INTO veturilo_stations (
+                    station_id, name, lat, lng, free_bikes, empty_slots, geom_2180, updated_at
+                )
+                SELECT 
+                    u.station_id, u.name, u.lat, u.lng, u.free_bikes, u.empty_slots,
+                    ST_Transform(ST_SetSRID(ST_MakePoint(u.lng, u.lat), 4326), 2180),
+                    CURRENT_TIMESTAMP
+                FROM json_to_recordset($1::json) AS u(
+                    station_id TEXT, name TEXT, lat DOUBLE PRECISION, lng DOUBLE PRECISION,
+                    free_bikes INTEGER, empty_slots INTEGER
+                )
+                ON CONFLICT (station_id) DO UPDATE SET
+                    name = EXCLUDED.name,
+                    free_bikes = EXCLUDED.free_bikes,
+                    empty_slots = EXCLUDED.empty_slots,
+                    geom_2180 = EXCLUDED.geom_2180,
+                    updated_at = CURRENT_TIMESTAMP;
+            """, json.dumps(prepared))
+
+        # 2. Zapytanie przestrzenne łączące stacje z peronami i postojami tramwajowymi
+        rows = await conn.fetch("""
+            WITH cluster_activity AS (
+                -- Natężenie ruchu tramwajowego per zespół przystankowy
+                SELECT 
+                    cluster_name,
+                    COUNT(*) AS dwells_count,
+                    ROUND(AVG(duration_sec)::numeric, 1) AS avg_dwell_sec
+                FROM tram_dwell_events
+                GROUP BY cluster_name
+            ),
+            spatial_match AS (
+                SELECT 
+                    vs.station_id AS id,
+                    vs.name,
+                    vs.lat,
+                    vs.lng,
+                    vs.free_bikes,
+                    vs.empty_slots,
+                    (vs.free_bikes + vs.empty_slots) AS total_docks,
+                    CASE 
+                        WHEN (vs.free_bikes + vs.empty_slots) > 0 
+                        THEN ROUND((vs.free_bikes::numeric / (vs.free_bikes + vs.empty_slots)) * 100, 1)
+                        ELSE 0.0
+                    END AS occupancy_pct,
+                    tp.name AS nearest_stop_name,
+                    tp.cluster_name AS nearest_cluster,
+                    ROUND(ST_Distance(vs.geom_2180, tp.geom_2180)::numeric, 0) AS dist_to_tram_m,
+                    COALESCE(ca.dwells_count, 0) AS tram_dwells_count,
+                    COALESCE(ca.avg_dwell_sec, 0.0) AS tram_avg_dwell_sec
+                FROM veturilo_stations vs
+                LEFT JOIN LATERAL (
+                    -- Szukamy najbliższego peronu w promieniu 250 metrów
+                    SELECT name, cluster_name, geom_2180
+                    FROM tram_platforms
+                    WHERE ST_DWithin(vs.geom_2180, geom_2180, 250.0)
+                    ORDER BY vs.geom_2180 <-> geom_2180
+                    LIMIT 1
+                ) tp ON TRUE
+                LEFT JOIN cluster_activity ca ON ca.cluster_name = tp.cluster_name
+                WHERE vs.free_bikes > 0
+            ),
+            scored AS (
+                SELECT 
+                    *,
+                    ROUND((
+                        -- Waga 1: Liczba rowerów (max 45 pkt)
+                        LEAST(free_bikes, 30) * 1.5
+                        +
+                        -- Waga 2: Bliskość peronu tramwajowego (0-50 pkt, im bliżej tym więcej)
+                        CASE 
+                            WHEN dist_to_tram_m IS NOT NULL 
+                            THEN GREATEST(0.0, (250.0 - dist_to_tram_m) / 5.0)
+                            ELSE 0.0
+                        END
+                        +
+                        -- Waga 3: Aktywność postojowa tramwajów na węźle (0-35 pkt)
+                        LEAST(tram_dwells_count * 1.5, 35.0)
+                    )::numeric, 1) AS hub_score
+                FROM spatial_match
+            )
+            SELECT * FROM scored
+            ORDER BY hub_score DESC, free_bikes DESC
+            LIMIT $1;
+        """, top_n)
+
+    top_multimodal_hubs = [dict(r) for r in rows]
 
     return {
-        "total_active_stations": len(stations),
-        "top_hubs": [
-            s.model_dump() for s in sorted(stations, key=lambda x: x.free_bikes, reverse=True)[:top_n]
-        ],
-        "top_overflow": [
-            s.model_dump() for s in sorted(stations, key=lambda x: (x.occupancy_pct, x.free_bikes), reverse=True)[:top_n]
-        ]
+        "total_active_stations": len(prepared),
+        "top_hubs": top_multimodal_hubs,
     }
-
-
-# --- 3. WYKRES DLA POPUPU STACJI ---
-
-@router.get("/analytics/station/{station_id}/chart.png")
-async def get_station_chart_endpoint(station_id: str, name: str = "Stacja"):
-    """
-    Pobiera wyrenderowany w oddzielnym module wykres PNG i zwraca go do popupu MapLibre.
-    """
-    img_bytes = await generate_station_chart(station_id=station_id, station_name=name)
-    if not img_bytes:
-        raise HTTPException(status_code=404, detail="Brak danych do wygenerowania wykresu dla podanej stacji")
-
-    return Response(
-        content=img_bytes,
-        media_type="image/png",
-        headers={"Cache-Control": "public, max-age=30"}
-    )

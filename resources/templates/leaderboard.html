@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veturilo & Tram - Ranking Węzłów Przesiadkowych</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body class="leaderboard-body">
+    <div class="leaderboard-container">
+        <div class="leaderboard-header">
+            <div>
+                <h1>Ranking Węzłów Przesiadkowych</h1>
+                <div style="font-size: 13px; color: #64748b; margin-top: 4px;">
+                    Indeks przestrzenny PostGIS: dostępność rowerów + bliskość peronu + natężenie postojów tramwajów
+                </div>
+            </div>
+            <a href="/" class="btn-map">&larr; Powrót do mapy</a>
+        </div>
+
+        <div class="section-title">
+            <span>Najlepsze punkty przesiadkowe (Bike &amp; Tram Hub Score)</span>
+        </div>
+
+        <div id="hubs-grid" class="cards-grid">
+            <div style="color: #64748b; font-size: 14px;">Przeliczanie indeksów przestrzennych...</div>
+        </div>
+    </div>
+
+    <script>
+        async function loadLeaderboard() {
+            const grid = document.getElementById('hubs-grid');
+            try {
+                const res = await fetch('/bikes/leaderboard?top_n=36');
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                const hubs = data.top_hubs || [];
+
+                if (hubs.length === 0) {
+                    grid.innerHTML = '<div style="color: #64748b;">Brak aktywnych stacji.</div>';
+                    return;
+                }
+
+                grid.innerHTML = hubs.map((st, idx) => {
+                    const hasTram = st.nearest_stop_name !== null;
+                    const tramBadge = hasTram 
+                        ? `<div style="margin-top: 8px; font-size: 12px; color: #4a154b; background: rgba(59, 1, 65, 0.06); padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(59, 1, 65, 0.12);">
+                             🚋 Peron: <b>${st.nearest_stop_name}</b> (${st.dist_to_tram_m} m)<br>
+                             <span style="font-size: 11px; color: #64748b;">Zarejestrowane postoje: <b>${st.tram_dwells_count}</b> (śr. ${st.tram_avg_dwell_sec}s)</span>
+                           </div>`
+                        : `<div style="margin-top: 8px; font-size: 12px; color: #94a3b8; padding: 6px 10px;">
+                             Brak peronu tramwajowego w promieniu 250 m
+                           </div>`;
+
+                    return `
+                        <div class="station-card" onclick="window.location.href='/?station=${encodeURIComponent(st.id)}&lat=${st.lat}&lng=${st.lng}'">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <span style="font-size: 11px; font-weight: 800; color: #007cbf; background: rgba(0, 124, 191, 0.1); padding: 2px 8px; border-radius: 99px;">
+                                    #${idx + 1} • SCORE: ${st.hub_score} pkt
+                                </span>
+                                <span style="font-size: 11px; color: #64748b;">Zapełnienie: ${st.occupancy_pct}%</span>
+                            </div>
+                            <div class="station-card-title">${st.name}</div>
+                            <div class="station-card-metrics">
+                                <span>🚲 Rowery: <b>${st.free_bikes}</b></span>
+                                <span>🅿️ Wolne stojaki: <b>${st.empty_slots}</b></span>
+                            </div>
+                            ${tramBadge}
+                            <div class="teleport-hint">Pokaż na mapie &rarr;</div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (err) {
+                console.error(err);
+                grid.innerHTML = '<div style="color: #ef4444;">Błąd wczytywania rankingu.</div>';
+            }
+        }
+
+        loadLeaderboard();
+    </script>
+</body>
+</html>
