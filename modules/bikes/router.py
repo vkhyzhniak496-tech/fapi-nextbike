@@ -34,70 +34,58 @@ async def get_warsaw_bikes_live():
 @router.get("/bikes/leaderboard")
 async def get_stations_leaderboard(top_n: int = 36):
     """
-    Aktualizuje stan stacji w PostGIS i wylicza ranking najlepszych
-    węzłów przesiadkowych (Veturilo + bliskość peronu + postoje tramwajów + bezpieczna sieć rowerowa).
+    Błyskawiczny ranking multimodalny oparty na zmaterializowanej 
+    tabeli veturilo_station_infrastructure.
     """
-    async with httpx.AsyncClient(timeout=15.0, follow_redirects=True, headers=HTTP_HEADERS) as client:
+    async with httpx.AsyncClient(timeout=10.0, follow_redirects=True, headers=HTTP_HEADERS) as client:
         res = await client.get(CITYBIKES_WARSAW_URL)
         if res.status_code != 200:
             raise HTTPException(status_code=502, detail="Błąd komunikacji z CityBikes")
         stations_raw = res.json().get("network", {}).get("stations", [])
 
-    prepared = []
-    for st in stations_raw:
-        lat = st.get("latitude")
-        lng = st.get("longitude")
-        if not (lat and lng):
-            continue
-        prepared.append({
+    prepared = [
+        {
             "station_id": str(st.get("id")),
-            "name": str(st.get("name", "Stacja")).strip(),
-            "lat": float(lat),
-            "lng": float(lng),
             "free_bikes": int(st.get("free_bikes") or 0),
             "empty_slots": int(st.get("empty_slots") or 0),
-        })
+        }
+        for st in stations_raw
+        if st.get("id")
+    ]
 
     pool = get_pool()
     async with pool.acquire() as conn:
-        # 1. Upsert stacji do tabeli PostGIS
+        # 1. Lekka aktualizacja wyłącznie liczby rowerów i wolnych stojaków
         if prepared:
             await conn.execute("""
-                INSERT INTO veturilo_stations (
-                    station_id, name, lat, lng, free_bikes, empty_slots, geom_2180, updated_at
-                )
-                SELECT 
-                    u.station_id, u.name, u.lat, u.lng, u.free_bikes, u.empty_slots,
-                    ST_Transform(ST_SetSRID(ST_MakePoint(u.lng, u.lat), 4326), 2180),
-                    CURRENT_TIMESTAMP
+                UPDATE veturilo_stations vs
+                SET 
+                    free_bikes = u.free_bikes,
+                    empty_slots = u.empty_slots,
+                    updated_at = CURRENT_TIMESTAMP
                 FROM json_to_recordset($1::json) AS u(
-                    station_id TEXT, name TEXT, lat DOUBLE PRECISION, lng DOUBLE PRECISION,
-                    free_bikes INTEGER, empty_slots INTEGER
+                    station_id TEXT, free_bikes INTEGER, empty_slots INTEGER
                 )
-                ON CONFLICT (station_id) DO UPDATE SET
-                    name = EXCLUDED.name,
-                    free_bikes = EXCLUDED.free_bikes,
-                    empty_slots = EXCLUDED.empty_slots,
-                    geom_2180 = EXCLUDED.geom_2180,
-                    updated_at = CURRENT_TIMESTAMP;
+                WHERE vs.station_id = u.station_id;
             """, json.dumps(prepared))
 
-        # 2. Szybkie zapytanie wagowe oparte o GiST
+        # 2. Błyskawiczny SELECT ze statycznego szkieletu i zdarzeń tramwajowych
         rows = await conn.fetch("""
-            WITH cluster_activity AS (
+            WITH live_dwell_stats AS (
+                -- Zliczamy postoje zarejestrowane dla każdego peronu
                 SELECT 
-                    cluster_name,
+                    stop_osm_id,
                     COUNT(*) AS dwells_count,
                     ROUND(AVG(duration_sec)::numeric, 1) AS avg_dwell_sec
                 FROM tram_dwell_events
-                GROUP BY cluster_name
+                GROUP BY stop_osm_id
             ),
-            spatial_match AS (
+            combined AS (
                 SELECT 
-                    vs.station_id AS id,
-                    vs.name,
-                    vs.lat,
-                    vs.lng,
+                    inf.station_id AS id,
+                    inf.name,
+                    inf.lat,
+                    inf.lng,
                     vs.free_bikes,
                     vs.empty_slots,
                     (vs.free_bikes + vs.empty_slots) AS total_docks,
@@ -106,39 +94,16 @@ async def get_stations_leaderboard(top_n: int = 36):
                         THEN ROUND((vs.free_bikes::numeric / (vs.free_bikes + vs.empty_slots)) * 100, 1)
                         ELSE 0.0
                     END AS occupancy_pct,
-                    tp.name AS nearest_stop_name,
-                    tp.cluster_name AS nearest_cluster,
-                    ROUND(tp.dist_m::numeric, 0) AS dist_to_tram_m,
-                    COALESCE(ca.dwells_count, 0) AS tram_dwells_count,
-                    COALESCE(ca.avg_dwell_sec, 0.0) AS tram_avg_dwell_sec,
-                    ROUND(COALESCE(infra.min_dist, 999.0)::numeric, 0) AS dist_to_cycleway_m,
-                    ROUND(COALESCE(infra.safe_meters, 0.0)::numeric, 0) AS safe_network_meters
-                FROM veturilo_stations vs
-                -- Najbliższy peron tramwajowy (do 250m)
-                LEFT JOIN LATERAL (
-                    SELECT name, cluster_name, ST_Distance(vs.geom_2180, geom_2180) AS dist_m
-                    FROM tram_platforms
-                    WHERE ST_DWithin(vs.geom_2180, geom_2180, 250.0)
-                    ORDER BY vs.geom_2180 <-> geom_2180
-                    LIMIT 1
-                ) tp ON TRUE
-                LEFT JOIN cluster_activity ca ON ca.cluster_name = tp.cluster_name
-                -- Bezpieczna sieć rowerowa w buforze 150m (zoptymalizowany LATERAL)
-                LEFT JOIN LATERAL (
-                    SELECT 
-                        MIN(ST_Distance(vs.geom_2180, ST_Transform(ce.geom, 2180))) AS min_dist,
-                        SUM(
-                            CASE 
-                                WHEN ce.properties_json->>'highway' = 'cycleway' THEN 1.0
-                                WHEN ce.properties_json->>'highway' = 'living_street' THEN 0.8
-                                WHEN ce.properties_json->>'cycleway' IN ('lane', 'opposite_lane') THEN 0.7
-                                ELSE 0.5
-                            END * ST_Length(ST_Transform(ce.geom, 2180))
-                        ) AS safe_meters
-                    FROM cycleway_edges ce
-                    WHERE ST_DWithin(vs.geom_2180, ST_Transform(ce.geom, 2180), 150.0)
-                      AND ce.properties_json->>'highway' NOT IN ('motorway', 'motorway_link', 'trunk', 'trunk_link', 'primary_link')
-                ) infra ON TRUE
+                    inf.nearest_stop_name,
+                    inf.nearest_cluster,
+                    inf.dist_to_tram_m,
+                    COALESCE(dw.dwells_count, 0) AS tram_dwells_count,
+                    COALESCE(dw.avg_dwell_sec, 0.0) AS tram_avg_dwell_sec,
+                    inf.dist_to_cycleway_m,
+                    inf.safe_network_meters
+                FROM veturilo_station_infrastructure inf
+                JOIN veturilo_stations vs ON vs.station_id = inf.station_id
+                LEFT JOIN live_dwell_stats dw ON dw.stop_osm_id = inf.nearest_stop_osm_id
                 WHERE (vs.free_bikes + vs.empty_slots) > 0
             ),
             scored AS (
@@ -148,27 +113,27 @@ async def get_stations_leaderboard(top_n: int = 36):
                         -- 1. Dostępność rowerów: max 35 pkt
                         LEAST(free_bikes, 25) * 1.4
                         +
-                        -- 2. Bliskość peronu tramwajowego (0-40 pkt)
+                        -- 2. Tramwaj w pobliżu: max 40 pkt
                         CASE 
                             WHEN dist_to_tram_m IS NOT NULL 
                             THEN GREATEST(0.0, (250.0 - dist_to_tram_m) / 6.25)
                             ELSE 0.0
                         END
                         +
-                        -- 3. Ruch tramwajowy (0-25 pkt)
-                        LEAST(tram_dwells_count * 1.2, 25.0)
+                        -- 3. Aktywność wymiany pasażerskiej tramwajów: max 25 pkt
+                        LEAST(tram_dwells_count * 1.5, 25.0)
                         +
-                        -- 4. Bezpieczna infrastruktura rowerowa wokół stacji (0-30 pkt)
+                        -- 4. Sieć tras rowerowych w promieniu 150m: max 30 pkt
                         LEAST(safe_network_meters / 15.0, 30.0)
                         -
-                        -- 5. Kara za odcięcie od trasy rowerowej (>25m bez bezpiecznego zjazdu)
+                        -- 5. Kara za odcięcie od trasy (>25m do DDR):
                         CASE 
                             WHEN dist_to_cycleway_m > 25.0 
                             THEN LEAST(25.0, (dist_to_cycleway_m - 25.0))
                             ELSE 0.0
                         END
                     )::numeric, 1) AS hub_score
-                FROM spatial_match
+                FROM combined
             )
             SELECT * FROM scored
             ORDER BY hub_score DESC, free_bikes DESC
