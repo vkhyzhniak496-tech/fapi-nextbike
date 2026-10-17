@@ -1,44 +1,10 @@
-// 1. Wydzielona droga dla rowerów (zielona)
-const IS_DDR = [
-  'any',
-  ['==', ['get', 'highway'], 'cycleway'],
-  ['all', ['==', ['get', 'highway'], 'path'], ['==', ['get', 'bicycle'], 'designated']],
-  ['all', ['==', ['get', 'highway'], 'footway'], ['==', ['get', 'bicycle'], 'designated']]
-];
-
-// 2. Pas rowerowy w jezdni / kontrapas / buspas z dopuszczeniem rowerów (pomarańczowy)
-const HAS_LANE = [
-  'any',
-  ['in', ['get', 'cycleway'], ['literal', ['lane', 'opposite_lane', 'share_busway', 'track', 'opposite_track', 'yes']]],
-  ['in', ['get', 'cycleway:left'], ['literal', ['lane', 'opposite_lane', 'share_busway', 'track', 'yes']]],
-  ['in', ['get', 'cycleway:right'], ['literal', ['lane', 'opposite_lane', 'share_busway', 'track', 'yes']]],
-  ['in', ['get', 'cycleway:both'], ['literal', ['lane', 'opposite_lane', 'share_busway', 'track', 'yes']]],
-  ['==', ['get', 'oneway:bicycle'], 'no'],
-  ['==', ['get', 'cycleway:opposite'], 'yes']
-];
-
-// 3. Strefa zamieszkania / Woonerf (ciemnoniebieski)
-const IS_WOONERF = ['==', ['get', 'highway'], 'living_street'];
-
-// 4. Ulica uspokojona / Tempo 30 (jasnoniebieski)
-const IS_TEMPO30 = [
-  'all',
-  ['!', IS_DDR],
-  ['!', HAS_LANE],
-  ['!', IS_WOONERF],
-  ['any',
-    ['==', ['get', 'maxspeed'], '30'],
-    ['==', ['get', 'zone:maxspeed'], 'PL:zone30'],
-    ['==', ['get', 'highway'], 'residential']
-  ]
-];
-
 export const FILTER_RULES = {
-  ddr: IS_DDR,
-  lane: ['all', ['!', IS_DDR], HAS_LANE],
-  woonerf: ['all', ['!', IS_DDR], ['!', HAS_LANE], IS_WOONERF],
-  tempo30: IS_TEMPO30,
+  ddr: ['==', ['get', 'infra_type'], 'ddr'],
+  lane: ['==', ['get', 'infra_type'], 'lane'],
+  woonerf: ['==', ['get', 'infra_type'], 'woonerf'],
+  tempo30: ['==', ['get', 'infra_type'], 'tempo30'],
 };
+
 export function setupInfraLayers(map) {
   // 1. Ścieżki rowerowe
   map.addSource('safe-cycleways', {
@@ -53,14 +19,13 @@ export function setupInfraLayers(map) {
     layout: {'line-join': 'round', 'line-cap': 'round'},
     paint: {
       'line-color': [
-        'case',
-        FILTER_RULES.ddr,
-        '#27ae60',
-        FILTER_RULES.lane,
-        '#f39c12',
-        FILTER_RULES.woonerf,
-        '#2980b9',
-        '#3498db',
+        'match',
+        ['get', 'infra_type'],
+        'ddr', '#27ae60',
+        'lane', '#f39c12',
+        'woonerf', '#2980b9',
+        'tempo30', '#3498db',
+        '#3498db' // fallback
       ],
       'line-width': 3,
       'line-opacity': 0.85,

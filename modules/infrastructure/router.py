@@ -30,8 +30,34 @@ async def get_safe_cycleways(response: Response) -> Dict[str, Any]:
             SELECT 
                 way_id,
                 properties_json,
+                CASE 
+                    -- 1. DDR / CPR
+                    WHEN (properties_json->>'highway' = 'cycleway')
+                         OR (properties_json->>'highway' IN ('path', 'footway') AND properties_json->>'bicycle' = 'designated')
+                    THEN 'ddr'
+                    
+                    -- 2. Pas rowerowy / kontrapas / buspas
+                    WHEN (properties_json->>'cycleway' IN ('lane', 'opposite_lane', 'share_busway', 'track', 'opposite_track', 'yes'))
+                         OR (properties_json->>'cycleway:left' IN ('lane', 'opposite_lane', 'share_busway', 'track', 'yes'))
+                         OR (properties_json->>'cycleway:right' IN ('lane', 'opposite_lane', 'share_busway', 'track', 'yes'))
+                         OR (properties_json->>'cycleway:both' IN ('lane', 'opposite_lane', 'share_busway', 'track', 'yes'))
+                         OR (properties_json->>'oneway:bicycle' = 'no')
+                         OR (properties_json->>'cycleway:opposite' = 'yes')
+                         OR (properties_json ? 'cycleway')
+                         OR (properties_json ? 'cycleway:right')
+                         OR (properties_json ? 'cycleway:left')
+                    THEN 'lane'
+                    
+                    -- 3. Woonerf / Strefa zamieszkania
+                    WHEN properties_json->>'highway' = 'living_street'
+                    THEN 'woonerf'
+                    
+                    -- 4. Tempo 30 / Ulica uspokojona
+                    ELSE 'tempo30'
+                END AS infra_type,
                 ST_AsGeoJSON(geom)::json AS geometry
-            FROM cycleway_edges;
+            FROM cycleway_edges
+            WHERE geom IS NOT NULL;
         """)
 
     if not rows:
@@ -47,6 +73,9 @@ async def get_safe_cycleways(response: Response) -> Dict[str, Any]:
                 props = {}
         elif not isinstance(props, dict):
             props = {}
+
+        # Wstrzykujemy pewną, przeliczoną w bazie kategorię
+        props["infra_type"] = r["infra_type"]
 
         geom = r["geometry"]
         if isinstance(geom, str):
