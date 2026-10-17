@@ -1,12 +1,25 @@
-const IS_DDR = ['==', ['get', 'highway'], 'cycleway'];
+// 1. Wydzielona droga dla rowerów (DDR) lub ciąg pieszo-rowerowy (CPR)
+const IS_DDR = [
+  'any',
+  ['==', ['get', 'highway'], 'cycleway'],
+  ['all', ['==', ['get', 'highway'], 'path'], ['==', ['get', 'bicycle'], 'designated']],
+  ['all', ['==', ['get', 'highway'], 'footway'], ['==', ['get', 'bicycle'], 'designated']]
+];
+
+// 2. Pas rowerowy w jezdni, kontrapas lub dopuszczony pas autobusowy
 const HAS_LANE = [
   'any',
-  ['has', 'cycleway'],
-  ['has', 'cycleway:left'],
-  ['has', 'cycleway:right'],
-  ['has', 'cycleway:both'],
+  // Standardowe pasy i pasy obustronne
+  ['in', ['get', 'cycleway'], ['literal', ['lane', 'opposite_lane', 'share_busway', 'track', 'opposite_track']]],
+  ['in', ['get', 'cycleway:left'], ['literal', ['lane', 'opposite_lane', 'share_busway', 'track']]],
+  ['in', ['get', 'cycleway:right'], ['literal', ['lane', 'opposite_lane', 'share_busway', 'track']]],
+  ['in', ['get', 'cycleway:both'], ['literal', ['lane', 'opposite_lane', 'share_busway', 'track']]],
+  // Kontraruch rowerowy na ulicach jednokierunkowych
   ['==', ['get', 'oneway:bicycle'], 'no'],
+  ['==', ['get', 'cycleway:opposite'], 'yes']
 ];
+
+// 3. Strefa zamieszkania / Woonerf
 const IS_WOONERF = ['==', ['get', 'highway'], 'living_street'];
 
 export const FILTER_RULES = {
