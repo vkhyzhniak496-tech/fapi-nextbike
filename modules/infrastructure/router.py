@@ -31,33 +31,49 @@ async def get_safe_cycleways(response: Response) -> Dict[str, Any]:
                 way_id,
                 properties_json,
                 CASE 
-                    -- 1. DDR / CPR
+                    -- 1. Wydzielona, bezkolizyjna droga dla rowerów / CPR (fizycznie odseparowana)
                     WHEN (properties_json->>'highway' = 'cycleway')
-                         OR (properties_json->>'highway' IN ('path', 'footway') AND properties_json->>'bicycle' = 'designated')
+                         OR (properties_json->>'highway' IN ('path', 'footway', 'pedestrian') 
+                             AND properties_json->>'bicycle' = 'designated')
                     THEN 'ddr'
-                    
-                    -- 2. Pas rowerowy / kontrapas / buspas
-                    WHEN (properties_json->>'cycleway' IN ('lane', 'opposite_lane', 'share_busway', 'track', 'opposite_track', 'yes'))
-                         OR (properties_json->>'cycleway:left' IN ('lane', 'opposite_lane', 'share_busway', 'track', 'yes'))
-                         OR (properties_json->>'cycleway:right' IN ('lane', 'opposite_lane', 'share_busway', 'track', 'yes'))
-                         OR (properties_json->>'cycleway:both' IN ('lane', 'opposite_lane', 'share_busway', 'track', 'yes'))
-                         OR (properties_json->>'oneway:bicycle' = 'no')
-                         OR (properties_json->>'cycleway:opposite' = 'yes')
-                         OR (properties_json ? 'cycleway')
-                         OR (properties_json ? 'cycleway:right')
-                         OR (properties_json ? 'cycleway:left')
+
+                    -- 2. Dedykowany pas rowerowy lub kontrapas w jezdni
+                    -- Twarde warunki: tylko ulice miejskie (<=50 km/h), bez buspasów i bez łącznic węzłów!
+                    WHEN (
+                            properties_json->>'cycleway' IN ('lane', 'opposite_lane', 'track', 'opposite_track')
+                            OR properties_json->>'cycleway:left' IN ('lane', 'opposite_lane', 'track')
+                            OR properties_json->>'cycleway:right' IN ('lane', 'opposite_lane', 'track')
+                            OR properties_json->>'cycleway:both' IN ('lane', 'opposite_lane', 'track')
+                            OR properties_json->>'oneway:bicycle' = 'no'
+                            OR properties_json->>'cycleway:opposite' = 'yes'
+                         )
+                         AND COALESCE((properties_json->>'maxspeed')::integer, 50) <= 50
+                         AND properties_json->>'highway' NOT IN ('motorway', 'motorway_link', 'trunk', 'trunk_link', 'primary_link')
+                         AND COALESCE(properties_json->>'busway', '') NOT LIKE '%lane%'
+                         AND COALESCE(properties_json->>'cycleway', '') != 'share_busway'
                     THEN 'lane'
-                    
-                    -- 3. Woonerf / Strefa zamieszkania
+
+                    -- 3. Strefa zamieszkania / Woonerf (20 km/h z pierwszeństwem pieszych)
                     WHEN properties_json->>'highway' = 'living_street'
                     THEN 'woonerf'
-                    
-                    -- 4. Tempo 30 / Ulica uspokojona
-                    ELSE 'tempo30'
+
+                    -- 4. Ulica uspokojona / Tempo 30 (lokalne uliczki osiedlowe)
+                    WHEN (
+                            COALESCE((properties_json->>'maxspeed')::integer, 50) <= 30
+                            OR properties_json->>'zone:maxspeed' = 'PL:zone30'
+                            OR properties_json->>'highway' = 'residential'
+                         )
+                         AND properties_json->>'highway' NOT IN ('motorway', 'trunk', 'primary', 'primary_link', 'secondary_link')
+                    THEN 'tempo30'
+
+                    -- Wszystkie inne (węzły, arterie, zwykłe wielopasmówki) wypadają z bezpiecznej sieci
+                    ELSE NULL
                 END AS infra_type,
                 ST_AsGeoJSON(geom)::json AS geometry
             FROM cycleway_edges
-            WHERE geom IS NOT NULL;
+            WHERE geom IS NOT NULL
+              -- Odsiewamy na starcie autostrady i ekspresówki
+              AND properties_json->>'highway' NOT IN ('motorway', 'motorway_link');
         """)
 
     if not rows:
@@ -65,6 +81,11 @@ async def get_safe_cycleways(response: Response) -> Dict[str, Any]:
 
     features = []
     for r in rows:
+        infra_type = r["infra_type"]
+        # Jeśli segment nie spełnia kryteriów bezpieczeństwa (np. węzeł/arteria bez DDR), pomijamy go
+        if not infra_type:
+            continue
+
         props = r["properties_json"]
         if isinstance(props, str):
             try:
@@ -74,8 +95,7 @@ async def get_safe_cycleways(response: Response) -> Dict[str, Any]:
         elif not isinstance(props, dict):
             props = {}
 
-        # Wstrzykujemy pewną, przeliczoną w bazie kategorię
-        props["infra_type"] = r["infra_type"]
+        props["infra_type"] = infra_type
 
         geom = r["geometry"]
         if isinstance(geom, str):
