@@ -88,13 +88,34 @@ async def get_stations_leaderboard(top_n: int = 36):
         # 2. Zapytanie przestrzenne łączące stacje z peronami i postojami tramwajowymi
         rows = await conn.fetch("""
             WITH cluster_activity AS (
-                -- Natężenie ruchu tramwajowego per zespół przystankowy
                 SELECT 
                     cluster_name,
                     COUNT(*) AS dwells_count,
                     ROUND(AVG(duration_sec)::numeric, 1) AS avg_dwell_sec
                 FROM tram_dwell_events
                 GROUP BY cluster_name
+            ),
+            infra_match AS (
+                -- Wyliczamy dostępność bezpiecznej infrastruktury w promieniu 150m od stacji
+                SELECT 
+                    vs.station_id,
+                    -- Dystans do najbliższego bezpiecznego zjazdu
+                    MIN(ST_Distance(vs.geom_2180, ST_Transform(ce.geom, 2180))) AS dist_to_infra_m,
+                    -- Suma ważonej długości tras w buforze 150m
+                    COALESCE(SUM(
+                        CASE 
+                            WHEN ce.properties_json->>'highway' = 'cycleway' THEN 1.0
+                            WHEN ce.properties_json->>'highway' = 'living_street' THEN 0.8
+                            WHEN ce.properties_json->>'cycleway' IN ('lane', 'opposite_lane') THEN 0.7
+                            ELSE 0.5
+                        END * ST_Length(ST_Intersection(ST_Transform(ce.geom, 2180), ST_Buffer(vs.geom_2180, 150.0)))
+                    ), 0.0) AS safe_network_meters
+                FROM veturilo_stations vs
+                LEFT JOIN cycleway_edges ce 
+                    ON ST_DWithin(vs.geom_2180, ST_Transform(ce.geom, 2180), 150.0)
+                    -- Wykluczamy arterie i węzły, które już wcześniej odcięliśmy
+                    AND ce.properties_json->>'highway' NOT IN ('motorway', 'motorway_link', 'trunk', 'trunk_link', 'primary_link')
+                GROUP BY vs.station_id
             ),
             spatial_match AS (
                 SELECT 
@@ -114,10 +135,11 @@ async def get_stations_leaderboard(top_n: int = 36):
                     tp.cluster_name AS nearest_cluster,
                     ROUND(ST_Distance(vs.geom_2180, tp.geom_2180)::numeric, 0) AS dist_to_tram_m,
                     COALESCE(ca.dwells_count, 0) AS tram_dwells_count,
-                    COALESCE(ca.avg_dwell_sec, 0.0) AS tram_avg_dwell_sec
+                    COALESCE(ca.avg_dwell_sec, 0.0) AS tram_avg_dwell_sec,
+                    ROUND(im.dist_to_infra_m::numeric, 0) AS dist_to_cycleway_m,
+                    ROUND(im.safe_network_meters::numeric, 0) AS safe_network_meters
                 FROM veturilo_stations vs
                 LEFT JOIN LATERAL (
-                    -- Szukamy najbliższego peronu w promieniu 250 metrów
                     SELECT name, cluster_name, geom_2180
                     FROM tram_platforms
                     WHERE ST_DWithin(vs.geom_2180, geom_2180, 250.0)
@@ -125,24 +147,36 @@ async def get_stations_leaderboard(top_n: int = 36):
                     LIMIT 1
                 ) tp ON TRUE
                 LEFT JOIN cluster_activity ca ON ca.cluster_name = tp.cluster_name
+                LEFT JOIN infra_match im ON im.station_id = vs.station_id
                 WHERE vs.free_bikes > 0
             ),
             scored AS (
                 SELECT 
                     *,
                     ROUND((
-                        -- Waga 1: Liczba rowerów (max 45 pkt)
-                        LEAST(free_bikes, 30) * 1.5
+                        -- 1. Rowery: max 35 pkt (zmniejszona waga samej liczby rowerów)
+                        LEAST(free_bikes, 25) * 1.4
                         +
-                        -- Waga 2: Bliskość peronu tramwajowego (0-50 pkt, im bliżej tym więcej)
+                        -- 2. Bliskość peronu tramwajowego (0-40 pkt)
                         CASE 
                             WHEN dist_to_tram_m IS NOT NULL 
-                            THEN GREATEST(0.0, (250.0 - dist_to_tram_m) / 5.0)
+                            THEN GREATEST(0.0, (250.0 - dist_to_tram_m) / 6.25)
                             ELSE 0.0
                         END
                         +
-                        -- Waga 3: Aktywność postojowa tramwajów na węźle (0-35 pkt)
-                        LEAST(tram_dwells_count * 1.5, 35.0)
+                        -- 3. Aktywność tramwajów (0-25 pkt)
+                        LEAST(tram_dwells_count * 1.2, 25.0)
+                        +
+                        -- 4. Bezpieczna infrastruktura rowerowa (0-30 pkt):
+                        -- Gęstość sieci w promieniu 150m (np. 300m tras DDR = 30 pkt)
+                        LEAST(safe_network_meters / 10.0, 30.0)
+                        -
+                        -- 5. Kara za odcięcie od drogi rowerowej (>30m bez bezpiecznego wjazdu):
+                        CASE 
+                            WHEN dist_to_cycleway_m IS NULL OR dist_to_cycleway_m > 30.0 
+                            THEN LEAST(25.0, COALESCE(dist_to_cycleway_m - 30.0, 25.0))
+                            ELSE 0.0
+                        END
                     )::numeric, 1) AS hub_score
                 FROM spatial_match
             )
