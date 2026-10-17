@@ -69,13 +69,17 @@ async def ingest_tram_batch(items: List[Dict[str, Any]]) -> int:
                 WHERE ST_DWithin(ST_Transform(e.geom, 2180), r.geom_2180, 25.0)
             ),
             with_platform AS (
-                -- 2. Sprawdzenie, czy rzut na szynę jest w promieniu 25m od peronu
+                -- 2. Sprawdzenie peronu oraz pobranie DOTYCHCZASOWEGO stanu wozu z tram_live_state
                 SELECT 
                     s.*,
                     p.osm_id AS plat_osm_id,
                     p.name AS plat_name,
-                    p.cluster_name AS plat_cluster
+                    p.cluster_name AS plat_cluster,
+                    prev.current_stop_osm_id AS prev_stop_id,
+                    prev.dwell_start_time AS prev_dwell_start,
+                    ST_Distance(s.snapped_geom, prev.snapped_geom_2180) AS dist_from_prev
                 FROM snapped s
+                LEFT JOIN tram_live_state prev ON prev.vehicle_number = s.v_num
                 LEFT JOIN LATERAL (
                     SELECT osm_id, name, cluster_name
                     FROM tram_platforms
@@ -84,91 +88,65 @@ async def ingest_tram_batch(items: List[Dict[str, Any]]) -> int:
                     LIMIT 1
                 ) p ON TRUE
             ),
-            upserted AS (
-                -- 3. Aktualizacja stanu wozów i detekcja opuszczenia przystanku
-                INSERT INTO tram_live_state AS tls (
-                    vehicle_number, line, brigade, raw_geom, 
-                    snapped_geom_2180, dist_to_track, nearest_way_id, 
-                    gps_time, current_stop_osm_id, dwell_start_time
+            completed_dwells AS (
+                -- 3. Zdarzenia zakończone: wóz miał zarejestrowany start postoju, ale ruszył (>4m) lub opuścił słupek
+                INSERT INTO tram_dwell_events (
+                    vehicle_number, line, brigade, stop_name, cluster_name, 
+                    stop_osm_id, arrival_time, departure_time, duration_sec
                 )
                 SELECT 
-                    w.v_num, w.line, w.brigade, w.raw_geom, 
-                    w.snapped_geom, w.track_dist, w.track_id, 
+                    w.v_num,
+                    w.line,
+                    w.brigade,
+                    plat.name,
+                    plat.cluster_name,
+                    w.prev_stop_id,
+                    w.prev_dwell_start,
                     w.gps_time,
-                    CASE 
-                        WHEN w.plat_osm_id IS NOT NULL THEN w.plat_osm_id
-                        ELSE NULL 
-                    END,
-                    CASE 
-                        WHEN w.plat_osm_id IS NOT NULL THEN w.gps_time
-                        ELSE NULL 
-                    END
+                    ROUND(EXTRACT(EPOCH FROM (w.gps_time - w.prev_dwell_start))::numeric, 1)
                 FROM with_platform w
-                ON CONFLICT (vehicle_number) DO UPDATE SET
-                    line = EXCLUDED.line,
-                    brigade = EXCLUDED.brigade,
-                    raw_geom = EXCLUDED.raw_geom,
-                    snapped_geom_2180 = EXCLUDED.snapped_geom_2180,
-                    dist_to_track = EXCLUDED.dist_to_track,
-                    nearest_way_id = EXCLUDED.nearest_way_id,
-                    
-                    -- Jeśli wóz ruszył lub opuścił strefę peronu, zerujemy stan
-                    current_stop_osm_id = CASE
-                        WHEN EXCLUDED.current_stop_osm_id IS NOT NULL 
-                             AND ST_Distance(EXCLUDED.snapped_geom_2180, tls.snapped_geom_2180) < 4.0 
-                        THEN COALESCE(tls.current_stop_osm_id, EXCLUDED.current_stop_osm_id)
-                        WHEN EXCLUDED.current_stop_osm_id IS NOT NULL 
-                             AND tls.current_stop_osm_id IS NULL
-                        THEN EXCLUDED.current_stop_osm_id
-                        ELSE NULL
-                    END,
-                    
-                    dwell_start_time = CASE
-                        WHEN EXCLUDED.current_stop_osm_id IS NOT NULL 
-                             AND ST_Distance(EXCLUDED.snapped_geom_2180, tls.snapped_geom_2180) < 4.0 
-                        THEN COALESCE(tls.dwell_start_time, EXCLUDED.dwell_start_time)
-                        WHEN EXCLUDED.current_stop_osm_id IS NOT NULL 
-                             AND tls.current_stop_osm_id IS NULL
-                        THEN EXCLUDED.dwell_start_time
-                        ELSE NULL
-                    END,
-                    
-                    gps_time = EXCLUDED.gps_time,
-                    updated_at = CURRENT_TIMESTAMP
-                RETURNING 
-                    tls.vehicle_number, 
-                    tls.line, 
-                    tls.brigade,
-                    OLD.current_stop_osm_id AS prev_stop,
-                    OLD.dwell_start_time AS prev_start,
-                    EXCLUDED.gps_time AS curr_time,
-                    tls.current_stop_osm_id AS curr_stop
+                JOIN tram_platforms plat ON plat.osm_id = w.prev_stop_id
+                WHERE w.prev_stop_id IS NOT NULL 
+                  AND (w.plat_osm_id IS NULL OR w.plat_osm_id != w.prev_stop_id OR w.dist_from_prev >= 4.0)
+                  AND EXTRACT(EPOCH FROM (w.gps_time - w.prev_dwell_start)) BETWEEN 8.0 AND 180.0
+                ON CONFLICT (vehicle_number, stop_osm_id, arrival_time) DO NOTHING
             )
-            -- 4. Jeśli wóz właśnie opuścił peron, a postój trwał 8-180s, zapisujemy zdarzenie
-            INSERT INTO tram_dwell_events (
-                vehicle_number, line, brigade, stop_name, cluster_name, 
-                stop_osm_id, arrival_time, departure_time, duration_sec
+            -- 4. Aktualizacja stanu bieżącego w tram_live_state
+            INSERT INTO tram_live_state AS tls (
+                vehicle_number, line, brigade, raw_geom, 
+                snapped_geom_2180, dist_to_track, nearest_way_id, 
+                gps_time, current_stop_osm_id, dwell_start_time
             )
             SELECT 
-                u.vehicle_number,
-                u.line,
-                u.brigade,
-                p.name,
-                p.cluster_name,
-                u.prev_stop,
-                u.prev_start,
-                u.curr_time,
-                ROUND(EXTRACT(EPOCH FROM (u.curr_time - u.prev_start))::numeric, 1)
-            FROM upserted u
-            JOIN tram_platforms p ON p.osm_id = u.prev_stop
-            WHERE u.prev_stop IS NOT NULL 
-              AND (u.curr_stop IS NULL OR u.curr_stop != u.prev_stop)
-              AND EXTRACT(EPOCH FROM (u.curr_time - u.prev_start)) BETWEEN 8.0 AND 180.0
-            ON CONFLICT (vehicle_number, stop_osm_id, arrival_time) DO NOTHING;
+                w.v_num, w.line, w.brigade, w.raw_geom, 
+                w.snapped_geom, w.track_dist, w.track_id, 
+                w.gps_time,
+                -- Ustalenie czy wóz stoi na przystanku
+                CASE 
+                    WHEN w.plat_osm_id IS NOT NULL AND (w.dist_from_prev IS NULL OR w.dist_from_prev < 4.0)
+                    THEN w.plat_osm_id
+                    ELSE NULL 
+                END,
+                CASE 
+                    WHEN w.plat_osm_id IS NOT NULL AND (w.dist_from_prev IS NULL OR w.dist_from_prev < 4.0)
+                    THEN COALESCE(w.prev_dwell_start, w.gps_time)
+                    ELSE NULL 
+                END
+            FROM with_platform w
+            ON CONFLICT (vehicle_number) DO UPDATE SET
+                line = EXCLUDED.line,
+                brigade = EXCLUDED.brigade,
+                raw_geom = EXCLUDED.raw_geom,
+                snapped_geom_2180 = EXCLUDED.snapped_geom_2180,
+                dist_to_track = EXCLUDED.dist_to_track,
+                nearest_way_id = EXCLUDED.nearest_way_id,
+                current_stop_osm_id = EXCLUDED.current_stop_osm_id,
+                dwell_start_time = EXCLUDED.dwell_start_time,
+                gps_time = EXCLUDED.gps_time,
+                updated_at = CURRENT_TIMESTAMP;
         """, json.dumps(prepared))
 
     return len(prepared)
-
 
 async def tram_telemetry_poller_task() -> None:
     if not settings.WAW_API_KEY:
