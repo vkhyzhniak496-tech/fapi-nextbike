@@ -1,4 +1,4 @@
-// 1. Wydzielona droga dla rowerów (DDR) lub ciąg pieszo-rowerowy (CPR)
+// 1. Wydzielona droga dla rowerów (zielona)
 const IS_DDR = [
   'any',
   ['==', ['get', 'highway'], 'cycleway'],
@@ -6,29 +6,39 @@ const IS_DDR = [
   ['all', ['==', ['get', 'highway'], 'footway'], ['==', ['get', 'bicycle'], 'designated']]
 ];
 
-// 2. Pas rowerowy w jezdni, kontrapas lub dopuszczony pas autobusowy
+// 2. Pas rowerowy w jezdni / kontrapas / buspas z dopuszczeniem rowerów (pomarańczowy)
 const HAS_LANE = [
   'any',
-  // Standardowe pasy i pasy obustronne
-  ['in', ['get', 'cycleway'], ['literal', ['lane', 'opposite_lane', 'share_busway', 'track', 'opposite_track']]],
-  ['in', ['get', 'cycleway:left'], ['literal', ['lane', 'opposite_lane', 'share_busway', 'track']]],
-  ['in', ['get', 'cycleway:right'], ['literal', ['lane', 'opposite_lane', 'share_busway', 'track']]],
-  ['in', ['get', 'cycleway:both'], ['literal', ['lane', 'opposite_lane', 'share_busway', 'track']]],
-  // Kontraruch rowerowy na ulicach jednokierunkowych
+  ['in', ['get', 'cycleway'], ['literal', ['lane', 'opposite_lane', 'share_busway', 'track', 'opposite_track', 'yes']]],
+  ['in', ['get', 'cycleway:left'], ['literal', ['lane', 'opposite_lane', 'share_busway', 'track', 'yes']]],
+  ['in', ['get', 'cycleway:right'], ['literal', ['lane', 'opposite_lane', 'share_busway', 'track', 'yes']]],
+  ['in', ['get', 'cycleway:both'], ['literal', ['lane', 'opposite_lane', 'share_busway', 'track', 'yes']]],
   ['==', ['get', 'oneway:bicycle'], 'no'],
   ['==', ['get', 'cycleway:opposite'], 'yes']
 ];
 
-// 3. Strefa zamieszkania / Woonerf
+// 3. Strefa zamieszkania / Woonerf (ciemnoniebieski)
 const IS_WOONERF = ['==', ['get', 'highway'], 'living_street'];
+
+// 4. Ulica uspokojona / Tempo 30 (jasnoniebieski)
+const IS_TEMPO30 = [
+  'all',
+  ['!', IS_DDR],
+  ['!', HAS_LANE],
+  ['!', IS_WOONERF],
+  ['any',
+    ['==', ['get', 'maxspeed'], '30'],
+    ['==', ['get', 'zone:maxspeed'], 'PL:zone30'],
+    ['==', ['get', 'highway'], 'residential']
+  ]
+];
 
 export const FILTER_RULES = {
   ddr: IS_DDR,
   lane: ['all', ['!', IS_DDR], HAS_LANE],
   woonerf: ['all', ['!', IS_DDR], ['!', HAS_LANE], IS_WOONERF],
-  tempo30: ['all', ['!', IS_DDR], ['!', HAS_LANE], ['!', IS_WOONERF]],
+  tempo30: IS_TEMPO30,
 };
-
 export function setupInfraLayers(map) {
   // 1. Ścieżki rowerowe
   map.addSource('safe-cycleways', {
