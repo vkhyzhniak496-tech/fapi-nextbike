@@ -183,7 +183,7 @@ async def save_tram_tracks_to_postgis(elements: List[Dict[str, Any]]) -> int:
 
     for el in elements:
         if el.get("type") == "way" and "geometry" in el:
-            way_id = el["id"]
+            way_id = f"way/{el['id']}"
             if way_id in seen_ways:
                 continue
             seen_ways.add(way_id)
@@ -197,8 +197,11 @@ async def save_tram_tracks_to_postgis(elements: List[Dict[str, Any]]) -> int:
                 continue
 
             linestring_wkt = _coords_to_linestring_wkt(coords)
-            line_name = tags.get("name") or tags.get("ref") or f"Way/{way_id}"
-            records.append((line_name, linestring_wkt))
+            records.append((
+                way_id,
+                json.dumps(tags, ensure_ascii=False),
+                linestring_wkt,
+            ))
 
     if not records:
         return 0
@@ -206,84 +209,64 @@ async def save_tram_tracks_to_postgis(elements: List[Dict[str, Any]]) -> int:
     pool = get_pool()
     async with pool.acquire() as conn:
         async with conn.transaction():
-            await conn.execute("TRUNCATE TABLE tram_tracks RESTART IDENTITY CASCADE;")
+            # Czyścimy właściwą tabelę tram_edges zamiast nieistniejącej tram_tracks:
+            await conn.execute("DELETE FROM tram_edges;")
             await conn.executemany("""
-                INSERT INTO tram_tracks (line_name, geom)
+                INSERT INTO tram_edges (way_id, properties_json, geom, length_m)
                 VALUES (
                     $1, 
-                    ST_Transform(ST_SetSRID(ST_GeomFromText($2), 4326), 2180)
+                    $2::jsonb, 
+                    ST_SetSRID(ST_GeomFromText($3), 4326),
+                    ROUND(ST_Length(ST_Transform(ST_SetSRID(ST_GeomFromText($3), 4326), 2180))::numeric, 1)
                 );
             """, records)
 
     return len(records)
 
 async def save_tram_platforms_to_postgis(elements: List[Dict[str, Any]]) -> int:
-    raw_nodes = []
+    records = []
     for el in elements:
         if el.get("type") == "node" and "lon" in el and "lat" in el:
-            platform_id = str(el["id"])
-            full_name = el.get("tags", {}).get("name") or "Przystanek"
-            parts = full_name.rsplit(" ", 1)
-            stop_name = parts[0]
-            stop_nr = parts[1] if len(parts) > 1 and parts[1].isdigit() else "01"
-            
+            osm_id = f"node/{el['id']}"
+            name = el.get("tags", {}).get("name") or "Przystanek"
             lon = float(el["lon"])
             lat = float(el["lat"])
             point_wkt = f"POINT({lon} {lat})"
-            raw_nodes.append((platform_id, stop_name, stop_nr, point_wkt))
+            cluster = name.rsplit(" ", 1)[0] if name else name
 
-    if not raw_nodes:
+            records.append((osm_id, name, cluster, lat, lon, point_wkt))
+
+    if not records:
         return 0
 
     pool = get_pool()
     async with pool.acquire() as conn:
         async with conn.transaction():
-            await conn.execute("TRUNCATE TABLE tram_platforms CASCADE;")
-            # Zuordnung zum nächstgelegenen Gleis und Berechnung des Bahnsteigintervalls (~40m Länge)
             await conn.executemany("""
-                WITH point_geom AS (
-                    SELECT 
-                        $1::varchar AS p_id,
-                        $2::text AS s_name,
-                        $3::varchar AS s_nr,
-                        ST_Transform(ST_SetSRID(ST_GeomFromText($4), 4326), 2180) AS geom_2180
-                ),
-                matched_track AS (
-                    SELECT 
-                        p.p_id,
-                        p.s_name,
-                        p.s_nr,
-                        p.geom_2180,
-                        t.track_id,
-                        ST_LineLocatePoint(t.geom, p.geom_2180) AS frac,
-                        (40.0 / GREATEST(ST_Length(t.geom), 1.0)) AS delta_frac
-                    FROM point_geom p
-                    CROSS JOIN LATERAL (
-                        SELECT track_id, geom 
-                        FROM tram_tracks 
-                        ORDER BY geom <-> p.geom_2180 
-                        LIMIT 1
-                    ) t
-                    WHERE ST_DWithin(t.geom, p.geom_2180, 25.0)
-                )
                 INSERT INTO tram_platforms (
-                    platform_id, stop_name, stop_nr, track_id, 
-                    track_fraction_start, track_fraction_end, geom
+                    osm_id, name, cluster_name, lat, lon, geom, geom_2180, updated_at
                 )
-                SELECT 
-                    p_id,
-                    s_name,
-                    s_nr,
-                    track_id,
-                    GREATEST(0.0, frac - (delta_frac / 2.0)),
-                    LEAST(1.0, frac + (delta_frac / 2.0)),
-                    geom_2180
-                FROM matched_track
-                ON CONFLICT (platform_id) DO NOTHING;
-            """, raw_nodes)
+                VALUES (
+                    $1, 
+                    $2, 
+                    $3, 
+                    $4,
+                    $5,
+                    ST_SetSRID(ST_GeomFromText($6), 4326),
+                    ST_Transform(ST_SetSRID(ST_GeomFromText($6), 4326), 2180),
+                    CURRENT_TIMESTAMP
+                )
+                ON CONFLICT (osm_id) DO UPDATE SET
+                    name = EXCLUDED.name,
+                    cluster_name = EXCLUDED.cluster_name,
+                    lat = EXCLUDED.lat,
+                    lon = EXCLUDED.lon,
+                    geom = EXCLUDED.geom,
+                    geom_2180 = EXCLUDED.geom_2180,
+                    updated_at = CURRENT_TIMESTAMP;
+            """, records)
 
-    return len(raw_nodes)
-
+    return len(records)
 
 async def sync_cycleways_task(custom_bbox: Optional[str] = None):
     logger.info("[INFRA_GIS] Synchronizacja dróg rowerowych z OSM do PostGIS...")
