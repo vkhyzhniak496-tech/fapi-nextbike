@@ -28,7 +28,7 @@ logger = logging.getLogger("main")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 1. Start połączenia z bazą danych PostgreSQL/PostGIS
+    # 1. Start połączenia z bazą danych PostgreSQL / PostGIS
     logger.info("Łączenie z bazą PostgreSQL / PostGIS...")
     await init_db_pool()
 
@@ -100,12 +100,14 @@ async def tram_analytics_page():
     return HTMLResponse(template_path.read_text(encoding="utf-8"))
 
 
-@app.get("/analytics/tram-corridor", response_class=HTMLResponse)
-async def tram_corridor_view():
-    html_file = RESOURCES_DIR / "templates" / "tram_corridor.html"
-    if not html_file.exists():
-        raise HTTPException(status_code=404, detail="Brak pliku tram_corridor.html")
-    return HTMLResponse(html_file.read_text(encoding="utf-8"))
+# --- WIDOK LEADERBOARD (NOWY) ---
+@app.get("/analytics/leaderboard", response_class=HTMLResponse)
+@app.get("/leaderboard", response_class=HTMLResponse)
+async def leaderboard_page():
+    template_path = RESOURCES_DIR / "templates" / "leaderboard.html"
+    if not template_path.exists():
+        raise HTTPException(status_code=404, detail="Brak pliku leaderboard.html w katalogu templates")
+    return HTMLResponse(template_path.read_text(encoding="utf-8"))
 
 
 @app.get("/stations")
@@ -114,8 +116,8 @@ async def list_stations():
     pool = get_pool()
     async with pool.acquire() as conn:
         rows = await conn.fetch("""
-            SELECT station_id, name, lat, lon 
-            FROM stations 
+            SELECT station_id, name, lat, lng 
+            FROM veturilo_stations 
             ORDER BY name ASC;
         """)
         return [dict(r) for r in rows]
@@ -144,4 +146,3 @@ async def custom_http_exception_handler(request: Request, exc: StarletteHTTPExce
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=False)
-    
