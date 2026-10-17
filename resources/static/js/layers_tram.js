@@ -5,7 +5,7 @@ export function setupTramLiveLayers(map) {
         data: { type: 'FeatureCollection', features: [] }
     });
 
-    // 2. Kółko pozycji wozu (dokładnie na szynie torowiska)
+    // 2. Kółko pozycji wozu (na osi torowiska)
     map.addLayer({
         id: 'tram-live-layer',
         type: 'circle',
@@ -37,36 +37,6 @@ export function setupTramLiveLayers(map) {
             'text-halo-width': 2.5
         }
     });
-
-    // 4. Prosty popup z danymi identyfikacyjnymi wozu (bez prędkości)
-    map.on('click', 'tram-live-layer', (e) => {
-        const p = e.features[0].properties;
-        const coords = e.features[0].geometry.coordinates.slice();
-        const vNum = p.vehicle_number || p.id || '---';
-
-        new maplibregl.Popup({ offset: 8 })
-            .setLngLat(coords)
-            .setHTML(`
-                <div style="font-family: sans-serif; min-width: 130px;">
-                    <div style="font-size: 15px; font-weight: 800; color: #8e44ad; margin-bottom: 6px;">
-                        🚋 Linia ${p.line}
-                    </div>
-                    <div style="font-size: 13px; color: #334155; margin-bottom: 2px;">
-                        Wóz: <b>#${vNum}</b>
-                    </div>
-                    <div style="font-size: 12px; color: #64748b; margin-bottom: 4px;">
-                        Brygada: <b>${p.brigade || '-'}</b>
-                    </div>
-                    <div style="font-size: 10px; color: #94a3b8; border-top: 1px solid #f1f5f9; padding-top: 4px;">
-                        GPS: ${p.time || ''}
-                    </div>
-                </div>
-            `)
-            .addTo(map);
-    });
-
-    map.on('mouseenter', 'tram-live-layer', () => { map.getCanvas().style.cursor = 'pointer'; });
-    map.on('mouseleave', 'tram-live-layer', () => { map.getCanvas().style.cursor = ''; });
 }
 
 export async function fetchLiveTrams(map) {

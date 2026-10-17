@@ -23,8 +23,7 @@ export function initMapInstance(containerId = 'map', onMapReady) {
     });
 
     map.on('click', (e) => {
-        const interactiveLayers = ['stations-point', 'tram-live-layer'].filter(id => map.getLayer(id));
-        const f = map.queryRenderedFeatures(e.point, { layers: interactiveLayers });
+    const interactiveLayers = ['stations-point'].filter(id => map.getLayer(id));        const f = map.queryRenderedFeatures(e.point, { layers: interactiveLayers });
         
         if (!f.length) {
             const legend = document.getElementById('legend');
