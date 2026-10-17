@@ -12,14 +12,14 @@
             <div>
                 <h1>Ranking Węzłów Przesiadkowych</h1>
                 <div style="font-size: 13px; color: #64748b; margin-top: 4px;">
-                    Indeks przestrzenny PostGIS: dostępność rowerów + bliskość peronu + natężenie postojów tramwajów
+                    Indeks PostGIS: rowery + bliskość tramwaju + postoje ZTM + bezpieczna sieć DDR
                 </div>
             </div>
             <a href="/" class="btn-map">&larr; Powrót do mapy</a>
         </div>
 
         <div class="section-title">
-            <span>Najlepsze punkty przesiadkowe (Bike &amp; Tram Hub Score)</span>
+            <span>Najlepsze punkty multimodalne (Bike &amp; Tram Hub Score)</span>
         </div>
 
         <div id="hubs-grid" class="cards-grid">
@@ -45,11 +45,19 @@
                     const hasTram = st.nearest_stop_name !== null;
                     const tramBadge = hasTram 
                         ? `<div style="margin-top: 8px; font-size: 12px; color: #4a154b; background: rgba(59, 1, 65, 0.06); padding: 6px 10px; border-radius: 6px; border: 1px solid rgba(59, 1, 65, 0.12);">
-                             🚋 Peron: <b>${st.nearest_stop_name}</b> (${st.dist_to_tram_m} m)<br>
+                             🚋 Tramwaj: <b>${st.nearest_stop_name}</b> (${st.dist_to_tram_m} m)<br>
                              <span style="font-size: 11px; color: #64748b;">Zarejestrowane postoje: <b>${st.tram_dwells_count}</b> (śr. ${st.tram_avg_dwell_sec}s)</span>
                            </div>`
-                        : `<div style="margin-top: 8px; font-size: 12px; color: #94a3b8; padding: 6px 10px;">
+                        : `<div style="margin-top: 8px; font-size: 12px; color: #94a3b8; padding: 4px 6px;">
                              Brak peronu tramwajowego w promieniu 250 m
+                           </div>`;
+
+                    const infraBadge = st.dist_to_cycleway_m <= 25
+                        ? `<div style="margin-top: 6px; font-size: 12px; color: #166534; background: rgba(34, 197, 94, 0.1); padding: 5px 10px; border-radius: 6px; border: 1px solid rgba(34, 197, 94, 0.2);">
+                             🟢 <b>Bezpieczny zjazd:</b> DDR w odległości ${st.dist_to_cycleway_m} m (${st.safe_network_meters} m tras wokół)
+                           </div>`
+                        : `<div style="margin-top: 6px; font-size: 12px; color: #991b1b; background: rgba(239, 68, 68, 0.08); padding: 5px 10px; border-radius: 6px; border: 1px solid rgba(239, 68, 68, 0.2);">
+                             ⚠️ <b>Odcięcie od DDR:</b> ${st.dist_to_cycleway_m} m do bezpiecznej trasy
                            </div>`;
 
                     return `
@@ -66,6 +74,7 @@
                                 <span>🅿️ Wolne stojaki: <b>${st.empty_slots}</b></span>
                             </div>
                             ${tramBadge}
+                            ${infraBadge}
                             <div class="teleport-hint">Pokaż na mapie &rarr;</div>
                         </div>
                     `;
