@@ -15,7 +15,7 @@
                     Indeks PostGIS: rowery + bliskość tramwaju + postoje ZTM + bezpieczna sieć DDR
                 </div>
             </div>
-            <a href="/" class="btn-map">&larr; Powrót do mapy</a>
+            <a href="/map" class="btn-map">&larr; Powrót do mapy</a>
         </div>
 
         <div class="section-title">
@@ -61,7 +61,7 @@
                            </div>`;
 
                     return `
-                        <div class="station-card" onclick="window.location.href='/?station=${encodeURIComponent(st.id)}&lat=${st.lat}&lng=${st.lng}'">
+                        <div class="station-card" onclick="window.location.href='/map?station=${encodeURIComponent(st.id)}&lat=${st.lat}&lng=${st.lng}'">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                 <span style="font-size: 11px; font-weight: 800; color: #007cbf; background: rgba(0, 124, 191, 0.1); padding: 2px 8px; border-radius: 99px;">
                                     #${idx + 1} • SCORE: ${st.hub_score} pkt
@@ -88,4 +88,3 @@
         loadLeaderboard();
     </script>
 </body>
-</html>

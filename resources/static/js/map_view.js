@@ -53,6 +53,20 @@ function bindUiEvents() {
     document.getElementById('filter-trams')?.addEventListener('change', toggleTramTracks);
 }
 
+function focusFromUrlCoords(mapInstance) {
+    const params = new URLSearchParams(window.location.search);
+    const lat = parseFloat(params.get('lat'));
+    const lng = parseFloat(params.get('lng'));
+    if (!isNaN(lat) && !isNaN(lng)) {
+        mapInstance.flyTo({
+            center: [lng, lat],
+            zoom: 16.5,
+            speed: 1.6,
+            essential: true
+        });
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     bindUiEvents();
 
@@ -61,6 +75,9 @@ document.addEventListener('DOMContentLoaded', () => {
         setupInfraLayers(mapInstance);
         setupTramLiveLayers(mapInstance);
         setupBikeLayers(mapInstance);
+
+        // Natychmiastowy przelot po współrzędnych z URL (jeśli przekazano z Leaderboardu)
+        focusFromUrlCoords(mapInstance);
 
         // Cykliczne pobieranie danych
         const initialStations = await fetchStations(mapInstance);
