@@ -29,6 +29,20 @@ async def get_warsaw_bikes_live():
         "features": []
     }
 
+@router.get("/analytics/station/{station_id}/chart.png")
+async def get_station_chart_endpoint(station_id: str, name: str = "Stacja"):
+    """
+    Pobiera wyrenderowany w oddzielnym module wykres PNG i zwraca go do popupu MapLibre.
+    """
+    img_bytes = await generate_station_chart(station_id=station_id, station_name=name)
+    if not img_bytes:
+        raise HTTPException(status_code=404, detail="Brak danych do wygenerowania wykresu dla podanej stacji")
+
+    return Response(
+        content=img_bytes,
+        media_type="image/png",
+        headers={"Cache-Control": "public, max-age=30"}
+    )
 
 # --- 2. RANKING HUBÓW ---
 @router.get("/bikes/leaderboard")
