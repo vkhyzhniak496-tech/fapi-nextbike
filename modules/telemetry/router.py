@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 # Jeśli dopisujesz do istniejącego routera:
 router = APIRouter(prefix="/network/tram", tags=["Tram Telemetry"])
 
-ZTM_API_KEY = os.getenv("ZTM_API_KEY") or os.getenv("WARSAW_API_KEY") or os.getenv("API_KEY")
+ZTM_API_KEY = os.getenv("ZTM_API_KEY") or os.getenv("WAW_API_KEY") or os.getenv("API_KEY")
 ROUTES_URL = "https://api.um.warszawa.pl/api/action/public_transport_routes/"
 STOPS_URL = "https://api.um.warszawa.pl/api/action/dbtimetable_get"
 DICT_URL = "https://api.um.warszawa.pl/api/action/public_transport_dictionary/"
