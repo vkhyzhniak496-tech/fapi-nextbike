@@ -1,10 +1,16 @@
 import os
+import json
 import logging
+from pathlib import Path
 from typing import Any, Dict
 from fastapi import APIRouter, BackgroundTasks, Response, HTTPException, status
 import httpx
+from dotenv import load_dotenv
 
 from core.database import get_pool
+
+# Pewne ładowanie .env niezależnie od katalogu uruchomienia procesu
+load_dotenv()
 
 logger = logging.getLogger(__name__)
 
@@ -17,9 +23,163 @@ DICT_URL = "https://api.um.warszawa.pl/api/action/public_transport_dictionary/"
 STOPS_RESOURCE_ID = "ab75c33d-3a26-4342-b36a-6e5fef0a3ac3"
 
 
+# --- 1. ENDPOINTY OPERACYJNE / TELEMETRIA ---
+
+@router.get("/live")
+async def get_live_trams(response: Response) -> Dict[str, Any]:
+    """
+    Zwraca bieżącą pozycję wszystkich tramwajów zrzutowanych na tory (PostGIS)
+    w standardzie GeoJSON FeatureCollection.
+    """
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("""
+            SELECT 
+                vehicle_number,
+                line,
+                brigade,
+                speed_kmh,
+                dist_to_track,
+                gps_time,
+                ST_AsGeoJSON(ST_Transform(snapped_geom_2180, 4326))::json AS geometry
+            FROM tram_live_state
+            WHERE updated_at > NOW() - INTERVAL '5 minutes';
+        """)
+
+    features = []
+    for r in rows:
+        geom = r["geometry"]
+        if isinstance(geom, str):
+            try:
+                geom = json.loads(geom)
+            except Exception:
+                geom = None
+
+        if geom:
+            features.append({
+                "type": "Feature",
+                "id": r["vehicle_number"],
+                "properties": {
+                    "vehicle_number": r["vehicle_number"],
+                    "line": r["line"],
+                    "brigade": r["brigade"],
+                    "speed_kmh": r["speed_kmh"],
+                    "dist_to_track": r["dist_to_track"],
+                    "gps_time": r["gps_time"].isoformat() if r["gps_time"] else None,
+                },
+                "geometry": geom,
+            })
+
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    return {
+        "type": "FeatureCollection",
+        "generator": "postgis-tram-snapper",
+        "total_active_trams": len(features),
+        "features": features,
+    }
+
+
+@router.get("/dwells/all-stops")
+async def get_all_stops_dwell_stats(response: Response) -> Dict[str, Any]:
+    """
+    Agreguje sfinalizowane postoje z tram_dwell_events i łączy je
+    z geometrią peronów tram_platforms pod interaktywny widok mapy.
+    """
+    pool = get_pool()
+    async with pool.acquire() as conn:
+        rows = await conn.fetch("""
+            WITH per_line AS (
+                -- 1. Średnia i liczba prób per peron oraz linia
+                SELECT 
+                    stop_osm_id,
+                    line,
+                    COUNT(*) AS line_samples,
+                    ROUND(AVG(duration_sec)::numeric, 1) AS line_avg_dwell
+                FROM tram_dwell_events
+                GROUP BY stop_osm_id, line
+            ),
+            lines_agg AS (
+                -- 2. Złożenie tablicy obiektów linii pod popup w przeglądarce
+                SELECT 
+                    stop_osm_id,
+                    json_agg(json_build_object(
+                        'line', line,
+                        'avg_dwell_sec', line_avg_dwell,
+                        'samples', line_samples
+                    ) ORDER BY line ASC) AS lines_json
+                FROM per_line
+                GROUP BY stop_osm_id
+            ),
+            stop_totals AS (
+                -- 3. Łączna średnia i suma prób dla całego peronu
+                SELECT 
+                    stop_osm_id,
+                    stop_name,
+                    cluster_name,
+                    ROUND(AVG(duration_sec)::numeric, 1) AS avg_dwell,
+                    COUNT(*) AS total_samples
+                FROM tram_dwell_events
+                GROUP BY stop_osm_id, stop_name, cluster_name
+            )
+            SELECT 
+                p.osm_id,
+                st.stop_name,
+                COALESCE(st.cluster_name, p.cluster_name, st.stop_name) AS cluster_name,
+                st.avg_dwell,
+                st.total_samples,
+                la.lines_json,
+                ST_AsGeoJSON(ST_Transform(p.geom_2180, 4326))::json AS geometry
+            FROM stop_totals st
+            JOIN lines_agg la ON la.stop_osm_id = st.stop_osm_id
+            JOIN tram_platforms p ON p.osm_id = st.stop_osm_id
+            WHERE p.geom_2180 IS NOT NULL
+            ORDER BY st.total_samples DESC;
+        """)
+
+    features = []
+    for r in rows:
+        geom = r["geometry"]
+        if isinstance(geom, str):
+            try:
+                geom = json.loads(geom)
+            except Exception:
+                geom = None
+
+        if geom:
+            lines_val = r["lines_json"]
+            if isinstance(lines_val, str):
+                try:
+                    lines_val = json.loads(lines_val)
+                except Exception:
+                    lines_val = []
+
+            features.append({
+                "type": "Feature",
+                "id": r["osm_id"],
+                "geometry": geom,
+                "properties": {
+                    "stop_name": r["stop_name"],
+                    "cluster_name": r["cluster_name"],
+                    "avg_dwell_sec": float(r["avg_dwell"]),
+                    "samples_count": int(r["total_samples"]),
+                    "lines_json": lines_val,
+                },
+            })
+
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    return {
+        "type": "FeatureCollection",
+        "total_stops": len(features),
+        "features": features,
+    }
+
+
+# --- 2. ZADANIA SYNCHRONIZACJI SŁOWNIKÓW ZTM ---
+
 async def run_ztm_dictionary_sync():
     """Zadanie w tle: pobiera słowniki ZTM i aktualizuje tabele w PostgreSQL."""
-    if not WAW_API_KEY:
+    key = os.getenv("WAW_API_KEY") or os.getenv("API_KEY")
+    if not key:
         logger.error("Brak klucza WAW_API_KEY w środowisku (.env)!")
         return
 
@@ -34,7 +194,7 @@ async def run_ztm_dictionary_sync():
     async with httpx.AsyncClient(timeout=90.0, follow_redirects=True, headers=headers) as client:
         # 1. Słownik pojęć i ulic
         try:
-            resp_dict = await client.get(DICT_URL, params={"apikey": WAW_API_KEY})
+            resp_dict = await client.get(DICT_URL, params={"apikey": key})
             if resp_dict.status_code == 200:
                 dict_payload = resp_dict.json().get("result", {})
                 dict_rows = []
@@ -68,7 +228,7 @@ async def run_ztm_dictionary_sync():
 
         # 2. Oficjalne trasy (tram_route_patterns)
         try:
-            resp_routes = await client.get(ROUTES_URL, params={"apikey": WAW_API_KEY})
+            resp_routes = await client.get(ROUTES_URL, params={"apikey": key})
             if resp_routes.status_code == 200:
                 routes_data = resp_routes.json().get("result", {})
                 route_rows = []
@@ -119,7 +279,7 @@ async def run_ztm_dictionary_sync():
 
         # 3. Słownik przystanków (tram_stops_dictionary)
         try:
-            resp_stops = await client.get(STOPS_URL, params={"id": STOPS_RESOURCE_ID, "apikey": WAW_API_KEY})
+            resp_stops = await client.get(STOPS_URL, params={"id": STOPS_RESOURCE_ID, "apikey": key})
             if resp_stops.status_code == 200:
                 raw_stops = resp_stops.json().get("result", [])
                 if isinstance(raw_stops, list):
@@ -171,8 +331,8 @@ async def run_ztm_dictionary_sync():
 @router.post("/sync/dictionaries", status_code=status.HTTP_202_ACCEPTED)
 async def trigger_ztm_sync(background_tasks: BackgroundTasks) -> Dict[str, str]:
     """
-    Ręczne lub cykliczne wywołanie aktualizacji oficjalnych tras i słowników ZTM.
-    Zadanie uruchamia się asynchronicznie w tle (nie blokuje endpointu).
+    Ręczne lub wywołane webhookiem odświeżenie tras i słowników ZTM.
+    Zadanie wykonuje się asynchronicznie w tle.
     """
     background_tasks.add_task(run_ztm_dictionary_sync)
     return {
