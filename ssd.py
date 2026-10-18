@@ -8,6 +8,7 @@ load_dotenv()
 
 API_KEY = os.getenv("ZTM_API_KEY") or os.getenv("WAW_API_KEY") or os.getenv("API_KEY")
 STOPS_DICT_URL = "https://api.um.warszawa.pl/api/action/dbtimetable_get"
+# Prawidłowy, scalony UUID zasobu listy przystanków z ZTM:
 STOPS_RESOURCE_ID = "ab75c33d-3a26-4342-b36a-6e5fef0a3ac3"
 
 
@@ -15,19 +16,45 @@ async def sync_stops_dictionary():
     if not API_KEY:
         raise ValueError("Brak klucza API ZTM w pliku .env!")
 
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+        "Accept": "application/json"
+    }
+
+    params = {
+        "id": STOPS_RESOURCE_ID,
+        "apikey": API_KEY.strip()
+    }
+
     print("Pobieranie oficjalnego słownika przystanków ZTM...")
-    async with httpx.AsyncClient(timeout=60.0) as client:
-        resp = await client.get(
-            STOPS_DICT_URL,
-            params={"id": STOPS_RESOURCE_ID, "apikey": API_KEY}
-        )
-        data = resp.json()
+    async with httpx.AsyncClient(timeout=90.0, follow_redirects=True) as client:
+        resp = await client.get(STOPS_DICT_URL, params=params, headers=headers)
+        
+        print(f"Status HTTP: {resp.status_code}")
+        
+        if resp.status_code != 200:
+            print(f"Treść błędu z serwera: {resp.text[:500]}")
+            return
+
+        try:
+            data = resp.json()
+        except Exception as e:
+            print("Serwer nie zwrócił poprawnego JSON-a!")
+            print(f"Pierwsze 300 znaków odpowiedzi:\n{resp.text[:300]}")
+            raise e
+
+    # ZTM czasami zwraca błąd w polu JSON: {"error": "..."} lub {"result": "false"}
+    if isinstance(data.get("result"), str):
+        print(f"Komunikat z API ZTM: {data.get('result')}")
+        return
 
     raw_list = data.get("result", [])
-    records = []
+    if not raw_list:
+        print("Pusta lista przystanków w odpowiedzi API.")
+        return
 
+    records = []
     for item in raw_list:
-        # ZTM zwraca listę obiektów w formacie [{'key': 'zespol', 'value': '...'}, ...]
         val_map = {entry["key"]: entry["value"] for entry in item.get("values", [])}
         
         cluster_id = str(val_map.get("zespol", "")).strip()
@@ -44,13 +71,13 @@ async def sync_stops_dictionary():
             lon = float(lon_str)
             if lat == 0.0 or lon == 0.0:
                 continue
-        except ValueError:
+        except (ValueError, TypeError):
             continue
 
         stop_tag = f"{cluster_id}{stop_nr}"
         records.append((cluster_id, stop_nr, stop_tag, name, lon, lat))
 
-    print(f"Pobrano {len(records)} słupków przystankowych. Zapis do PostgreSQL...")
+    print(f"Pobrano i sparsowano {len(records)} słupków przystankowych. Zapis do PostgreSQL...")
 
     pool = await init_db_pool()
     try:
@@ -90,7 +117,7 @@ async def sync_stops_dictionary():
                     updated_at = CURRENT_TIMESTAMP;
             """, records)
 
-        print("Oficjalny słownik przystanków został zapisany.")
+        print("Oficjalny słownik przystanków ZTM został pomyślnie zsynchronizowany!")
     finally:
         await close_db_pool()
 
