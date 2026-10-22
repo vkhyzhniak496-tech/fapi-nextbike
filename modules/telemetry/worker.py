@@ -200,8 +200,18 @@ async def tram_telemetry_poller_task() -> None:
         "resource_id": UM_WARSZAWA_RESOURCE_ID,
     }
 
-    async with httpx.AsyncClient(timeout=10.0) as client:
-        logger.info("[TRAM_TELEMETRY] Uruchomiono poller telemetrii z detekcją postojów (Opcja B+Kinematyka)...")
+    # Standardowe nagłówki przeglądarki omijające dławienie WAF
+    headers = {
+        "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
+        "Accept": "application/json",
+        "Connection": "close"  # Wymusza świeże połączenie per request, zapobiega ucinaniu strumienia
+    }
+
+    timeout_config = httpx.Timeout(connect=10.0, read=30.0, write=10.0, pool=10.0)
+
+    # http1=True wyłącza eksperymentalny http2, który rzuca ReadError na api.um.warszawa.pl
+    async with httpx.AsyncClient(headers=headers, timeout=timeout_config, http1=True, verify=False) as client:
+        logger.info("[TRAM_TELEMETRY] Uruchomiono poller telemetrii z zabezpieczeniem sieciowym...")
         while True:
             try:
                 res = await client.get(UM_WARSZAWA_VEHICLES_URL, params=params)
@@ -214,13 +224,14 @@ async def tram_telemetry_poller_task() -> None:
                 elif res.status_code == 429:
                     logger.warning("[TRAM_TELEMETRY] Rate limit ZTM (429). Czekam 30s...")
                     await asyncio.sleep(30)
+            except (httpx.ReadError, httpx.ConnectError, httpx.RemoteProtocolError, httpx.ReadTimeout) as net_err:
+                logger.warning(f"[TRAM_TELEMETRY] Chwilowe zerwanie ze strony API ZTM ({type(net_err).__name__}). Ponawiam w kolejnym cyklu...")
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.warning(f"[TRAM_TELEMETRY] Błąd w pętli telemetrii: {e}", exc_info=True)
+                logger.error(f"[TRAM_TELEMETRY] Nieoczekiwany błąd w pętli: {e}", exc_info=True)
 
             await asyncio.sleep(10)
-
 
 async def tram_analytics_cleaner_task() -> None:
     """Czyszczenie historii starszej niż 4 godziny."""
