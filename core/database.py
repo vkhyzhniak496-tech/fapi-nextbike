@@ -1,6 +1,10 @@
 import os
-import asyncpg
 from typing import Optional
+import asyncpg
+from dotenv import load_dotenv
+
+# Wczytanie pliku .env zanim odpytamy os.getenv
+load_dotenv()
 
 # Pobieranie konfiguracji z env lub domyślny kontener lokalny Docker
 DATABASE_URL = os.getenv(
