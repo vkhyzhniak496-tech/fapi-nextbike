@@ -217,7 +217,7 @@ async def tram_telemetry_poller_task() -> None:
             except asyncio.CancelledError:
                 break
             except Exception as e:
-                logger.warning(f"[TRAM_TELEMETRY] Błąd w pętli telemetrii: {e}")
+                logger.warning(f"[TRAM_TELEMETRY] Błąd w pętli telemetrii: {e}", exc_info=True)
 
             await asyncio.sleep(10)
 
