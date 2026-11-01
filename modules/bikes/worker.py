@@ -21,27 +21,24 @@ LAST_KNOWN_BIKES: Dict[str, int] = {}
 async def save_snapshots_to_postgres(
     stations_live_batch: List[tuple], snapshots_delta_batch: List[tuple]
 ) -> None:
-    """
-    Transakcyjny zapis:
-    1. Aktualizuje bieżący stan i geometrię stacji (veturilo_stations).
-    2. Zapisuje delty do historii czasowej (station_snapshots).
-    """
+    if not stations_live_batch and not snapshots_delta_batch:
+        return
+
     pool = get_pool()
     try:
         async with pool.acquire() as conn:
             async with conn.transaction():
-                # 1. SŁOWNIK I BIEŻĄCY STAN (7 parametrów: id, name, lat, lng, capacity, free_bikes, empty_slots)
+                # 1. SŁOWNIK I BIEŻĄCY STAN (6 parametrów: id, name, lat, lng, free_bikes, empty_slots)
                 if stations_live_batch:
                     await conn.executemany(
                         """
                         INSERT INTO veturilo_stations (
-                            station_id, name, lat, lng, capacity, 
+                            station_id, name, lat, lng, 
                             free_bikes, empty_slots,
-                            geom, geom_2180, updated_at
+                            geom_2180, updated_at
                         )
                         VALUES (
-                            $1, $2, $3, $4, $5, $6, $7,
-                            ST_SetSRID(ST_MakePoint($4, $3), 4326),
+                            $1, $2, $3, $4, $5, $6,
                             ST_Transform(ST_SetSRID(ST_MakePoint($4, $3), 4326), 2180),
                             CURRENT_TIMESTAMP
                         )
@@ -49,14 +46,9 @@ async def save_snapshots_to_postgres(
                             name = EXCLUDED.name,
                             lat = COALESCE(EXCLUDED.lat, veturilo_stations.lat),
                             lng = COALESCE(EXCLUDED.lng, veturilo_stations.lng),
-                            geom = EXCLUDED.geom,
-                            geom_2180 = EXCLUDED.geom_2180,
-                            capacity = CASE 
-                                WHEN EXCLUDED.capacity > 0 THEN EXCLUDED.capacity 
-                                ELSE veturilo_stations.capacity 
-                            END,
                             free_bikes = EXCLUDED.free_bikes,
                             empty_slots = EXCLUDED.empty_slots,
+                            geom_2180 = EXCLUDED.geom_2180,
                             updated_at = CURRENT_TIMESTAMP;
                         """,
                         stations_live_batch,
