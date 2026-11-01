@@ -68,7 +68,6 @@
         }
         .btn-nav-leaderboard:hover { background: #0369a1; }
 
-        /* Stylizacja okna popup */
         .maplibregl-popup-content {
             border-radius: 10px;
             padding: 14px 16px;
@@ -81,7 +80,7 @@
             .analytics-control {
                 top: 10px;
                 left: 10px;
-                right: 56px; /* Miejsce na przycisk lokalizacji GPS */
+                right: 56px;
                 gap: 8px;
                 padding: 6px 10px;
                 height: 42px;
@@ -154,7 +153,20 @@
             }
         }
 
-        // Filtrowanie danych po wybranej linii
+        function extractLines(feature) {
+            const raw = feature.properties.lines ?? feature.properties.lines_json;
+            if (Array.isArray(raw)) return raw;
+            if (typeof raw === 'string') {
+                try {
+                    const parsed = JSON.parse(raw);
+                    return Array.isArray(parsed) ? parsed : [];
+                } catch (e) {
+                    return [];
+                }
+            }
+            return [];
+        }
+
         function filterView(selectedLine) {
             if (!globalAllStopsData) return;
 
@@ -165,37 +177,25 @@
             }
 
             const filtered = globalAllStopsData.features.filter(f => {
-                let lines = [];
-                try {
-                    lines = typeof f.properties.lines_json === 'string'
-                        ? JSON.parse(f.properties.lines_json)
-                        : (f.properties.lines_json || []);
-                } catch (e) { lines = []; }
-                return lines.some(l => String(l.line) === String(selectedLine));
+                const lines = extractLines(f);
+                return lines.some(l => l && String(l.line) === String(selectedLine));
             });
 
             setGeoJsonData({ type: 'FeatureCollection', features: filtered });
             setStatus(`Perony linii ${selectedLine}: ${filtered.length}`);
         }
 
-        // Pobranie danych i inicjalizacja listy linii
         async function loadInitialData() {
             try {
                 const res = await fetch('/network/tram/dwells/all-stops');
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 globalAllStopsData = await res.json();
 
-                // Wyciągamy unikalne linie ze zbioru peronów
                 const uniqueLines = new Set();
                 globalAllStopsData.features.forEach(f => {
-                    let lines = [];
-                    try {
-                        lines = typeof f.properties.lines_json === 'string'
-                            ? JSON.parse(f.properties.lines_json)
-                            : (f.properties.lines_json || []);
-                    } catch (e) { lines = []; }
+                    const lines = extractLines(f);
                     lines.forEach(l => {
-                        if (l.line) uniqueLines.add(String(l.line));
+                        if (l && l.line) uniqueLines.add(String(l.line));
                     });
                 });
 
@@ -207,13 +207,12 @@
                     const opt = document.createElement('option');
                     opt.value = l;
                     opt.innerText = `Linia ${l}`;
-                    if (l === '16') opt.selected = true; // Linia 16 domyślnie
+                    if (l === '16') opt.selected = true;
                     picker.appendChild(opt);
                 });
 
                 picker.addEventListener('change', () => filterView(picker.value));
 
-                // Jeśli styl mapy jest już załadowany, renderujemy
                 if (map.getSource('dwell-stats')) {
                     filterView(picker.value);
                 }
@@ -226,7 +225,6 @@
         loadInitialData();
 
         map.on('load', () => {
-            // Torowiska tramwajowe
             map.addSource('tram-network', { type: 'geojson', data: '/network/tram' });
             map.addLayer({
                 id: 'tram-tracks',
@@ -240,13 +238,11 @@
                 }
             });
 
-            // Źródło postojów
             map.addSource('dwell-stats', {
                 type: 'geojson',
                 data: { type: 'FeatureCollection', features: [] }
             });
 
-            // Warstwa kółek ze skalowaniem zależnym od przybliżenia (zoom)
             map.addLayer({
                 id: 'dwell-circles',
                 type: 'circle',
@@ -282,7 +278,6 @@
                 }
             });
 
-            // Nazwy peronów
             map.addLayer({
                 id: 'dwell-stop-names',
                 type: 'symbol',
@@ -307,7 +302,6 @@
                 }
             });
 
-            // Wartość sekundowa
             map.addLayer({
                 id: 'dwell-seconds-label',
                 type: 'symbol',
@@ -327,15 +321,10 @@
                 }
             });
 
-            // Dymek z rozbiciem na linie
             map.on('click', 'dwell-circles', (e) => {
                 const p = e.features[0].properties;
-                let rawLines = [];
-                try {
-                    rawLines = typeof p.lines_json === 'string' ? JSON.parse(p.lines_json) : (p.lines_json || []);
-                } catch (err) { rawLines = []; }
+                const rawLines = extractLines(e.features[0]);
 
-                // Zabezpieczenie przed duplikatami po stronie klienta (unikalne per linia)
                 const lineMap = new Map();
                 rawLines.forEach(l => {
                     if (l && l.line && !lineMap.has(String(l.line))) {
@@ -371,7 +360,6 @@
             map.on('mouseenter', 'dwell-circles', () => { map.getCanvas().style.cursor = 'pointer'; });
             map.on('mouseleave', 'dwell-circles', () => { map.getCanvas().style.cursor = ''; });
 
-            // Jeśli dane załadowały się przed startem stylu mapy
             if (globalAllStopsData) {
                 const picker = document.getElementById('line-picker');
                 filterView(picker.value || 'ALL');
