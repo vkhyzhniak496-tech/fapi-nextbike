@@ -3,20 +3,17 @@ from typing import Optional
 import asyncpg
 from dotenv import load_dotenv
 
-# Wczytanie pliku .env zanim odpytamy os.getenv
 load_dotenv()
 
-# Pobieranie konfiguracji z env lub domyślny kontener lokalny Docker
 DATABASE_URL = os.getenv(
-    "DATABASE_URL", 
-    "postgresql://postgres:postgres@localhost:5432/warsaw_gis"
+    "DATABASE_URL"
 )
 
 _DB_POOL: Optional[asyncpg.Pool] = None
 
 
 async def init_db_pool() -> asyncpg.Pool:
-    """Inicjalizuje globalną asynchroniczną pulę połączeń PostgreSQL."""
+    """Inicjalizuje globalną pulę połączeń z rejestracją typów PostGIS/JSON."""
     global _DB_POOL
     if _DB_POOL is None:
         _DB_POOL = await asyncpg.create_pool(
@@ -29,7 +26,6 @@ async def init_db_pool() -> asyncpg.Pool:
 
 
 async def close_db_pool() -> None:
-    """Zamyka asynchroniczną pulę połączeń przy zamykaniu aplikacji."""
     global _DB_POOL
     if _DB_POOL is not None:
         await _DB_POOL.close()
@@ -37,7 +33,6 @@ async def close_db_pool() -> None:
 
 
 def get_pool() -> asyncpg.Pool:
-    """Zwraca aktywną pulę połączeń asyncpg."""
     if _DB_POOL is None:
-        raise RuntimeError("Pula bazy danych PostgreSQL nie została zainicjalizowana!")
+        raise RuntimeError("Pula bazy danych PostgreSQL/PostGIS nie została zainicjalizowana!")
     return _DB_POOL

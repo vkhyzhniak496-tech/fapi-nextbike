@@ -48,50 +48,19 @@ async def get_station_chart_endpoint(station_id: str, name: str = "Stacja"):
 @router.get("/bikes/leaderboard")
 async def get_stations_leaderboard(top_n: int = 36):
     """
-    Błyskawiczny ranking multimodalny oparty na zmaterializowanej 
-    tabeli veturilo_station_infrastructure.
+    Błyskawiczny ranking multimodalny czytający z bazy zasilanej w tle przez workera.
+    Odpowiedź w kilkanaście milisekund bez ryzyka 429 z CityBikes.
     """
-    async with httpx.AsyncClient(timeout=10.0, follow_redirects=True, headers=HTTP_HEADERS) as client:
-        res = await client.get(CITYBIKES_WARSAW_URL)
-        if res.status_code != 200:
-            raise HTTPException(status_code=502, detail="Błąd komunikacji z CityBikes")
-        stations_raw = res.json().get("network", {}).get("stations", [])
-
-    prepared = [
-        {
-            "station_id": str(st.get("id")),
-            "free_bikes": int(st.get("free_bikes") or 0),
-            "empty_slots": int(st.get("empty_slots") or 0),
-        }
-        for st in stations_raw
-        if st.get("id")
-    ]
-
     pool = get_pool()
     async with pool.acquire() as conn:
-        # 1. Lekka aktualizacja wyłącznie liczby rowerów i wolnych stojaków
-        if prepared:
-            await conn.execute("""
-                UPDATE veturilo_stations vs
-                SET 
-                    free_bikes = u.free_bikes,
-                    empty_slots = u.empty_slots,
-                    updated_at = CURRENT_TIMESTAMP
-                FROM json_to_recordset($1::json) AS u(
-                    station_id TEXT, free_bikes INTEGER, empty_slots INTEGER
-                )
-                WHERE vs.station_id = u.station_id;
-            """, json.dumps(prepared))
-
-        # 2. Błyskawiczny SELECT ze statycznego szkieletu i zdarzeń tramwajowych
         rows = await conn.fetch("""
             WITH live_dwell_stats AS (
-                -- Zliczamy postoje zarejestrowane dla każdego peronu
                 SELECT 
                     stop_osm_id,
                     COUNT(*) AS dwells_count,
                     ROUND(AVG(duration_sec)::numeric, 1) AS avg_dwell_sec
                 FROM tram_dwell_events
+                WHERE departure_time > NOW() - INTERVAL '2 hours'
                 GROUP BY stop_osm_id
             ),
             combined AS (
@@ -112,7 +81,7 @@ async def get_stations_leaderboard(top_n: int = 36):
                     inf.nearest_cluster,
                     inf.dist_to_tram_m,
                     COALESCE(dw.dwells_count, 0) AS tram_dwells_count,
-                    COALESCE(dw.avg_dwell_sec, 0.0) AS tram_avg_dwell_sec,
+                    COALESce(dw.avg_dwell_sec, 0.0) AS tram_avg_dwell_sec,
                     inf.dist_to_cycleway_m,
                     inf.safe_network_meters
                 FROM veturilo_station_infrastructure inf
@@ -134,10 +103,10 @@ async def get_stations_leaderboard(top_n: int = 36):
                             ELSE 0.0
                         END
                         +
-                        -- 3. Aktywność wymiany pasażerskiej tramwajów: max 25 pkt
+                        -- 3. Aktywność tramwajowa: max 25 pkt
                         LEAST(tram_dwells_count * 1.5, 25.0)
                         +
-                        -- 4. Sieć tras rowerowych w promieniu 150m: max 30 pkt
+                        -- 4. Sieć DDR w promieniu 150m: max 30 pkt
                         LEAST(safe_network_meters / 15.0, 30.0)
                         -
                         -- 5. Kara za odcięcie od trasy (>25m do DDR):
@@ -155,6 +124,6 @@ async def get_stations_leaderboard(top_n: int = 36):
         """, top_n)
 
     return {
-        "total_active_stations": len(prepared),
+        "total_active_stations": len(rows),
         "top_hubs": [dict(r) for r in rows],
     }

@@ -8,14 +8,12 @@ from core.database import get_pool
 
 logger = logging.getLogger(__name__)
 
-# Tylko zweryfikowane serwery akceptujące publiczne kwerendy GIS
 OVERPASS_SERVERS = [
     "https://overpass-api.de/api/interpreter",
     "https://overpass.openstreetmap.fr/api/interpreter",
     "https://overpass.kumi.systems/api/interpreter",
 ]
 
-# Polityka OSM wymaga formatu: NazwaAplikacji/Wersja (kontakt@domena.com)
 OVERPASS_HEADERS = {
     "User-Agent": "WarsawTransitGIS/2.0 (urban.gis.research.warsaw@gmail.com)",
     "Accept": "application/json",
@@ -57,7 +55,6 @@ def build_cycleways_query(bbox: str) -> str:
       way["cycleway:both"]({bbox});
       way["oneway:bicycle"="no"]({bbox});
       way["highway"="living_street"]({bbox});
-      // Nowo otwierane trasy i przejezdne budowy (np. al. Jana Pawła II):
       way["highway"="construction"]["construction"="cycleway"]({bbox});
     );
     out body geom;
@@ -109,13 +106,13 @@ async def execute_overpass_query(
 
                     elements = payload.get("elements", [])
                     if elements:
-                        logger.info(f"[OVERPASS] Sukces z {server}. Pobrano elementów: {len(elements)}")
+                        logger.info(f"[OVERPASS] Sukces z {server}. Pobrano: {len(elements)} el.")
                         return elements
                     break
 
                 elif res.status_code == 429:
                     wait_time = attempt * 20
-                    logger.warning(f"[OVERPASS] Rate Limit (429) na {server}. Pauza na {wait_time}s...")
+                    logger.warning(f"[OVERPASS] Rate Limit (429) na {server}. Pauza {wait_time}s...")
                     await asyncio.sleep(wait_time)
 
                 elif res.status_code in (403, 500, 502, 504):
@@ -160,9 +157,12 @@ async def save_cycleways_to_postgis(elements: List[Dict[str, Any]]) -> int:
     async with pool.acquire() as conn:
         await conn.executemany("""
             INSERT INTO cycleway_edges (
-                way_id, highway, cycleway, name, maxspeed, properties_json, geom
+                way_id, highway, cycleway, name, maxspeed, properties_json, geom, geom_2180, updated_at
             ) VALUES (
-                $1, $2, $3, $4, $5, $6::jsonb, ST_SetSRID(ST_GeomFromText($7), 4326)
+                $1, $2, $3, $4, $5, $6::jsonb, 
+                ST_SetSRID(ST_GeomFromText($7), 4326),
+                ST_Transform(ST_SetSRID(ST_GeomFromText($7), 4326), 2180),
+                CURRENT_TIMESTAMP
             )
             ON CONFLICT (way_id) DO UPDATE SET
                 highway = EXCLUDED.highway,
@@ -171,6 +171,7 @@ async def save_cycleways_to_postgis(elements: List[Dict[str, Any]]) -> int:
                 maxspeed = EXCLUDED.maxspeed,
                 properties_json = EXCLUDED.properties_json,
                 geom = EXCLUDED.geom,
+                geom_2180 = EXCLUDED.geom_2180,
                 updated_at = CURRENT_TIMESTAMP;
         """, records)
 
@@ -209,19 +210,27 @@ async def save_tram_tracks_to_postgis(elements: List[Dict[str, Any]]) -> int:
     pool = get_pool()
     async with pool.acquire() as conn:
         async with conn.transaction():
-            # Czyścimy właściwą tabelę tram_edges zamiast nieistniejącej tram_tracks:
-            await conn.execute("DELETE FROM tram_edges;")
+            # Zapisujemy geometrię WGS84 i EPSG:2180 pod natywne indeksy GiST
             await conn.executemany("""
-                INSERT INTO tram_edges (way_id, properties_json, geom, length_m)
+                INSERT INTO tram_edges (way_id, properties_json, geom, geom_2180, length_m, updated_at)
                 VALUES (
                     $1, 
                     $2::jsonb, 
                     ST_SetSRID(ST_GeomFromText($3), 4326),
-                    ROUND(ST_Length(ST_Transform(ST_SetSRID(ST_GeomFromText($3), 4326), 2180))::numeric, 1)
-                );
+                    ST_Transform(ST_SetSRID(ST_GeomFromText($3), 4326), 2180),
+                    ROUND(ST_Length(ST_Transform(ST_SetSRID(ST_GeomFromText($3), 4326), 2180))::numeric, 1),
+                    CURRENT_TIMESTAMP
+                )
+                ON CONFLICT (way_id) DO UPDATE SET
+                    properties_json = EXCLUDED.properties_json,
+                    geom = EXCLUDED.geom,
+                    geom_2180 = EXCLUDED.geom_2180,
+                    length_m = EXCLUDED.length_m,
+                    updated_at = CURRENT_TIMESTAMP;
             """, records)
 
     return len(records)
+
 
 async def save_tram_platforms_to_postgis(elements: List[Dict[str, Any]]) -> int:
     records = []
@@ -247,11 +256,7 @@ async def save_tram_platforms_to_postgis(elements: List[Dict[str, Any]]) -> int:
                     osm_id, name, cluster_name, lat, lon, geom, geom_2180, updated_at
                 )
                 VALUES (
-                    $1, 
-                    $2, 
-                    $3, 
-                    $4,
-                    $5,
+                    $1, $2, $3, $4, $5,
                     ST_SetSRID(ST_GeomFromText($6), 4326),
                     ST_Transform(ST_SetSRID(ST_GeomFromText($6), 4326), 2180),
                     CURRENT_TIMESTAMP
@@ -268,6 +273,7 @@ async def save_tram_platforms_to_postgis(elements: List[Dict[str, Any]]) -> int:
 
     return len(records)
 
+
 async def sync_cycleways_task(custom_bbox: Optional[str] = None):
     logger.info("[INFRA_GIS] Synchronizacja dróg rowerowych z OSM do PostGIS...")
     sanitized = _sanitize_bbox(custom_bbox) if custom_bbox else None
@@ -279,7 +285,6 @@ async def sync_cycleways_task(custom_bbox: Optional[str] = None):
             elements = await execute_overpass_query(build_cycleways_query(bbox), client)
             added = await save_cycleways_to_postgis(elements)
             total += added
-            # Kluczowy odstęp zapobiegający blokadzie 502/429 na kolejnym kafelku
             await asyncio.sleep(6)
 
     logger.info(f"[INFRA_GIS] Zakończono trasy rowerowe. Zapisano/zaktualizowano łącznie: {total} segmentów.")

@@ -8,10 +8,8 @@ services:
       POSTGRES_USER: gis_user
       POSTGRES_PASSWORD: gis_secure_password_123
     ports:
-      # Wystawiamy port na zewnątrz kontenera:
       - "5432:5432"
     volumes:
-      # Trwałe dane bazy zapisywane na dysku hosta:
       - ./pgdata:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U gis_user -d warsaw_transit_gis"]
