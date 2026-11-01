@@ -106,7 +106,7 @@ async def bike_history_poller_worker() -> None:
 
                         # Każda poprawna stacja trafia do aktualizacji stanu bieżącego dla leaderboardu
                         stations_live_batch.append((
-                            s_id, s_name, lat_val, lon_val, capacity_val, current_bikes, empty_slots
+                            s_id, s_name, lat_val, lon_val, current_bikes, empty_slots
                         ))
 
                         # Tylko zmiana stanu generuje wpis historyczny do tabeli snapshotów
