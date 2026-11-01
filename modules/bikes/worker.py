@@ -23,19 +23,19 @@ async def save_snapshots_to_postgres(
 ) -> None:
     """
     Transakcyjny zapis:
-    1. Aktualizuje bieżący stan i geometrię stacji (veturilo_stations) pod błyskawiczny leaderboard.
+    1. Aktualizuje bieżący stan i geometrię stacji (veturilo_stations).
     2. Zapisuje delty do historii czasowej (station_snapshots).
     """
     pool = get_pool()
     try:
         async with pool.acquire() as conn:
             async with conn.transaction():
-                # 1. SŁOWNIK I BIEŻĄCY STAN (7 parametrów: id, name, lat, lon, capacity, free_bikes, empty_slots)
+                # 1. SŁOWNIK I BIEŻĄCY STAN (7 parametrów: id, name, lat, lng, capacity, free_bikes, empty_slots)
                 if stations_live_batch:
                     await conn.executemany(
                         """
                         INSERT INTO veturilo_stations (
-                            station_id, name, lat, lon, capacity, 
+                            station_id, name, lat, lng, capacity, 
                             free_bikes, empty_slots,
                             geom, geom_2180, updated_at
                         )
@@ -48,7 +48,7 @@ async def save_snapshots_to_postgres(
                         ON CONFLICT (station_id) DO UPDATE SET 
                             name = EXCLUDED.name,
                             lat = COALESCE(EXCLUDED.lat, veturilo_stations.lat),
-                            lon = COALESCE(EXCLUDED.lon, veturilo_stations.lon),
+                            lng = COALESCE(EXCLUDED.lng, veturilo_stations.lng),
                             geom = EXCLUDED.geom,
                             geom_2180 = EXCLUDED.geom_2180,
                             capacity = CASE 
@@ -62,7 +62,7 @@ async def save_snapshots_to_postgres(
                         stations_live_batch,
                     )
 
-                # 2. HISTORIA ZMIAN (tylko gdy stan rowerów uległ zmianie)
+                # 2. HISTORIA ZMIAN
                 if snapshots_delta_batch:
                     await conn.executemany(
                         """
@@ -74,7 +74,6 @@ async def save_snapshots_to_postgres(
                     )
     except Exception as e:
         logger.error(f"[BIKES] Błąd transakcji zapisu bazy: {e}")
-
 
 async def bike_history_poller_worker() -> None:
     """Worker odpytujący CityBikes, zasilający PostgreSQL i odświeżający GeoJSON w RAM."""
