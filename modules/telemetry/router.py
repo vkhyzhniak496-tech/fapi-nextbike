@@ -7,9 +7,8 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/network/tram", tags=["Tram Telemetry"])
 
-
 @router.get("/live")
-async def get_live_trams(response: Response) -> Dict[str, Any]:
+async def get_live_trams(response: Response) -> Response:
     """
     Zwraca bieżącą pozycję tramwajów na torach w formacie GeoJSON FeatureCollection.
     Generowane bezpośrednio przez silnik PostGIS.
@@ -37,6 +36,7 @@ async def get_live_trams(response: Response) -> Dict[str, Any]:
             ) AS feature
             FROM tram_live_state
             WHERE updated_at > NOW() - INTERVAL '5 minutes'
+              AND snapped_geom_2180 IS NOT NULL
         ) f;
     """
     pool = get_pool()
@@ -44,8 +44,10 @@ async def get_live_trams(response: Response) -> Dict[str, Any]:
         geojson_str = await conn.fetchval(query)
 
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    response.headers["Content-Type"] = "application/json"
-    return Response(content=geojson_str, media_type="application/json")
+    return Response(
+        content=geojson_str or '{"type":"FeatureCollection","features":[]}', 
+        media_type="application/json"
+    )
 
 
 @router.get("/dwells/all-stops")
