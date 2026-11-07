@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Warszawa - Veturilo & Tram Analytics</title>
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div id="info-box" class="glass-panel">
+        <div class="status-row">
+            <span class="pulse"></span>
+            <span>Veturilo 3.0 Live</span>
+        </div>
+        <div class="update-time">Aktualizacja: <span id="last-update-label">Ładowanie...</span></div>
+        
+        <div class="nav-actions">
+            <a href="/analytics/tram" class="btn-nav-tram">Postoje</a>
+            <a href="/analytics/leaderboard" class="btn-nav-corridor">Veturilo Leaderboard</a>
+        </div>
+    </div>
+
+    <!-- Pływający przycisk filtrów warstw (FAB) -->
+    <button id="btn-toggle-filters" class="fab-filters" aria-label="Filtry warstw">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+            <polyline points="2 17 12 22 22 17"></polyline>
+            <polyline points="2 12 12 17 22 12"></polyline>
+        </svg>
+    </button>
+
+    <!-- Dolny wysuwany arkusz (Bottom Sheet) -->
+    <div id="legend" class="glass-panel">
+        <div class="legend-header-mobile">
+            <div class="legend-title" style="margin: 0;">Filtruj infrastrukturę</div>
+            <button class="btn-close-mobile" id="btn-close-legend">&times;</button>
+        </div>
+
+        <label class="legend-row">
+            <input type="checkbox" id="filter-ddr" checked>
+            <span class="legend-line" style="background: #27ae60;"></span>
+            <span class="legend-label">Wydzielona droga (DDR)</span>
+        </label>
+
+        <label class="legend-row">
+            <input type="checkbox" id="filter-lane" checked>
+            <span class="legend-line" style="background: #f39c12;"></span>
+            <span class="legend-label">Pas rowerowy w jezdni</span>
+        </label>
+
+        <label class="legend-row">
+            <input type="checkbox" id="filter-woonerf" checked>
+            <span class="legend-line" style="background: #2980b9;"></span>
+            <span class="legend-label">Strefa zamieszkania / Woonerf</span>
+        </label>
+
+        <label class="legend-row">
+            <input type="checkbox" id="filter-tempo30" checked>
+            <span class="legend-line" style="background: #3498db;"></span>
+            <span class="legend-label">Ulica Tempo 30 (uspokojona)</span>
+        </label>
+
+        <label class="legend-row">
+            <input type="checkbox" id="filter-trams" checked>
+            <span class="legend-line" style="background: #3b0141;"></span>
+            <span class="legend-label">Torowiska tramwajowe</span>
+        </label>
+    </div>
+
+    <div id="map"></div>
+
+    <!-- Pojedynczy, skonsolidowany skrypt aplikacji -->
+    <script src="/static/js/app.js?v=4.0"></script>
+</body>
+</html>

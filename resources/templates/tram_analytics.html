@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analityka Tramwajowa - Czasy Wymiany</title>
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+    <style>
+        body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        #map { width: 100vw; height: 100vh; }
+
+        .analytics-control {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 14px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-sizing: border-box;
+        }
+
+        .analytics-control label {
+            font-size: 13px;
+            color: #334155;
+            white-space: nowrap;
+        }
+
+        select.line-select {
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            outline: none;
+            background: #ffffff;
+            color: #0f172a;
+            min-width: 130px;
+        }
+        select.line-select:focus { border-color: #0284c7; }
+
+        #stats-summary {
+            font-size: 12px;
+            font-weight: 500;
+            color: #64748b;
+            white-space: nowrap;
+        }
+
+        .btn-nav-leaderboard {
+            text-decoration: none;
+            background: #0284c7;
+            color: #ffffff;
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            white-space: nowrap;
+            transition: background 0.2s;
+        }
+        .btn-nav-leaderboard:hover { background: #0369a1; }
+
+        .maplibregl-popup-content {
+            border-radius: 10px;
+            padding: 14px 16px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            min-width: 200px;
+            max-width: 280px;
+        }
+
+        @media (max-width: 640px) {
+            .analytics-control {
+                top: 10px;
+                left: 10px;
+                right: 56px;
+                gap: 8px;
+                padding: 6px 10px;
+                height: 42px;
+            }
+            .analytics-control label { display: none; }
+            select.line-select {
+                min-width: 105px;
+                max-width: 120px;
+                font-size: 12px;
+                padding: 4px 6px;
+            }
+            #stats-summary {
+                font-size: 10px !important;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                text-align: center;
+                flex-grow: 1;
+            }
+            .btn-nav-leaderboard {
+                padding: 5px 8px;
+                font-size: 11px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="analytics-control">
+        <label for="line-picker"><b>Widok:</b></label>
+        <select id="line-picker" class="line-select">
+            <option value="ALL">Wszystkie perony</option>
+        </select>
+        <span id="stats-summary">Pobieranie peronów...</span>
+        <a href="/" class="btn-nav-leaderboard">Powrót do mapy</a>
+    </div>
+
+    <div id="map"></div>
+
+    <script type="module">
+        let globalAllStopsData = null;
+
+        const map = new maplibregl.Map({
+            container: 'map',
+            style: 'https://basemaps.cartocdn.com/gl/positron-gl-style/style.json',
+            center: [21.035, 52.205],
+            zoom: 12.5
+        });
+
+        window.gisMap = map;
+
+        const geolocate = new maplibregl.GeolocateControl({
+            positionOptions: { enableHighAccuracy: true },
+            trackUserLocation: true,
+            showUserLocation: true,
+            showAccuracyCircle: true
+        });
+        map.addControl(geolocate, 'top-right');
+
+        function setStatus(text, isError = false) {
+            const el = document.getElementById('stats-summary');
+            if (!el) return;
+            el.innerText = text;
+            el.style.color = isError ? '#e11d48' : '#64748b';
+        }
+
+        function setGeoJsonData(geojson) {
+            const source = map.getSource('dwell-stats');
+            if (source) {
+                source.setData(geojson);
+            }
+        }
+
+        function extractLines(feature) {
+            const raw = feature.properties.lines ?? feature.properties.lines_json;
+            if (Array.isArray(raw)) return raw;
+            if (typeof raw === 'string') {
+                try {
+                    const parsed = JSON.parse(raw);
+                    return Array.isArray(parsed) ? parsed : [];
+                } catch (e) {
+                    return [];
+                }
+            }
+            return [];
+        }
+
+        function filterView(selectedLine) {
+            if (!globalAllStopsData) return;
+
+            if (selectedLine === 'ALL') {
+                setGeoJsonData(globalAllStopsData);
+                setStatus(`Obsłużone perony: ${globalAllStopsData.features.length}`);
+                return;
+            }
+
+            const filtered = globalAllStopsData.features.filter(f => {
+                const lines = extractLines(f);
+                return lines.some(l => l && String(l.line) === String(selectedLine));
+            });
+
+            setGeoJsonData({ type: 'FeatureCollection', features: filtered });
+            setStatus(`Perony linii ${selectedLine}: ${filtered.length}`);
+        }
+
+        async function loadInitialData() {
+            try {
+                const res = await fetch('/network/tram/dwells/all-stops');
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                globalAllStopsData = await res.json();
+
+                const uniqueLines = new Set();
+                globalAllStopsData.features.forEach(f => {
+                    const lines = extractLines(f);
+                    lines.forEach(l => {
+                        if (l && l.line) uniqueLines.add(String(l.line));
+                    });
+                });
+
+                const picker = document.getElementById('line-picker');
+                picker.innerHTML = '<option value="ALL">Wszystkie perony</option>';
+
+                const sortedLines = Array.from(uniqueLines).sort((a, b) => parseInt(a) - parseInt(b));
+                sortedLines.forEach(l => {
+                    const opt = document.createElement('option');
+                    opt.value = l;
+                    opt.innerText = `Linia ${l}`;
+                    if (l === '16') opt.selected = true;
+                    picker.appendChild(opt);
+                });
+
+                picker.addEventListener('change', () => filterView(picker.value));
+
+                if (map.getSource('dwell-stats')) {
+                    filterView(picker.value);
+                }
+            } catch (err) {
+                console.error("Błąd pobierania danych postojów:", err);
+                setStatus('Błąd wczytywania danych', true);
+            }
+        }
+
+        loadInitialData();
+
+        map.on('load', () => {
+            map.addSource('tram-network', { type: 'geojson', data: '/network/tram' });
+            map.addLayer({
+                id: 'tram-tracks',
+                type: 'line',
+                source: 'tram-network',
+                layout: { 'line-join': 'round', 'line-cap': 'round' },
+                paint: {
+                    'line-color': '#64748b',
+                    'line-width': 2.0,
+                    'line-opacity': 0.5
+                }
+            });
+
+            map.addSource('dwell-stats', {
+                type: 'geojson',
+                data: { type: 'FeatureCollection', features: [] }
+            });
+
+            map.addLayer({
+                id: 'dwell-circles',
+                type: 'circle',
+                source: 'dwell-stats',
+                paint: {
+                    'circle-radius': [
+                        'interpolate', ['linear'], ['zoom'],
+                        11, [
+                            'interpolate', ['linear'], ['coalesce', ['get', 'avg_dwell_sec'], 15],
+                            15, 3,
+                            35, 5,
+                            60, 8,
+                            120, 12
+                        ],
+                        15, [
+                            'interpolate', ['linear'], ['coalesce', ['get', 'avg_dwell_sec'], 15],
+                            15, 7,
+                            35, 12,
+                            60, 18,
+                            120, 26
+                        ]
+                    ],
+                    'circle-color': [
+                        'interpolate', ['linear'], ['coalesce', ['get', 'avg_dwell_sec'], 20],
+                        20, '#2ecc71',
+                        35, '#f1c40f',
+                        55, '#e67e22',
+                        80, '#e74c3c'
+                    ],
+                    'circle-opacity': 0.85,
+                    'circle-stroke-width': 1.5,
+                    'circle-stroke-color': '#ffffff'
+                }
+            });
+
+            map.addLayer({
+                id: 'dwell-stop-names',
+                type: 'symbol',
+                source: 'dwell-stats',
+                minzoom: 12.0,
+                layout: {
+                    'text-field': ['get', 'stop_name'],
+                    'text-size': [
+                        'interpolate', ['linear'], ['zoom'],
+                        12, 9,
+                        15, 12
+                    ],
+                    'text-offset': [0, 1.4],
+                    'text-anchor': 'top',
+                    'text-max-width': 8,
+                    'text-allow-overlap': false
+                },
+                paint: {
+                    'text-color': '#0f172a',
+                    'text-halo-color': '#ffffff',
+                    'text-halo-width': 2.0
+                }
+            });
+
+            map.addLayer({
+                id: 'dwell-seconds-label',
+                type: 'symbol',
+                source: 'dwell-stats',
+                minzoom: 13.0,
+                layout: {
+                    'text-field': ['concat', ['to-string', ['get', 'avg_dwell_sec']], 's'],
+                    'text-size': 10,
+                    'text-offset': [0, -1.4],
+                    'text-anchor': 'bottom',
+                    'text-allow-overlap': false
+                },
+                paint: {
+                    'text-color': '#334155',
+                    'text-halo-color': '#ffffff',
+                    'text-halo-width': 1.5
+                }
+            });
+
+            map.on('click', 'dwell-circles', (e) => {
+                const p = e.features[0].properties;
+                const rawLines = extractLines(e.features[0]);
+
+                const lineMap = new Map();
+                rawLines.forEach(l => {
+                    if (l && l.line && !lineMap.has(String(l.line))) {
+                        lineMap.set(String(l.line), l);
+                    }
+                });
+                const lines = Array.from(lineMap.values());
+
+                const linesHtml = lines.length > 0 
+                    ? lines.map(l => `
+                        <div style="display: flex; justify-content: space-between; gap: 14px; margin-top: 4px; font-size: 12px;">
+                            <span>Linia <b>${l.line}</b> (${l.samples} kursów):</span>
+                            <b>${l.avg_dwell_sec} s</b>
+                        </div>
+                    `).join('')
+                    : '<div style="font-size: 12px; color: #94a3b8;">Brak rozbicia na linie</div>';
+
+                new maplibregl.Popup({ offset: 8 })
+                    .setLngLat(e.features[0].geometry.coordinates)
+                    .setHTML(`
+                        <div style="font-weight: 700; font-size: 14px; color: #0f172a;">${p.stop_name}</div>
+                        <div style="font-size: 12px; color: #64748b; margin-bottom: 6px;">Zespół: ${p.cluster_name || '–'}</div>
+                        <div style="margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #e2e8f0; font-size: 13px;">
+                            Średni postój: <b>${p.avg_dwell_sec} s</b><br>
+                            Łącznie kursów: <b>${p.samples_count}</b>
+                        </div>
+                        <div style="font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 2px;">Linie na peronie:</div>
+                        ${linesHtml}
+                    `)
+                    .addTo(map);
+            });
+
+            map.on('mouseenter', 'dwell-circles', () => { map.getCanvas().style.cursor = 'pointer'; });
+            map.on('mouseleave', 'dwell-circles', () => { map.getCanvas().style.cursor = ''; });
+
+            if (globalAllStopsData) {
+                const picker = document.getElementById('line-picker');
+                filterView(picker.value || 'ALL');
+            }
+        });
+    </script>
+</body>
+</html>

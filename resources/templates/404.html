@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Nie znaleziono strony</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background: #0f172a;
+            color: #f8fafc;
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        .error-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 40px 48px;
+            text-align: center;
+            max-width: 420px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .error-code {
+            font-size: 72px;
+            font-weight: 800;
+            color: #007cbf;
+            line-height: 1;
+            margin-bottom: 12px;
+        }
+        .error-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .error-desc {
+            font-size: 14px;
+            color: #94a3b8;
+            margin-bottom: 24px;
+            line-height: 1.5;
+        }
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #007cbf;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13px;
+            transition: background 0.2s ease;
+        }
+        .btn-back:hover {
+            background: #005a8c;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-card">
+        <div class="error-code">404</div>
+        <div class="error-title">Not found.</div>
+        <div class="error-desc">
+            Wygląda na to, że ten zasób został przeniesiony, usunięty lub nigdy nie istniał.
+        </div>
+        <a href="/map" class="btn-back">← Wróć do mapy</a>
+    </div>
+</body>
+</html>
