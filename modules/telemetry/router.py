@@ -54,8 +54,7 @@ async def get_all_stops_dwell_stats(response: Response) -> Response:
     query = """
         WITH per_stop AS (
             SELECT
-                s.stop_osm_id::text AS stop_id_txt,
-                MAX(s.stop_name) AS stop_name,
+                s.stop_name,
                 MAX(s.cluster_name) AS cluster_name,
                 SUM(s.samples_count)::integer AS total_samples,
                 ROUND(
@@ -69,11 +68,21 @@ async def get_all_stops_dwell_stats(response: Response) -> Response:
                         'avg_dwell_sec', s.avg_dwell_sec,
                         'samples', s.samples_count
                     )
-                    ORDER BY NULLIF(regexp_replace(s.line, '\\D', '', 'g'), '')::int NULLS LAST, s.line ASC
+                    ORDER BY CASE WHEN s.line ~ '^\d+$' THEN s.line::int ELSE 999 END, s.line ASC
                 ) AS lines_json
             FROM tram_stop_dwell_stats s
             WHERE s.samples_count > 0
-            GROUP BY s.stop_osm_id
+            GROUP BY s.stop_name
+        ),
+        platforms_unique AS (
+            SELECT DISTINCT ON (TRIM(name))
+                TRIM(name) AS stop_name,
+                cluster_name,
+                geom_2180
+            FROM tram_platforms
+            WHERE name IS NOT NULL
+              AND geom_2180 IS NOT NULL
+            ORDER BY TRIM(name)
         )
         SELECT json_build_object(
             'type', 'FeatureCollection',
@@ -82,25 +91,22 @@ async def get_all_stops_dwell_stats(response: Response) -> Response:
             'features', COALESCE(json_agg(f.feature), '[]'::json)
         )::text AS geojson
         FROM per_stop ps
-        JOIN tram_platforms p
-          ON regexp_replace(p.osm_id, '\\D', '', 'g') = ps.stop_id_txt
+        JOIN platforms_unique p ON p.stop_name = ps.stop_name
         CROSS JOIN LATERAL (
             SELECT json_build_object(
                 'type', 'Feature',
-                'id', p.osm_id,
+                'id', ps.stop_name,
                 'geometry', ST_AsGeoJSON(ST_Transform(p.geom_2180, 4326))::json,
                 'properties', json_build_object(
                     'stop_name', ps.stop_name,
                     'cluster_name', COALESCE(NULLIF(TRIM(ps.cluster_name), ''), p.cluster_name, ps.stop_name),
                     'avg_dwell_sec', ps.avg_dwell_sec,
                     'samples_count', ps.total_samples,
-                    'window_minutes', 60,
                     'updated_at', to_char(ps.updated_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
                     'lines', ps.lines_json
                 )
             ) AS feature
-        ) f
-        WHERE p.geom_2180 IS NOT NULL;
+        ) f;
     """
     pool = get_pool()
     async with pool.acquire() as conn:
