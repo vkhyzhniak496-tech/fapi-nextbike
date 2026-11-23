@@ -51,14 +51,10 @@ async def get_live_trams(response: Response) -> Response:
 
 @router.get("/dwells/all-stops")
 async def get_all_stops_dwell_stats(response: Response) -> Response:
-    """
-    Zwraca zagregowane statystyki postojów tramwajowych z ostatniej godziny (okno 1h)
-    per peron wraz z rozbiciem na linie oraz czasem aktualizacji updated_at.
-    """
     query = """
         WITH per_stop AS (
             SELECT
-                s.stop_osm_id,
+                s.stop_osm_id::text AS stop_id_txt,
                 MAX(s.stop_name) AS stop_name,
                 MAX(s.cluster_name) AS cluster_name,
                 SUM(s.samples_count)::integer AS total_samples,
@@ -87,7 +83,7 @@ async def get_all_stops_dwell_stats(response: Response) -> Response:
         )::text AS geojson
         FROM per_stop ps
         JOIN tram_platforms p
-          ON NULLIF(regexp_replace(p.osm_id, '\\D', '', 'g'), '')::bigint = ps.stop_osm_id
+          ON regexp_replace(p.osm_id, '\\D', '', 'g') = ps.stop_id_txt
         CROSS JOIN LATERAL (
             SELECT json_build_object(
                 'type', 'Feature',
