@@ -17,7 +17,7 @@
             z-index: 10;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             background: rgba(255, 255, 255, 0.95);
             padding: 8px 14px;
             border-radius: 12px;
@@ -48,6 +48,17 @@
         }
         select.line-select:focus { border-color: #0284c7; }
 
+        .updated-badge {
+            font-size: 11px;
+            font-weight: 600;
+            color: #475569;
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            padding: 5px 9px;
+            border-radius: 7px;
+            white-space: nowrap;
+        }
+
         #stats-summary {
             font-size: 12px;
             font-weight: 500;
@@ -72,8 +83,8 @@
             border-radius: 10px;
             padding: 14px 16px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-            min-width: 210px;
-            max-width: 290px;
+            min-width: 200px;
+            max-width: 280px;
         }
 
         @media (max-width: 640px) {
@@ -81,27 +92,28 @@
                 top: 10px;
                 left: 10px;
                 right: 56px;
-                gap: 8px;
-                padding: 6px 10px;
+                gap: 6px;
+                padding: 6px 8px;
                 height: 42px;
             }
             .analytics-control label { display: none; }
             select.line-select {
-                min-width: 105px;
-                max-width: 120px;
+                min-width: 98px;
+                max-width: 115px;
                 font-size: 12px;
                 padding: 4px 6px;
             }
+            .updated-badge {
+                font-size: 10px;
+                padding: 3px 6px;
+            }
             #stats-summary {
-                font-size: 10px !important;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                text-align: center;
-                flex-grow: 1;
+                display: none;
             }
             .btn-nav-leaderboard {
                 padding: 5px 8px;
                 font-size: 11px;
+                margin-left: auto;
             }
         }
     </style>
@@ -113,6 +125,7 @@
         <select id="line-picker" class="line-select">
             <option value="ALL">Wszystkie perony</option>
         </select>
+        <span id="updated-at-badge" class="updated-badge" title="Czas ostatniego przeliczenia statystyk z ostatniej godziny">Stan: --:--</span>
         <span id="stats-summary">Pobieranie peronów...</span>
         <a href="/" class="btn-nav-leaderboard">Powrót do mapy</a>
     </div>
@@ -140,13 +153,10 @@
         map.addControl(geolocate, 'top-right');
 
         function formatUpdatedAt(isoStr) {
-            if (!isoStr) return null;
+            if (!isoStr) return '--:--';
             const d = new Date(isoStr);
-            if (Number.isNaN(d.getTime())) return null;
-            return d.toLocaleTimeString('pl-PL', {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+            if (Number.isNaN(d.getTime())) return '--:--';
+            return d.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit' });
         }
 
         function setStatus(text, isError = false) {
@@ -180,12 +190,9 @@
         function filterView(selectedLine) {
             if (!globalAllStopsData) return;
 
-            const updatedTime = formatUpdatedAt(globalAllStopsData.updated_at);
-            const updatedSuffix = updatedTime ? ` • okno 1h (stan: ${updatedTime})` : ' • okno 1h';
-
             if (selectedLine === 'ALL') {
                 setGeoJsonData(globalAllStopsData);
-                setStatus(`Perony: ${globalAllStopsData.features.length}${updatedSuffix}`);
+                setStatus(`Obsłużone perony: ${globalAllStopsData.features.length}`);
                 return;
             }
 
@@ -195,7 +202,7 @@
             });
 
             setGeoJsonData({ type: 'FeatureCollection', features: filtered });
-            setStatus(`Linia ${selectedLine}: ${filtered.length} peronów${updatedSuffix}`);
+            setStatus(`Perony linii ${selectedLine}: ${filtered.length}`);
         }
 
         async function loadInitialData() {
@@ -203,6 +210,13 @@
                 const res = await fetch('/network/tram/dwells/all-stops');
                 if (!res.ok) throw new Error(`HTTP ${res.status}`);
                 globalAllStopsData = await res.json();
+
+                const badge = document.getElementById('updated-at-badge');
+                if (badge) {
+                    const rawTs = globalAllStopsData.updated_at
+                        || globalAllStopsData.features?.[0]?.properties?.updated_at;
+                    badge.innerText = `Stan (1h): ${formatUpdatedAt(rawTs)}`;
+                }
 
                 const uniqueLines = new Set();
                 globalAllStopsData.features.forEach(f => {
@@ -355,11 +369,6 @@
                     `).join('')
                     : '<div style="font-size: 12px; color: #94a3b8;">Brak rozbicia na linie</div>';
 
-                const stopUpdated = formatUpdatedAt(p.updated_at || globalAllStopsData?.updated_at);
-                const updatedHtml = stopUpdated
-                    ? `<div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid #f1f5f9; font-size: 11px; color: #94a3b8; text-align: right;">Aktualizacja (1h): ${stopUpdated}</div>`
-                    : '';
-
                 new maplibregl.Popup({ offset: 8 })
                     .setLngLat(e.features[0].geometry.coordinates)
                     .setHTML(`
@@ -369,9 +378,8 @@
                             Średni postój: <b>${p.avg_dwell_sec} s</b><br>
                             Łącznie kursów: <b>${p.samples_count}</b>
                         </div>
-                        <div style="font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 2px;">Linie na peronie (ostatnia 1h):</div>
+                        <div style="font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 2px;">Linie na peronie:</div>
                         ${linesHtml}
-                        ${updatedHtml}
                     `)
                     .addTo(map);
             });
