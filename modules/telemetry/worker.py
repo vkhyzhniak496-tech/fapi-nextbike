@@ -247,3 +247,56 @@ async def tram_analytics_cleaner_task() -> None:
             logger.error(f"[TRAM_CLEANER] Błąd cleanera: {e}")
 
         await asyncio.sleep(1800)
+
+DWELL_STATS_1H_SQL = """
+TRUNCATE TABLE tram_stop_dwell_stats;
+
+INSERT INTO tram_stop_dwell_stats (
+    stop_osm_id,
+    line,
+    stop_name,
+    cluster_name,
+    avg_dwell_sec,
+    samples_count,
+    window_minutes,
+    updated_at
+)
+SELECT
+    d.stop_osm_id,
+    d.line,
+    COALESCE(MAX(p.name), MAX(d.stop_name)) AS stop_name,
+    COALESCE(
+        NULLIF(TRIM(MAX(p.cluster_name)), ''),
+        NULLIF(TRIM(MAX(d.cluster_name)), ''),
+        COALESCE(MAX(p.name), MAX(d.stop_name))
+    ) AS cluster_name,
+    ROUND(AVG(d.duration_sec)::numeric, 1)::double precision AS avg_dwell_sec,
+    COUNT(*)::integer AS samples_count,
+    60 AS window_minutes,
+    CURRENT_TIMESTAMP AS updated_at
+FROM tram_dwell_events d
+LEFT JOIN tram_platforms p ON p.osm_id = d.stop_osm_id
+WHERE d.stop_osm_id IS NOT NULL
+  AND d.line IS NOT NULL
+  AND d.line <> ''
+  AND d.departure_time >= NOW() - INTERVAL '1 hour'
+  AND d.duration_sec BETWEEN 8.0 AND 180.0
+GROUP BY d.stop_osm_id, d.line;
+"""
+
+
+async def tram_dwell_stats_refresher_task(interval_sec: int = 60) -> None:
+    logger.info("[TRAM_STATS_1H] Uruchomiono odświeżanie statystyk (okno 1h)...")
+    await asyncio.sleep(10)
+
+    while True:
+        try:
+            pool = get_pool()
+            async with pool.acquire() as conn:
+                await conn.execute(DWELL_STATS_1H_SQL)
+        except asyncio.CancelledError:
+            break
+        except Exception as e:
+            logger.error(f"[TRAM_STATS_1H] Błąd odświeżania: {e}", exc_info=True)
+
+        await asyncio.sleep(interval_sec)

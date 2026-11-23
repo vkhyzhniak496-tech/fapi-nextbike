@@ -53,65 +53,66 @@ async def get_live_trams(response: Response) -> Response:
 @router.get("/dwells/all-stops")
 async def get_all_stops_dwell_stats(response: Response) -> Response:
     """
-    Agreguje postoje tramwajowe per peron pod warstwę analityczną mapy (GeoJSON).
+    Zwraca zagregowane statystyki postojów tramwajowych z ostatniej godziny (okno 1h)
+    per peron wraz z rozbiciem na linie oraz czasem aktualizacji updated_at.
     """
     query = """
-        WITH per_line AS (
-            SELECT 
-                stop_osm_id,
-                line,
-                COUNT(*) AS line_samples,
-                ROUND(AVG(duration_sec)::numeric, 1) AS line_avg_dwell
-            FROM tram_dwell_events
-            GROUP BY stop_osm_id, line
-        ),
-        lines_agg AS (
-            SELECT 
-                stop_osm_id,
-                json_agg(json_build_object(
-                    'line', line,
-                    'avg_dwell_sec', line_avg_dwell,
-                    'samples', line_samples
-                ) ORDER BY line ASC) AS lines_json
-            FROM per_line
-            GROUP BY stop_osm_id
-        ),
-        stop_totals AS (
-            SELECT 
-                stop_osm_id,
-                stop_name,
-                cluster_name,
-                ROUND(AVG(duration_sec)::numeric, 1) AS avg_dwell,
-                COUNT(*) AS total_samples
-            FROM tram_dwell_events
-            GROUP BY stop_osm_id, stop_name, cluster_name
+        WITH per_stop AS (
+            SELECT
+                s.stop_osm_id,
+                MAX(s.stop_name) AS stop_name,
+                MAX(s.cluster_name) AS cluster_name,
+                SUM(s.samples_count)::integer AS total_samples,
+                ROUND(
+                    (SUM(s.avg_dwell_sec * s.samples_count) / NULLIF(SUM(s.samples_count), 0))::numeric,
+                    1
+                )::double precision AS avg_dwell_sec,
+                MAX(s.updated_at) AS updated_at,
+                json_agg(
+                    json_build_object(
+                        'line', s.line,
+                        'avg_dwell_sec', s.avg_dwell_sec,
+                        'samples', s.samples_count
+                    )
+                    ORDER BY s.line ASC
+                ) AS lines_json
+            FROM tram_stop_dwell_stats s
+            WHERE s.samples_count > 0
+            GROUP BY s.stop_osm_id
         )
         SELECT json_build_object(
             'type', 'FeatureCollection',
+            'window_minutes', 60,
+            'updated_at', to_char(MAX(ps.updated_at), 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
             'features', COALESCE(json_agg(f.feature), '[]'::json)
         )::text AS geojson
-        FROM (
+        FROM per_stop ps
+        JOIN tram_platforms p
+          ON NULLIF(regexp_replace(p.osm_id, '\D', '', 'g'), '')::bigint = ps.stop_osm_id
+        CROSS JOIN LATERAL (
             SELECT json_build_object(
                 'type', 'Feature',
                 'id', p.osm_id,
                 'geometry', ST_AsGeoJSON(ST_Transform(p.geom_2180, 4326))::json,
                 'properties', json_build_object(
-                    'stop_name', st.stop_name,
-                    'cluster_name', COALESCE(st.cluster_name, p.cluster_name, st.stop_name),
-                    'avg_dwell_sec', st.avg_dwell,
-                    'samples_count', st.total_samples,
-                    'lines', la.lines_json
+                    'stop_name', ps.stop_name,
+                    'cluster_name', COALESCE(NULLIF(TRIM(ps.cluster_name), ''), p.cluster_name, ps.stop_name),
+                    'avg_dwell_sec', ps.avg_dwell_sec,
+                    'samples_count', ps.total_samples,
+                    'window_minutes', 60,
+                    'updated_at', to_char(ps.updated_at, 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
+                    'lines', ps.lines_json
                 )
             ) AS feature
-            FROM stop_totals st
-            JOIN lines_agg la ON la.stop_osm_id = st.stop_osm_id
-            JOIN tram_platforms p ON p.osm_id = st.stop_osm_id
-            WHERE p.geom_2180 IS NOT NULL
-        ) f;
+        ) f
+        WHERE p.geom_2180 IS NOT NULL;
     """
     pool = get_pool()
     async with pool.acquire() as conn:
         geojson_str = await conn.fetchval(query)
 
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
-    return Response(content=geojson_str or '{"type":"FeatureCollection","features":[]}', media_type="application/json")
+    return Response(
+        content=geojson_str or '{"type":"FeatureCollection","features":[]}',
+        media_type="application/json"
+    )
