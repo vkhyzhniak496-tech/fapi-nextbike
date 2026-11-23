@@ -49,7 +49,6 @@ async def get_live_trams(response: Response) -> Response:
         media_type="application/json"
     )
 
-
 @router.get("/dwells/all-stops")
 async def get_all_stops_dwell_stats(response: Response) -> Response:
     """
@@ -74,7 +73,7 @@ async def get_all_stops_dwell_stats(response: Response) -> Response:
                         'avg_dwell_sec', s.avg_dwell_sec,
                         'samples', s.samples_count
                     )
-                    ORDER BY s.line ASC
+                    ORDER BY NULLIF(regexp_replace(s.line, '\\D', '', 'g'), '')::int NULLS LAST, s.line ASC
                 ) AS lines_json
             FROM tram_stop_dwell_stats s
             WHERE s.samples_count > 0
@@ -88,7 +87,7 @@ async def get_all_stops_dwell_stats(response: Response) -> Response:
         )::text AS geojson
         FROM per_stop ps
         JOIN tram_platforms p
-          ON NULLIF(regexp_replace(p.osm_id, '\D', '', 'g'), '')::bigint = ps.stop_osm_id
+          ON NULLIF(regexp_replace(p.osm_id, '\\D', '', 'g'), '')::bigint = ps.stop_osm_id
         CROSS JOIN LATERAL (
             SELECT json_build_object(
                 'type', 'Feature',

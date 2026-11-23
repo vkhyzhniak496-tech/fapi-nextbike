@@ -19,6 +19,7 @@ from modules.telemetry.router import (
 from modules.telemetry.worker import (
     tram_analytics_cleaner_task,
     tram_telemetry_poller_task,
+    tram_dwell_stats_refresher_task
 )
 
 logging.basicConfig(
@@ -38,8 +39,8 @@ async def lifespan(app: FastAPI):
     ingest_task = asyncio.create_task(tram_telemetry_poller_task())
     cleaner_task = asyncio.create_task(tram_analytics_cleaner_task())
     bikes_task = asyncio.create_task(bike_history_poller_worker())
-
-    all_tasks = [ingest_task, cleaner_task, bikes_task]
+    tram_stats_task = asyncio.create_task(tram_dwell_stats_refresher_task(interval_sec=300))
+    all_tasks = [ingest_task, cleaner_task, bikes_task, tram_stats_task]
 
     try:
         yield
