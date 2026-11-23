@@ -72,8 +72,8 @@
             border-radius: 10px;
             padding: 14px 16px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-            min-width: 200px;
-            max-width: 280px;
+            min-width: 210px;
+            max-width: 290px;
         }
 
         @media (max-width: 640px) {
@@ -139,6 +139,16 @@
         });
         map.addControl(geolocate, 'top-right');
 
+        function formatUpdatedAt(isoStr) {
+            if (!isoStr) return null;
+            const d = new Date(isoStr);
+            if (Number.isNaN(d.getTime())) return null;
+            return d.toLocaleTimeString('pl-PL', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
         function setStatus(text, isError = false) {
             const el = document.getElementById('stats-summary');
             if (!el) return;
@@ -170,9 +180,12 @@
         function filterView(selectedLine) {
             if (!globalAllStopsData) return;
 
+            const updatedTime = formatUpdatedAt(globalAllStopsData.updated_at);
+            const updatedSuffix = updatedTime ? ` • okno 1h (stan: ${updatedTime})` : ' • okno 1h';
+
             if (selectedLine === 'ALL') {
                 setGeoJsonData(globalAllStopsData);
-                setStatus(`Obsłużone perony: ${globalAllStopsData.features.length}`);
+                setStatus(`Perony: ${globalAllStopsData.features.length}${updatedSuffix}`);
                 return;
             }
 
@@ -182,7 +195,7 @@
             });
 
             setGeoJsonData({ type: 'FeatureCollection', features: filtered });
-            setStatus(`Perony linii ${selectedLine}: ${filtered.length}`);
+            setStatus(`Linia ${selectedLine}: ${filtered.length} peronów${updatedSuffix}`);
         }
 
         async function loadInitialData() {
@@ -342,6 +355,11 @@
                     `).join('')
                     : '<div style="font-size: 12px; color: #94a3b8;">Brak rozbicia na linie</div>';
 
+                const stopUpdated = formatUpdatedAt(p.updated_at || globalAllStopsData?.updated_at);
+                const updatedHtml = stopUpdated
+                    ? `<div style="margin-top: 8px; padding-top: 6px; border-top: 1px solid #f1f5f9; font-size: 11px; color: #94a3b8; text-align: right;">Aktualizacja (1h): ${stopUpdated}</div>`
+                    : '';
+
                 new maplibregl.Popup({ offset: 8 })
                     .setLngLat(e.features[0].geometry.coordinates)
                     .setHTML(`
@@ -351,8 +369,9 @@
                             Średni postój: <b>${p.avg_dwell_sec} s</b><br>
                             Łącznie kursów: <b>${p.samples_count}</b>
                         </div>
-                        <div style="font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 2px;">Linie na peronie:</div>
+                        <div style="font-size: 12px; font-weight: 600; color: #334155; margin-bottom: 2px;">Linie na peronie (ostatnia 1h):</div>
                         ${linesHtml}
+                        ${updatedHtml}
                     `)
                     .addTo(map);
             });
